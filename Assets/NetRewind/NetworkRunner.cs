@@ -169,12 +169,12 @@ namespace NetRewind
                 inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
                 
                 if (debugMode == DebugMode.All)
-                    Debug.LogError("[NetRewind] Started client!");
+                    Debug.Log("[NetRewind] Started client!");
             }
             else
             {
                 if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
-                    Debug.Log("[NetRewind] Failed to start client!");
+                    Debug.LogError("[NetRewind] Failed to start client!");
             }
         }
         #endif
@@ -212,12 +212,12 @@ namespace NetRewind
                 inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
                 
                 if (debugMode == DebugMode.All)
-                    Debug.LogError("[NetRewind] Started client!");
+                    Debug.Log("[NetRewind] Started client!");
             }
             else
             {
                 if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
-                    Debug.Log("[NetRewind] Failed to start client!");
+                    Debug.LogError("[NetRewind] Failed to start client!");
             }
         }
         #endif
@@ -253,12 +253,12 @@ namespace NetRewind
                 stateTickSystem.OnTick += TickSystemHandler.OnStateTick;
                 
                 if (debugMode == DebugMode.All)
-                    Debug.LogError("[NetRewind] Started server!");
+                    Debug.Log("[NetRewind] Started server!");
             }
             else
             {
                 if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
-                    Debug.Log("[NetRewind] Failed to start server!");
+                    Debug.LogError("[NetRewind] Failed to start server!");
             }
         }
         #endif 
