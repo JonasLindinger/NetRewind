@@ -31,6 +31,8 @@ namespace NetRewind
         /// Timeouts in seconds
         /// </summary>
         private const float START_SERVER_TIMEOUT = 5f;
+        private const float START_CLIENT_TIMEOUT = 5f;
+        private const float START_HOST_TIMEOUT = 5f;
         
         /// <summary>
         /// Unity Editor Settings
@@ -140,21 +142,90 @@ namespace NetRewind
         #if Client
         public async Task StartClient()
         {
-                        
+            if (networkManager.StartClient())
+            {
+                #region Timeout Check
+                int timer = 0;
+                int timeout = Mathf.RoundToInt(START_CLIENT_TIMEOUT * 1000);
+                while (!networkManager.IsConnectedClient)
+                {
+                    timer += 1;
+
+                    if (timer >= timeout)
+                    {
+                        // Timeout
+                        if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
+                            Debug.LogError("[NetRewind] Timed out trying to start client!");
+                        return;
+                    }
+                    await Task.Delay(1);
+                }
+                    
+                #endregion
+                
+                simulationTickSystem = new TickSystem(simulationTickRate);
+                simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
+                inputTickSystem = new TickSystem(inputTickRate);
+                inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
+                
+                if (debugMode == DebugMode.All)
+                    Debug.LogError("[NetRewind] Started client!");
+            }
+            else
+            {
+                if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
+                    Debug.Log("[NetRewind] Failed to start client!");
+            }
         }
         #endif
 
         #if Client 
         public async Task HostGame()
         {
-            
+            if (networkManager.StartClient())
+            {
+                #region Timeout Check
+                int timer = 0;
+                int timeout = Mathf.RoundToInt(START_HOST_TIMEOUT * 1000);
+                while (!(networkManager.IsConnectedClient && networkManager.IsServer && NetworkManager.Singleton.IsListening))
+                {
+                    timer += 1;
+
+                    if (timer >= timeout)
+                    {
+                        // Timeout
+                        if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
+                            Debug.LogError("[NetRewind] Timed out trying to start host!");
+                            
+                        return;
+                    }
+                    await Task.Delay(1);
+                }
+                    
+                #endregion
+                
+                simulationTickSystem = new TickSystem(simulationTickRate);
+                simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
+                inputTickSystem = new TickSystem(inputTickRate);
+                inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
+                inputTickSystem = new TickSystem(inputTickRate);
+                inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
+                
+                if (debugMode == DebugMode.All)
+                    Debug.LogError("[NetRewind] Started client!");
+            }
+            else
+            {
+                if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
+                    Debug.Log("[NetRewind] Failed to start client!");
+            }
         }
         #endif
 
         #if Server
         public async Task StartServer()
         {
-            if (networkManager.StartServer())
+            if (networkManager.StartHost())
             {
                 #region Timeout Check
                 int timer = 0;
@@ -167,9 +238,8 @@ namespace NetRewind
                     {
                         // Timeout
                         if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
-                        {
                             Debug.LogError("[NetRewind] Timed out trying to start server!");
-                        }
+                            
                         return;
                     }
                     await Task.Delay(1);
@@ -181,10 +251,13 @@ namespace NetRewind
                 simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
                 stateTickSystem = new TickSystem(stateTickRate);
                 stateTickSystem.OnTick += TickSystemHandler.OnStateTick;
+                
+                if (debugMode == DebugMode.All)
+                    Debug.LogError("[NetRewind] Started server!");
             }
             else
             {
-                if (debugMode == DebugMode.All)
+                if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
                     Debug.Log("[NetRewind] Failed to start server!");
             }
         }
