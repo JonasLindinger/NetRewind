@@ -108,9 +108,11 @@ namespace NetRewind
             
             SetUpNetworkManager();
             
+            #if Server
             // Subscribe to events
             networkManager.OnClientConnectedCallback += OnPlayerJoined;
             networkManager.OnClientDisconnectCallback += OnPlayerLeft;
+            #endif
             
             #if Server
             // Auto Start Server
@@ -121,9 +123,11 @@ namespace NetRewind
 
         private void OnDestroy()
         {
+            #if Server
             // Subscribe to events
             networkManager.OnClientConnectedCallback -= OnPlayerJoined;
             networkManager.OnClientDisconnectCallback -= OnPlayerLeft;
+            #endif
         }
 
         private void Update()
@@ -280,8 +284,11 @@ namespace NetRewind
 
         #region Events
 
+        #if Server
         private void OnPlayerJoined(ulong clientId)
         {
+            if (!networkManager.IsServer) return;
+            
             // Instantiate player transport prefab
             var connection = Instantiate(networkClientConnectionPrefab, Vector3.zero, Quaternion.identity);
             var networkObject = connection.NetworkObject;
@@ -300,8 +307,9 @@ namespace NetRewind
         
         private void OnPlayerLeft(ulong clientId)
         {
-            
+            if (!networkManager.IsServer) return;
         }
+        #endif
 
         #endregion
         
