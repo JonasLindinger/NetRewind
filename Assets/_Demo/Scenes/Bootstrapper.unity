@@ -1125,7 +1125,7 @@ MonoBehaviour:
     - reference:
         asset: {fileID: 102900000, guid: 99c9720ab356a0642a771bea13969a05, type: 3}
         guid: 99c9720ab356a0642a771bea13969a05
-      sceneType: 0
+      sceneType: 1
 --- !u!114 &8712393598693920206
 MonoBehaviour:
   m_ObjectHideFlags: 0
