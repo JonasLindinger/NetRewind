@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using NetRewind.DONOTUSE;
-using NetRewind.Utils;
 using UnityEngine;
 using Unity.Netcode;
 using Debug = UnityEngine.Debug;
@@ -21,6 +20,7 @@ namespace NetRewind
 
         /// Getters
         public DebugMode DebugMode => debugMode;
+        public uint CurrentTick => simulationTickSystem.Tick;
         
         /// <summary>
         /// Maximum allowed tick rate
@@ -113,6 +113,9 @@ namespace NetRewind
             networkManager.OnClientConnectedCallback += OnPlayerJoined;
             networkManager.OnClientDisconnectCallback += OnPlayerLeft;
             #endif
+            #if Client
+            NetworkClientConnection.OnStartTickSystem += StartClientTickSystem;
+            #endif
             
             #if Server
             // Auto Start Server
@@ -127,6 +130,9 @@ namespace NetRewind
             // Subscribe to events
             networkManager.OnClientConnectedCallback -= OnPlayerJoined;
             networkManager.OnClientDisconnectCallback -= OnPlayerLeft;
+            #endif
+            #if Client
+            NetworkClientConnection.OnStartTickSystem -= StartClientTickSystem;
             #endif
         }
 
@@ -180,11 +186,6 @@ namespace NetRewind
                     
                 #endregion
                 
-                simulationTickSystem = new TickSystem(simulationTickRate);
-                simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
-                inputTickSystem = new TickSystem(inputTickRate);
-                inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
-                
                 if (debugMode == DebugMode.All)
                     Debug.Log("[NetRewind] Started client!");
             }
@@ -220,13 +221,10 @@ namespace NetRewind
                 }
                     
                 #endregion
-                
-                simulationTickSystem = new TickSystem(simulationTickRate);
-                simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
-                inputTickSystem = new TickSystem(inputTickRate);
-                inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
-                inputTickSystem = new TickSystem(inputTickRate);
-                inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
+
+                StartClientTickSystem(0);
+                stateTickSystem = new TickSystem(stateTickRate);
+                stateTickSystem.OnTick += TickSystemHandler.OnStateTick;
                 
                 if (debugMode == DebugMode.All)
                     Debug.Log("[NetRewind] Started host!");
@@ -278,7 +276,7 @@ namespace NetRewind
                     Debug.LogError("[NetRewind] Failed to start server!");
             }
         }
-        #endif 
+        #endif
 
         #endregion
 
@@ -318,6 +316,16 @@ namespace NetRewind
             networkObject.SpawnWithOwnership(clientId);
             networkObject.NetworkShow(clientId);
         }
+        
+        #if Client
+        private void StartClientTickSystem(uint simulationTickOffset)
+        {
+            simulationTickSystem = new TickSystem(simulationTickRate, simulationTickOffset);
+            simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
+            inputTickSystem = new TickSystem(inputTickRate);
+            inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
+        }
+        #endif
         
         #endregion
     }
