@@ -21,6 +21,13 @@ namespace NetRewind
         /// Getters
         public DebugMode DebugMode => debugMode;
         public uint CurrentTick => simulationTickSystem.Tick;
+        #if Client
+        public ulong GetCurrentRtt(ulong connectionId) => networkTransport.GetCurrentRtt(connectionId);
+        public ulong ServerClientId => networkTransport.ServerClientId;
+        public ulong GetRTTToServer() => GetCurrentRtt(ServerClientId);
+        public uint SimulationTickRate => simulationTickRate;
+        public uint ClientServerOffsetBuffer => clientServerOffsetBuffer;
+        #endif
         
         /// <summary>
         /// Maximum allowed tick rate
@@ -42,11 +49,16 @@ namespace NetRewind
         [SerializeField] private uint inputTickRate = 32;
         [SerializeField] private uint stateTickRate = 32;
         [Space(10)] 
+        [Header("Buffers")] 
+        [SerializeField] private uint clientServerOffsetBuffer = 3;
+        [Space(10)] 
         [Header("Settings")] 
         [SerializeField] private bool autoStartServer = false;
         [SerializeField] private DebugMode debugMode = DebugMode.All;
         [Space(10)] 
+        [Header("References")]
         [SerializeField] private NetworkClientConnection networkClientConnectionPrefab;
+        [SerializeField] private NetworkTransport networkTransport;
         
         /// <summary>
         /// References

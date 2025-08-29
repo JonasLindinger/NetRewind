@@ -24,7 +24,14 @@ namespace NetRewind.DONOTUSE
         [Rpc(SendTo.Owner, Delivery = RpcDelivery.Reliable)]
         private void OnStartClientTickSystemRPC(uint simulationTickOffset)
         {
-            OnStartTickSystem?.Invoke(simulationTickOffset);
+            ulong ms = NetworkRunner.Runner.GetRTTToServer() / 2;
+            float msPerTick = 1000f / NetworkRunner.Runner.SimulationTickRate;
+            int passedTicks = (int)(ms / msPerTick);
+            
+            uint simulationTickOffsetWithBuffer = (uint) (simulationTickOffset + passedTicks);
+            simulationTickOffsetWithBuffer += NetworkRunner.Runner.ClientServerOffsetBuffer; // Add an offset, just for possible future jitter
+            
+            OnStartTickSystem?.Invoke(simulationTickOffsetWithBuffer);
         }
     }
 }
