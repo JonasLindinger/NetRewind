@@ -45,6 +45,8 @@ namespace NetRewind
         [Header("Settings")] 
         [SerializeField] private bool autoStartServer = false;
         [SerializeField] private DebugMode debugMode = DebugMode.All;
+        [Space(10)] 
+        [SerializeField] private NetworkClientConnection networkClientConnectionPrefab;
         
         /// <summary>
         /// References
@@ -115,6 +117,13 @@ namespace NetRewind
             if (autoStartServer)
                 StartServer();
             #endif
+        }
+
+        private void OnDestroy()
+        {
+            // Subscribe to events
+            networkManager.OnClientConnectedCallback -= OnPlayerJoined;
+            networkManager.OnClientDisconnectCallback -= OnPlayerLeft;
         }
 
         private void Update()
@@ -274,6 +283,19 @@ namespace NetRewind
         private void OnPlayerJoined(ulong clientId)
         {
             // Instantiate player transport prefab
+            var connection = Instantiate(networkClientConnectionPrefab, Vector3.zero, Quaternion.identity);
+            var networkObject = connection.NetworkObject;
+            networkObject.AlwaysReplicateAsRoot = false;
+            networkObject.SynchronizeTransform = false;
+            networkObject.ActiveSceneSynchronization = false;
+            networkObject.SceneMigrationSynchronization = false;
+            networkObject.SpawnWithObservers = false;
+            networkObject.DontDestroyWithOwner = true;
+            networkObject.AutoObjectParentSync = false;
+            networkObject.SyncOwnerTransformWhenParented = false;
+            networkObject.AllowOwnerToParent = false;
+            networkObject.SpawnWithOwnership(clientId);
+            networkObject.NetworkShow(clientId);
         }
         
         private void OnPlayerLeft(ulong clientId)

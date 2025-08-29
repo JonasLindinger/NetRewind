@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace NetRewind.Utils
+namespace NetRewind.DONOTUSE
 {
     public class TickSystem
     {
