@@ -350,7 +350,7 @@ namespace NetRewind
             stateTickSystem.OnTick += TickSystemHandler.OnStateTick;
             uint syncTickRate = 1; // Sync every second
             syncTickSystem = new TickSystem(syncTickRate);
-            syncTickSystem.OnTick += TickSystemHandler.OnSyncTick;
+            syncTickSystem.OnTick += SyncTickSystem.UpdateSystem;
         }
         #endif
         

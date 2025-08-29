@@ -12,11 +12,6 @@
         {
             
         }
-
-        public static void OnSyncTick(uint _)
-        {
-            
-        }
         #endif
         
         #if Client

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1221716936995824858}
   - component: {fileID: 3096924742861884018}
   - component: {fileID: 8005851421492708301}
+  - component: {fileID: 8314423377167154172}
   m_Layer: 0
   m_Name: NetworkClientConnection
   m_TagString: Untagged
@@ -70,4 +71,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e63c2a8b20b4ba6b342161d059cdf47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetRewind.Utils.NetworkClientConnection
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8314423377167154172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8262439091929260942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 289308f5222c43268dc04a50b0062c38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetRewind.DONOTUSE.SyncTickSystem
   ShowTopMostFoldoutHeaderGroup: 1
