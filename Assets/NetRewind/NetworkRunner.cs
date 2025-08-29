@@ -287,9 +287,23 @@ namespace NetRewind
         #if Server
         private void OnPlayerJoined(ulong clientId)
         {
-            if (!networkManager.IsServer) return;
-            
             // Instantiate player transport prefab
+            if (networkManager.IsServer)
+                InstantiateTransportPrefab(clientId);
+        }
+        
+        private void OnPlayerLeft(ulong clientId)
+        {
+            
+        }
+        #endif
+
+        #endregion
+        
+        #region Private Methods
+
+        private void InstantiateTransportPrefab(ulong clientId)
+        {
             var connection = Instantiate(networkClientConnectionPrefab, Vector3.zero, Quaternion.identity);
             var networkObject = connection.NetworkObject;
             networkObject.AlwaysReplicateAsRoot = false;
@@ -303,21 +317,6 @@ namespace NetRewind
             networkObject.AllowOwnerToParent = false;
             networkObject.SpawnWithOwnership(clientId);
             networkObject.NetworkShow(clientId);
-        }
-        
-        private void OnPlayerLeft(ulong clientId)
-        {
-            if (!networkManager.IsServer) return;
-        }
-        #endif
-
-        #endregion
-        
-        #region Private Methods
-
-        private void InstantiateTransportPrefab(ulong clientId)
-        {
-            
         }
         
         #endregion
