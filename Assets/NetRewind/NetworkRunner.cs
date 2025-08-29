@@ -75,6 +75,7 @@ namespace NetRewind
         #endif
         #if Server
         private TickSystem stateTickSystem;
+        private TickSystem syncTickSystem;
         #endif
         
         #endregion
@@ -235,8 +236,7 @@ namespace NetRewind
                 #endregion
 
                 StartClientTickSystem(0);
-                stateTickSystem = new TickSystem(stateTickRate);
-                stateTickSystem.OnTick += TickSystemHandler.OnStateTick;
+                StartServerTickSystem();
                 
                 if (debugMode == DebugMode.All)
                     Debug.Log("[NetRewind] Started host!");
@@ -273,11 +273,9 @@ namespace NetRewind
                 }
                     
                 #endregion
-                
-                simulationTickSystem = new TickSystem(simulationTickRate);
-                simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
-                stateTickSystem = new TickSystem(stateTickRate);
-                stateTickSystem.OnTick += TickSystemHandler.OnStateTick;
+
+                StartSimulationTickSystem(0);
+                StartServerTickSystem();
                 
                 if (debugMode == DebugMode.All)
                     Debug.Log("[NetRewind] Started server!");
@@ -328,14 +326,30 @@ namespace NetRewind
             networkObject.SpawnWithOwnership(clientId);
             networkObject.NetworkShow(clientId);
         }
+
+        private void StartSimulationTickSystem(uint simulationTickOffset)
+        {
+            simulationTickSystem = new TickSystem(simulationTickRate, simulationTickOffset);
+            simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
+        }
         
         #if Client
         private void StartClientTickSystem(uint simulationTickOffset)
         {
-            simulationTickSystem = new TickSystem(simulationTickRate, simulationTickOffset);
-            simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
+            StartSimulationTickSystem(simulationTickOffset);
             inputTickSystem = new TickSystem(inputTickRate);
             inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
+        }
+        #endif
+        
+        #if Server
+        private void StartServerTickSystem()
+        {
+            stateTickSystem = new TickSystem(stateTickRate);
+            stateTickSystem.OnTick += TickSystemHandler.OnStateTick;
+            uint syncTickRate = 1; // Sync every second
+            syncTickSystem = new TickSystem(syncTickRate);
+            syncTickSystem.OnTick += TickSystemHandler.OnSyncTick;
         }
         #endif
         
