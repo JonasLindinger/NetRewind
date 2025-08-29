@@ -702,7 +702,7 @@ MonoBehaviour:
   simulationTickRate: 64
   inputTickRate: 32
   stateTickRate: 32
-  autoStartServer: 1
+  autoStartServer: 0
   debugMode: 2
 --- !u!114 &1824306438
 MonoBehaviour:

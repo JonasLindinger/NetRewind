@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using NetRewind.DONOTUSE;
 using NetRewind.Utils;
 using UnityEngine;
 using Unity.Netcode;
+using Debug = UnityEngine.Debug;
 
 namespace NetRewind
 {
@@ -43,7 +45,7 @@ namespace NetRewind
         [SerializeField] private uint stateTickRate = 32;
         [Space(10)] 
         [Header("Settings")] 
-        [SerializeField] private bool autoStartServer = true;
+        [SerializeField] private bool autoStartServer = false;
         [SerializeField] private DebugMode debugMode = DebugMode.All;
         
         /// <summary>
@@ -145,20 +147,20 @@ namespace NetRewind
             if (networkManager.StartClient())
             {
                 #region Timeout Check
-                int timer = 0;
-                int timeout = Mathf.RoundToInt(START_CLIENT_TIMEOUT * 1000);
+                var sw = Stopwatch.StartNew();
+                var timeout = TimeSpan.FromSeconds(START_CLIENT_TIMEOUT);
+
                 while (!networkManager.IsConnectedClient)
                 {
-                    timer += 1;
-
-                    if (timer >= timeout)
+                    if (sw.Elapsed >= timeout)
                     {
                         // Timeout
                         if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
                             Debug.LogError("[NetRewind] Timed out trying to start client!");
                         return;
                     }
-                    await Task.Delay(1);
+                    
+                    await Task.Delay(10);
                 }
                     
                 #endregion
@@ -180,18 +182,17 @@ namespace NetRewind
         #endif
 
         #if Client 
-        public async Task HostGame()
+        public async Task StartHost()
         {
-            if (networkManager.StartClient())
+            if (networkManager.StartHost())
             {
                 #region Timeout Check
-                int timer = 0;
-                int timeout = Mathf.RoundToInt(START_HOST_TIMEOUT * 1000);
+                var sw = Stopwatch.StartNew();
+                var timeout = TimeSpan.FromSeconds(START_CLIENT_TIMEOUT);
+                
                 while (!(networkManager.IsConnectedClient && networkManager.IsServer && NetworkManager.Singleton.IsListening))
                 {
-                    timer += 1;
-
-                    if (timer >= timeout)
+                    if (sw.Elapsed >= timeout)
                     {
                         // Timeout
                         if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
@@ -199,7 +200,8 @@ namespace NetRewind
                             
                         return;
                     }
-                    await Task.Delay(1);
+                    
+                    await Task.Delay(10);
                 }
                     
                 #endregion
@@ -212,12 +214,12 @@ namespace NetRewind
                 inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
                 
                 if (debugMode == DebugMode.All)
-                    Debug.Log("[NetRewind] Started client!");
+                    Debug.Log("[NetRewind] Started host!");
             }
             else
             {
                 if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
-                    Debug.LogError("[NetRewind] Failed to start client!");
+                    Debug.LogError("[NetRewind] Failed to start host!");
             }
         }
         #endif
@@ -225,16 +227,14 @@ namespace NetRewind
         #if Server
         public async Task StartServer()
         {
-            if (networkManager.StartHost())
+            if (networkManager.StartServer())
             {
                 #region Timeout Check
-                int timer = 0;
-                int timeout = Mathf.RoundToInt(START_SERVER_TIMEOUT * 1000);
+                var sw = Stopwatch.StartNew();
+                var timeout = TimeSpan.FromSeconds(START_CLIENT_TIMEOUT);
                 while (!(networkManager.IsServer && NetworkManager.Singleton.IsListening))
                 {
-                    timer += 1;
-
-                    if (timer >= timeout)
+                    if (sw.Elapsed >= timeout)
                     {
                         // Timeout
                         if (debugMode != DebugMode.ErrorsOnly || debugMode == DebugMode.All)
@@ -242,6 +242,7 @@ namespace NetRewind
                             
                         return;
                     }
+                    
                     await Task.Delay(1);
                 }
                     
