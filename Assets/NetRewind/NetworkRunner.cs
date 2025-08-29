@@ -154,6 +154,7 @@ namespace NetRewind
             simulationTickSystem?.Update(Time.deltaTime);
             #if Server
             stateTickSystem?.Update(Time.deltaTime);
+            syncTickSystem?.Update(Time.deltaTime);
             #endif
             #if Client
             inputTickSystem?.Update(Time.deltaTime);
@@ -235,8 +236,8 @@ namespace NetRewind
                     
                 #endregion
 
-                StartClientTickSystem(0);
-                StartServerTickSystem();
+                StartClientTickSystem(0); // Start Simulation and Input Tick System
+                StartServerTickSystem(); // Start State and Sync Tick System
                 
                 if (debugMode == DebugMode.All)
                     Debug.Log("[NetRewind] Started host!");
@@ -274,8 +275,8 @@ namespace NetRewind
                     
                 #endregion
 
-                StartSimulationTickSystem(0);
-                StartServerTickSystem();
+                StartSimulationTickSystem(0); // Start Simulation Tick System
+                StartServerTickSystem(); // Start State and Sync Tick System
                 
                 if (debugMode == DebugMode.All)
                     Debug.Log("[NetRewind] Started server!");
@@ -336,8 +337,8 @@ namespace NetRewind
         #if Client
         private void StartClientTickSystem(uint simulationTickOffset)
         {
-            StartSimulationTickSystem(simulationTickOffset);
-            inputTickSystem = new TickSystem(inputTickRate);
+            StartSimulationTickSystem(simulationTickOffset); // Start Simulation Tick System
+            inputTickSystem = new TickSystem(inputTickRate); // Start Input Tick System
             inputTickSystem.OnTick += TickSystemHandler.OnInputTick;
         }
         #endif
