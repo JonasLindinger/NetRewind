@@ -19,9 +19,7 @@ namespace NetRewind
         /// </summary>
         public static NetworkRunner Runner { get; private set; }
 
-        /// <summary>
         /// Getters
-        /// </summary>
         public DebugMode DebugMode => debugMode;
         
         /// <summary>
@@ -108,6 +106,10 @@ namespace NetRewind
             
             SetUpNetworkManager();
             
+            // Subscribe to events
+            networkManager.OnClientConnectedCallback += OnPlayerJoined;
+            networkManager.OnClientDisconnectCallback += OnPlayerLeft;
+            
             #if Server
             // Auto Start Server
             if (autoStartServer)
@@ -188,7 +190,7 @@ namespace NetRewind
             {
                 #region Timeout Check
                 var sw = Stopwatch.StartNew();
-                var timeout = TimeSpan.FromSeconds(START_CLIENT_TIMEOUT);
+                var timeout = TimeSpan.FromSeconds(START_HOST_TIMEOUT);
                 
                 while (!(networkManager.IsConnectedClient && networkManager.IsServer && NetworkManager.Singleton.IsListening))
                 {
@@ -231,7 +233,8 @@ namespace NetRewind
             {
                 #region Timeout Check
                 var sw = Stopwatch.StartNew();
-                var timeout = TimeSpan.FromSeconds(START_CLIENT_TIMEOUT);
+                var timeout = TimeSpan.FromSeconds(START_SERVER_TIMEOUT);
+                
                 while (!(networkManager.IsServer && NetworkManager.Singleton.IsListening))
                 {
                     if (sw.Elapsed >= timeout)
@@ -264,6 +267,29 @@ namespace NetRewind
         }
         #endif 
 
+        #endregion
+
+        #region Events
+
+        private void OnPlayerJoined(ulong clientId)
+        {
+            // Instantiate player transport prefab
+        }
+        
+        private void OnPlayerLeft(ulong clientId)
+        {
+            
+        }
+
+        #endregion
+        
+        #region Private Methods
+
+        private void InstantiateTransportPrefab(ulong clientId)
+        {
+            
+        }
+        
         #endregion
     }
 }
