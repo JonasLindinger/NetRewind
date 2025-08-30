@@ -40,6 +40,8 @@ namespace NetRewind.DONOTUSE
         private void OnSyncInfoRPC(uint simulationTick)
         {
             #if Client
+            if (NetworkRunner.Runner.CurrentTick == 0) return; // Check if we have started the tick system
+            
             ulong ms = NetworkRunner.Runner.GetRTTToServer() / 2;
             float msPerTick = 1000f / NetworkRunner.Runner.SimulationTickRate;
             int passedTicks = (int)(ms / msPerTick);
@@ -49,7 +51,7 @@ namespace NetRewind.DONOTUSE
             uint targetSimulationTick = (uint) (simulationTick + passedTicks);
             targetSimulationTick += buffer; // Add an offset, just for possible future jitter
 
-            int difference = Mathf.RoundToInt(targetSimulationTick - NetworkRunner.Runner.CurrentTick);
+            int difference = (int) (targetSimulationTick - NetworkRunner.Runner.CurrentTick);
             uint absDifference = (uint)Mathf.Abs(difference);
             
             if (difference > 0)

@@ -10,6 +10,7 @@ namespace _Demo.UI
         [Header("References")] 
         [SerializeField] private GameObject ui;
         
+        #if Client
         private void Start()
         {
             NetworkManager.Singleton.OnServerStarted += () =>
@@ -31,10 +32,13 @@ namespace _Demo.UI
         {
             NetworkRunner.Runner.StartHost();
         }
+        #endif
         
+        #if Server
         public void StartServer()
         {
             NetworkRunner.Runner.StartServer();
         }
+        #endif
     }
 }

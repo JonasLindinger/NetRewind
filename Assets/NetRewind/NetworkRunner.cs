@@ -135,7 +135,7 @@ namespace NetRewind
             SyncTickSystem.SetTick += OnSetTick;
             #endif
             
-            #if Server
+            #if Server && !Client
             // Auto Start Server
             if (autoStartServer)
                 StartServer();
@@ -327,14 +327,14 @@ namespace NetRewind
         {
             simulationTickSystem.CalculateExtraTicks(ticks);
             if (debugMode == DebugMode.All)
-                Debug.Log("[NetRewind] Calculating extra ticks");
+                Debug.Log("[NetRewind] Calculating extra ticks: " + ticks);
         }
         
         private void OnCalculateLessTicks(uint ticks)
         {
             simulationTickSystem.SkipTicks(ticks);
             if (debugMode == DebugMode.All)
-                Debug.Log("[NetRewind] Skipping ticks");
+                Debug.Log("[NetRewind] Skipping ticks: " + ticks);
         }
         
         #endif
