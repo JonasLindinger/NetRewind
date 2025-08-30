@@ -17,7 +17,7 @@ namespace _Demo.UI
             {
                 ui.SetActive(false);
             };
-            NetworkManager.Singleton.OnClientStopped += (_) =>
+            NetworkManager.Singleton.OnClientStarted += () =>
             {
                 ui.SetActive(false);
             };
