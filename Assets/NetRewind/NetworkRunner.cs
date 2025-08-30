@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using NetRewind.DONOTUSE;
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.InputSystem;
 using Debug = UnityEngine.Debug;
 
 namespace NetRewind
@@ -54,6 +57,9 @@ namespace NetRewind
         [SerializeField] private uint clientServerOffsetBuffer = 3;
         [SerializeField] private uint maxTickRecalculation = 10;
         [Space(10)] 
+        [Header("Input")] 
+        [SerializeField] private string networkInputMapName = "Networked";
+        [Space(10)] 
         [Header("Settings")] 
         [SerializeField] private bool autoStartServer = false;
         [SerializeField] private DebugMode debugMode = DebugMode.All;
@@ -61,6 +67,7 @@ namespace NetRewind
         [Header("References")]
         [SerializeField] private NetworkClientConnection networkClientConnectionPrefab;
         [SerializeField] private NetworkTransport networkTransport;
+        [SerializeField] private PlayerInput playerInput;
         
         /// <summary>
         /// References
@@ -122,6 +129,9 @@ namespace NetRewind
             networkTickRate = (uint) Mathf.Max(inputTickRate, stateTickRate);
             
             SetUpNetworkManager();
+            #if Client
+            SetUpNetworkInput();
+            #endif
             
             #if Server
             // Subscribe to events
@@ -382,6 +392,20 @@ namespace NetRewind
             uint syncTickRate = 1; // Sync every second
             syncTickSystem = new TickSystem(syncTickRate);
             syncTickSystem.OnTick += SyncTickSystem.UpdateSystem;
+        }
+        #endif
+        
+        #if Client
+        private void SetUpNetworkInput()
+        {
+            InputActionMap networkMap = playerInput.actions.FindActionMap(networkInputMapName, throwIfNotFound: true);
+
+            List<InputAction> networkActions = networkMap.actions.ToList();
+
+            foreach (var action in networkActions)
+            {
+                Debug.Log(action.name);
+            }
         }
         #endif
         

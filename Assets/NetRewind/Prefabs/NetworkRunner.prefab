@@ -10,8 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5406076578113223618}
   - component: {fileID: 2270951876602689876}
-  - component: {fileID: 6405311908427885707}
   - component: {fileID: 5621092151489545034}
+  - component: {fileID: 6405311908427885707}
+  - component: {fileID: 4119305493566237774}
   m_Layer: 0
   m_Name: NetworkRunner
   m_TagString: Untagged
@@ -76,27 +77,6 @@ MonoBehaviour:
     OldPrefabList: []
   RunInBackground: 1
   LogLevel: 1
---- !u!114 &6405311908427885707
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 223444829577150758}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bc1e21b802c24a1fbc665930d6fd3e89, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetRewind.NetworkRunner
-  simulationTickRate: 64
-  inputTickRate: 32
-  stateTickRate: 32
-  clientServerOffsetBuffer: 3
-  maxTickRecalculation: 10
-  autoStartServer: 0
-  debugMode: 2
-  networkClientConnectionPrefab: {fileID: 8005851421492708301, guid: a6cca694dff2833449d751adeed6f9c8, type: 3}
-  networkTransport: {fileID: 5621092151489545034}
 --- !u!114 &5621092151489545034
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -126,3 +106,56 @@ MonoBehaviour:
     PacketDelayMS: 0
     PacketJitterMS: 0
     PacketDropRate: 0
+--- !u!114 &6405311908427885707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223444829577150758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc1e21b802c24a1fbc665930d6fd3e89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetRewind.NetworkRunner
+  simulationTickRate: 64
+  inputTickRate: 32
+  stateTickRate: 32
+  clientServerOffsetBuffer: 3
+  maxTickRecalculation: 10
+  networkInputMapName: Networked
+  autoStartServer: 1
+  debugMode: 2
+  networkClientConnectionPrefab: {fileID: 8005851421492708301, guid: a6cca694dff2833449d751adeed6f9c8, type: 3}
+  networkTransport: {fileID: 5621092151489545034}
+  playerInput: {fileID: 4119305493566237774}
+--- !u!114 &4119305493566237774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223444829577150758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+  m_Actions: {fileID: -944628639613478452, guid: 58897e354e1ca7b428734b6806052a9b, type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: 59d678c3-ad04-49b9-86e4-a2f99888631f
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
