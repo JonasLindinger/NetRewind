@@ -91,9 +91,12 @@ MonoBehaviour:
   simulationTickRate: 64
   inputTickRate: 32
   stateTickRate: 32
+  clientServerOffsetBuffer: 3
+  maxTickRecalculation: 10
   autoStartServer: 0
   debugMode: 2
   networkClientConnectionPrefab: {fileID: 8005851421492708301, guid: a6cca694dff2833449d751adeed6f9c8, type: 3}
+  networkTransport: {fileID: 5621092151489545034}
 --- !u!114 &5621092151489545034
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -27,6 +27,7 @@ namespace NetRewind
         public ulong GetRTTToServer() => GetCurrentRtt(ServerClientId);
         public uint SimulationTickRate => simulationTickRate;
         public uint ClientServerOffsetBuffer => clientServerOffsetBuffer;
+        public uint MaxTickRecalculation => maxTickRecalculation;
         #endif
         
         /// <summary>
@@ -51,6 +52,7 @@ namespace NetRewind
         [Space(10)] 
         [Header("Buffers")] 
         [SerializeField] private uint clientServerOffsetBuffer = 3;
+        [SerializeField] private uint maxTickRecalculation = 10;
         [Space(10)] 
         [Header("Settings")] 
         [SerializeField] private bool autoStartServer = false;
@@ -128,6 +130,9 @@ namespace NetRewind
             #endif
             #if Client
             NetworkClientConnection.OnStartTickSystem += StartClientTickSystem;
+            SyncTickSystem.CalculateExtraTicks += OnCalculateExtraTicks;
+            SyncTickSystem.CalculateLessTicks += OnCalculateLessTicks;
+            SyncTickSystem.SetTick += OnSetTick;
             #endif
             
             #if Server
@@ -146,6 +151,9 @@ namespace NetRewind
             #endif
             #if Client
             NetworkClientConnection.OnStartTickSystem -= StartClientTickSystem;
+            SyncTickSystem.CalculateExtraTicks -= OnCalculateExtraTicks;
+            SyncTickSystem.CalculateLessTicks -= OnCalculateLessTicks;
+            SyncTickSystem.SetTick -= OnSetTick;
             #endif
         }
 
@@ -306,7 +314,30 @@ namespace NetRewind
             
         }
         #endif
+        
+        #if Client
+        private void OnSetTick(uint tick)
+        {
+            simulationTickSystem.SetTick(tick);
+            if (debugMode == DebugMode.ErrorsOnly || debugMode == DebugMode.All)
+                Debug.LogWarning("[NetRewind] Set Simulation Tick");
+        }
 
+        private void OnCalculateExtraTicks(uint ticks)
+        {
+            simulationTickSystem.CalculateExtraTicks(ticks);
+            if (debugMode == DebugMode.All)
+                Debug.Log("[NetRewind] Calculating extra ticks");
+        }
+        
+        private void OnCalculateLessTicks(uint ticks)
+        {
+            simulationTickSystem.SkipTicks(ticks);
+            if (debugMode == DebugMode.All)
+                Debug.Log("[NetRewind] Skipping ticks");
+        }
+        
+        #endif
         #endregion
         
         #region Private Methods
