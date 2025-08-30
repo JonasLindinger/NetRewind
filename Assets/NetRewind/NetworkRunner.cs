@@ -401,11 +401,8 @@ namespace NetRewind
             InputActionMap networkMap = playerInput.actions.FindActionMap(networkInputMapName, throwIfNotFound: true);
 
             List<InputAction> networkActions = networkMap.actions.ToList();
-
-            foreach (var action in networkActions)
-            {
-                Debug.Log(action.name);
-            }
+            
+            InputCollector.SetUp(networkActions);
         }
         #endif
         
