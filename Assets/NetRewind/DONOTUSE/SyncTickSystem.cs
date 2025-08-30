@@ -74,8 +74,9 @@ namespace NetRewind.DONOTUSE
                 if (absDifference <= NetworkRunner.Runner.MaxTickRecalculation)
                 {
                     // Skip the ticks
-                    uint ticksToSkip = absDifference - buffer;
-                    CalculateLessTicks?.Invoke(ticksToSkip);
+                    uint ticksToSkip = (uint) Mathf.Min(0, absDifference - buffer);
+                    if (ticksToSkip != 0)
+                        CalculateLessTicks?.Invoke(ticksToSkip);
                 }
                 else
                 {
