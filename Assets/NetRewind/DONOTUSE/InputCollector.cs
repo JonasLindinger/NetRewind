@@ -12,6 +12,12 @@ namespace NetRewind.DONOTUSE
         // Amount of Inputs to store in a queue
         private const uint AMOUNT_OF_INPUTS_TO_KEEP = 128;
         
+        public static int NetworkInputFlagCount => inputFlagNames.Count;
+        public static int NetworkDirectionalInputCount => directionalInputNames.Count;
+        
+        public static string GetNetworkInputFlagName(int index) => inputFlagNames[index];
+        public static string GetNetworkDirectionalInputName(int index) => directionalInputNames[index];
+        
         // Inputs by there name and there value
         private static Dictionary<string, Vector2> directionalInputs = new Dictionary<string, Vector2>();
         private static Dictionary<string, bool> inputFlags = new Dictionary<string, bool>();
@@ -102,10 +108,16 @@ namespace NetRewind.DONOTUSE
                     directionalInputs[inputFlag] = inputs[inputFlag].ReadValue<Vector2>();
             }
 
+            IData playerData = PlayerNetworkEntity.Local.GetPlayerData();
+            
             // Create the actual input
             ClientInputState input = new ClientInputState()
             {
-                // Todo: Create the input and set the IData from the PlayerNetworkBehaviour (a override method).
+                Tick = tick,
+                LatestReceivedServerGameStateTick = GameStateSync.latestReceavedServerGameStateTick,
+                InputFlags = inputFlags,
+                DirectionalInputs = directionalInputs,
+                Data = playerData
             };
 
             // Enqueue the input, so that it can be collected afterward.

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using NetRewind.DONOTUSE;
+using NetRewind.Utils;
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
@@ -20,7 +21,7 @@ namespace NetRewind
         /// Singleton instance
         /// </summary>
         public static NetworkRunner Runner { get; private set; }
-
+        
         /// Getters
         public DebugMode DebugMode => debugMode;
         public uint CurrentTick => simulationTickSystem.Tick;
@@ -372,7 +373,7 @@ namespace NetRewind
         private void StartSimulationTickSystem(uint simulationTickOffset)
         {
             simulationTickSystem = new TickSystem(simulationTickRate, simulationTickOffset);
-            simulationTickSystem.OnTick += TickSystemHandler.OnSimulationTick;
+            simulationTickSystem.OnTick += NetworkEntity.TriggerSimulationTick;
         }
         
         #if Client
