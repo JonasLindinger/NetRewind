@@ -19,6 +19,8 @@ namespace NetRewind.Utils
             OnPostRegister();
             
             networkEntities.Add(this);
+
+            InternalOnStart();
         }
 
         public override void OnDestroy()
@@ -27,6 +29,8 @@ namespace NetRewind.Utils
             
             Unregister();
             OnPostUnregister();
+
+            InternalOnDestroy();
         }
 
         private void Register()
@@ -106,6 +110,8 @@ namespace NetRewind.Utils
         
         protected virtual void OnPostRegister() {}
         protected virtual void OnPostUnregister() {}
+        protected virtual void InternalOnStart() {}
+        protected virtual void InternalOnDestroy() {}
         protected virtual void InternalOnPostRegister() {}
         protected virtual void OnTick(uint tick) {}
 

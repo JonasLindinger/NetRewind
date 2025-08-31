@@ -8,12 +8,5 @@
             
         }
         #endif
-        
-        #if Client
-        public static void OnInputTick(uint _)
-        {
-            
-        }
-        #endif
     }
 }

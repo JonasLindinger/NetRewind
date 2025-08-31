@@ -80,11 +80,11 @@ namespace NetRewind.DONOTUSE
             Enable();
         }
         
-        public static ClientInputState Collect(uint tick)
+        public static void Collect(uint tick)
         {
             // Check if SetUp
             if (!setUp)
-                return null;
+                return;
             
             // Update the input list(s)
             if (enabled)
@@ -123,11 +123,9 @@ namespace NetRewind.DONOTUSE
 
             // Enqueue the input, so that it can be collected afterward.
             lastInputStates.Enqueue(input);
-            
-            return input;
         }
 
-        public static ClientInputState[] GetLastInputStates(uint amount)
+        public static ClientInputState[] GetInputStatesToSend(uint amount)
         {
             // Remove old inputs so that the queue has the max size of: AMOUNT_OF_INPUTS_TO_KEEP
             int i;
@@ -145,6 +143,15 @@ namespace NetRewind.DONOTUSE
             {
                 inputsToReturn.Add(lastInputs[i]);
                 i--;
+            }
+
+            // Remove inputs, that the server doesn't need
+            for (i = inputsToReturn.Count - 1; i >= 0; i--)
+            {
+                // Check if we 100% know, that the server doesn't need our input and then remove it.
+                bool isUseless = inputsToReturn[i].Tick <= GameStateSync.latestReceavedServerGameStateTick;
+                if (isUseless)
+                    inputsToReturn.RemoveAt(i);
             }
             
             // Return the list as an array

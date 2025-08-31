@@ -5,7 +5,23 @@
         #if Client
         public static PlayerNetworkEntity Local { get; private set; }
         #endif
-        
+
+        protected override void InternalOnSpawn()
+        {
+            #if Client
+            if (IsOwner)
+                Local = this;
+            #endif
+        }
+
+        protected override void InternalOnDestroy()
+        {
+            #if Client
+            if (Local == this)
+                Local = null;
+            #endif
+        }
+
         protected override IState GetCurrentState()
         {
             throw new System.NotImplementedException();

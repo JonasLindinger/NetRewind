@@ -18,8 +18,11 @@ namespace NetRewind.Utils
                 await Task.Delay(1);
             
             IsPredicted = ShouldBePredicted();
+            InternalOnSpawn();
         }
-        
+
+        protected virtual void InternalOnSpawn() {}
+            
         protected abstract bool ShouldBePredicted();
         protected abstract bool DoWeNeedToReconcile(uint tick, IState predictedState, IState serverState);
     }
