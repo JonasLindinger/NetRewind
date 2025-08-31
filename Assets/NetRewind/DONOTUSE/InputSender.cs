@@ -47,12 +47,43 @@ namespace NetRewind.DONOTUSE
         {
             var inputs = clients[ownerClientId].inputs;
             ClientInputState input = inputs[tick % inputs.Length];
-            if (input != null)
-                return input;
+            
+            if (IsValidInput(tick, input))
+                return input; // Found a valid input
             else
-                return null; // Todo: try to get the last input (if possible)
-            TODO!
-        }       
+            {
+                // Check the last input and try to repeat it.
+                uint oldTick = tick - 1;
+                input = inputs[oldTick % inputs.Length];
+                if (IsValidInput(oldTick, input))
+                {
+                    // Is a valid input to use
+                        
+                    // Repeat the old input and save it for the current tick
+                    clients[ownerClientId].inputs[tick % inputs.Length] = input;
+                        
+                    // Return the (old repeated) input
+                    return input;
+                }
+                else
+                {
+                    // No input found
+                }
+            }
+            
+            return null;
+        }
+
+        private static bool IsValidInput(uint tick, ClientInputState input)
+        {
+            // If input is null, input isn't valid
+            if (input == null) return false;
+            
+            // if the input tick is not the tick we want, input isn't valid
+            if (input.Tick != tick) return false;
+            
+            return true; // Input is valid
+        }
         
         #endif
         
