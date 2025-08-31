@@ -108,7 +108,8 @@ namespace NetRewind.DONOTUSE
                     directionalInputs[inputFlag] = inputs[inputFlag].ReadValue<Vector2>();
             }
 
-            IData playerData = PlayerNetworkEntity.Local.GetPlayerData();
+            // Get the Player IData (if a local player exists)
+            IData playerData = PlayerNetworkEntity.Local == null ? null : PlayerNetworkEntity.Local.GetPlayerData();
             
             // Create the actual input
             ClientInputState input = new ClientInputState()
