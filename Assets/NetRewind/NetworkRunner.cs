@@ -391,7 +391,9 @@ namespace NetRewind
         private void StartSimulationTickSystem(uint simulationTickOffset)
         {
             simulationTickSystem = new TickSystem(simulationTickRate, simulationTickOffset);
+            #if Client
             simulationTickSystem.OnTick += InputCollector.Collect; // Collect input (first)
+            #endif
             simulationTickSystem.OnTick += NetworkEntity.TriggerSimulationTick; // Do the Tick (second)
         }
         

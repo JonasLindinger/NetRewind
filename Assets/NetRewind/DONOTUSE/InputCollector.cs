@@ -8,9 +8,12 @@ namespace NetRewind.DONOTUSE
 {
     public static class InputCollector
     {
-        #if Client
         public static int NetworkInputFlagCount => inputFlagNames.Count;
         public static int NetworkDirectionalInputCount => directionalInputNames.Count;
+        
+        // All Input names
+        private static List<string> directionalInputNames = new List<string>();
+        private static List<string> inputFlagNames = new List<string>();
         
         public static string GetNetworkInputFlagName(int index) => inputFlagNames[index];
         public static string GetNetworkDirectionalInputName(int index) => directionalInputNames[index];
@@ -19,10 +22,7 @@ namespace NetRewind.DONOTUSE
         private static Dictionary<string, Vector2> directionalInputs = new Dictionary<string, Vector2>();
         private static Dictionary<string, bool> inputFlags = new Dictionary<string, bool>();
         
-        // All Input names
-        private static List<string> directionalInputNames = new List<string>();
-        private static List<string> inputFlagNames = new List<string>();
-
+        #if Client
         private static Dictionary<string, InputAction> inputs = new Dictionary<string, InputAction>();
         
         private static Queue<ClientInputState> lastInputStates = new Queue<ClientInputState>();
@@ -31,8 +31,11 @@ namespace NetRewind.DONOTUSE
         private static bool enabled; // For example, when in UI, this is false and returns always false or Vector2.zero.
         private static bool setUp;
         private static uint inputBufferOnClient;
+        #endif
+        
         private static ClientInputState emptyInputState;
-
+        
+        #if Client
         public static void Enable()
         {
             enabled = true;
@@ -42,17 +45,21 @@ namespace NetRewind.DONOTUSE
         {
             enabled = false;
         }
+        #endif
         
         public static void SetUp(List<InputAction> inputActions)
         {
+            #if Client
             if (setUp) return;
             
             inputBufferOnClient = NetworkRunner.Runner.InputBufferOnClient;
             localInputBuffer = new ClientInputState[inputBufferOnClient];
             
             setUp = true;
+
             foreach (var input in inputActions)
                 inputs.Add(input.name, input);
+            #endif
             
             foreach (var action in inputActions)
             {
@@ -90,9 +97,12 @@ namespace NetRewind.DONOTUSE
                 Data = null,
             };
 
+            #if Client
             Enable();
+            #endif
         }
         
+        #if Client
         public static void Collect(uint tick)
         {
             // Check if SetUp
@@ -170,7 +180,7 @@ namespace NetRewind.DONOTUSE
             // Return the list as an array
             return inputsToReturn.ToArray();
         }
-
+        
         public static ClientInputState GetInput(uint tick)
         {
             ClientInputState input = localInputBuffer[tick % localInputBuffer.Length];

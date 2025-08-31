@@ -65,10 +65,12 @@ namespace NetRewind.Utils
             {
                 if (player.IsOwner)
                 {
+                    #if Client
                     // This is the host player, so we use the local input
                     ClientInputState input = InputCollector.GetInput(tick);
                     if (input != null)
                         player.OnTick(tick, input);
+                    #endif
                 }
                 else
                 {
