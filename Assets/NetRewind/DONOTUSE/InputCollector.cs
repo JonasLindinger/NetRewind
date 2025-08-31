@@ -184,12 +184,15 @@ namespace NetRewind.DONOTUSE
         public static ClientInputState GetInput(uint tick)
         {
             ClientInputState input = localInputBuffer[tick % localInputBuffer.Length];
-            
-            // Check if input is correct
-            if (input.Tick == tick)
-                return input;
-            else
-                return null;
+
+            if (input != null)
+            {
+                // Check if input is correct
+                if (input.Tick == tick)
+                    return input;
+            }
+
+            return null;
         }
         #endif
     }
