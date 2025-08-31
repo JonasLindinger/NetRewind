@@ -23,12 +23,15 @@ namespace NetRewind.DONOTUSE
         private static List<string> directionalInputNames = new List<string>();
         private static List<string> inputFlagNames = new List<string>();
 
-        private static Queue<ClientInputState> lastInputStates = new Queue<ClientInputState>();
         private static Dictionary<string, InputAction> inputs = new Dictionary<string, InputAction>();
+        
+        private static Queue<ClientInputState> lastInputStates = new Queue<ClientInputState>();
+        private static ClientInputState[] localInputBuffer;
         
         private static bool enabled; // For example, when in UI, this is false and returns always false or Vector2.zero.
         private static bool setUp;
         private static uint inputBufferOnClient;
+        private static ClientInputState emptyInputState;
 
         public static void Enable()
         {
@@ -45,6 +48,8 @@ namespace NetRewind.DONOTUSE
             if (setUp) return;
             
             inputBufferOnClient = NetworkRunner.Runner.InputBufferOnClient;
+            localInputBuffer = new ClientInputState[inputBufferOnClient];
+            
             setUp = true;
             foreach (var input in inputActions)
                 inputs.Add(input.name, input);
@@ -75,6 +80,15 @@ namespace NetRewind.DONOTUSE
                         break;
                 }
             }
+
+            emptyInputState = new ClientInputState()
+            {
+                Tick = 0,
+                LatestReceivedServerGameStateTick = 0,
+                InputFlags = inputFlags,
+                DirectionalInputs = directionalInputs,
+                Data = null,
+            };
 
             Enable();
         }
@@ -156,7 +170,17 @@ namespace NetRewind.DONOTUSE
             // Return the list as an array
             return inputsToReturn.ToArray();
         }
+
+        public static ClientInputState GetInput(uint tick)
+        {
+            ClientInputState input = localInputBuffer[tick % localInputBuffer.Length];
             
+            // Check if input is correct
+            if (input.Tick == tick)
+                return input;
+            else
+                return null;
+        }
         #endif
     }
 }
