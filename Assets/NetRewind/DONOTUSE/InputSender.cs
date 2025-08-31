@@ -21,10 +21,11 @@ namespace NetRewind.DONOTUSE
         {
             #if Server
             clients.Add(OwnerClientId, this);
+            
+            inputs = new ClientInputState[NetworkRunner.Runner.InputBufferOnServer];
             #endif
             
             #if Client
-            inputs = new ClientInputState[NetworkRunner.Runner.InputBufferOnServer];
             
             if (IsOwner)
                 local = this;

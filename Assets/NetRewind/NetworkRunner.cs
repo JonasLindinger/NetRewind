@@ -35,6 +35,8 @@ namespace NetRewind
         public uint ClientServerInputBuffer => clientServerInputBuffer;
         public uint MaxTickRecalculation => maxTickRecalculation;
         public uint InputBufferOnClient => inputBufferOnClient;
+        #endif
+        #if Server
         public uint InputBufferOnServer => inputBufferOnServer;
         #endif
         
@@ -248,7 +250,7 @@ namespace NetRewind
         }
         #endif
 
-        #if Client 
+        #if Client && Server
         public async Task StartHost()
         {
             if (networkManager.StartHost())

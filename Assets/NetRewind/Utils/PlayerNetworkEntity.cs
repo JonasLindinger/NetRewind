@@ -18,7 +18,9 @@ namespace NetRewind.Utils
             #if Client
             if (IsOwner)
                 Local = this;
+            #endif
 
+            #if Server
             if (IsServer)
                 players.Add(this);
             #endif
@@ -29,7 +31,9 @@ namespace NetRewind.Utils
             #if Client
             if (Local == this)
                 Local = null;
+            #endif
 
+            #if Server
             if (IsServer)
                 players.Remove(this);
             #endif

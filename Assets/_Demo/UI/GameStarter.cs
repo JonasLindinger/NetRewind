@@ -27,7 +27,9 @@ namespace _Demo.UI
         {
             NetworkRunner.Runner.StartClient();
         }
-
+        #endif
+        
+        #if Client && Server
         public void StartHost()
         {
             NetworkRunner.Runner.StartHost();
