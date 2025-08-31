@@ -49,7 +49,7 @@ namespace NetRewind.DONOTUSE
         }
         #endif
 
-        [Rpc(SendTo.Server, Delivery = RpcDelivery.Reliable)]
+        [Rpc(SendTo.Server, Delivery = RpcDelivery.Unreliable)]
         private void OnClientInputsRPC(ClientInputState[] clientInputs)
         {
             #if Server
