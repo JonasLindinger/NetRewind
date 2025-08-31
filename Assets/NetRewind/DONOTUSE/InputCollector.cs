@@ -9,9 +9,6 @@ namespace NetRewind.DONOTUSE
     public static class InputCollector
     {
         #if Client
-        // Amount of Inputs to store in a queue
-        private const uint AMOUNT_OF_INPUTS_TO_KEEP = 128;
-        
         public static int NetworkInputFlagCount => inputFlagNames.Count;
         public static int NetworkDirectionalInputCount => directionalInputNames.Count;
         
@@ -31,6 +28,7 @@ namespace NetRewind.DONOTUSE
         
         private static bool enabled; // For example, when in UI, this is false and returns always false or Vector2.zero.
         private static bool setUp;
+        private static uint inputBufferOnClient;
 
         public static void Enable()
         {
@@ -46,6 +44,7 @@ namespace NetRewind.DONOTUSE
         {
             if (setUp) return;
             
+            inputBufferOnClient = NetworkRunner.Runner.InputBufferOnClient;
             setUp = true;
             foreach (var input in inputActions)
                 inputs.Add(input.name, input);
@@ -129,9 +128,9 @@ namespace NetRewind.DONOTUSE
         {
             // Remove old inputs so that the queue has the max size of: AMOUNT_OF_INPUTS_TO_KEEP
             int i;
-            if (lastInputStates.Count > AMOUNT_OF_INPUTS_TO_KEEP)
+            if (lastInputStates.Count > inputBufferOnClient)
             {
-                for (i = 0; i < lastInputStates.Count - AMOUNT_OF_INPUTS_TO_KEEP; i++)
+                for (i = 0; i < lastInputStates.Count - inputBufferOnClient; i++)
                     lastInputStates.Dequeue();
             }
             

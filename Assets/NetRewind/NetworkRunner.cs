@@ -32,6 +32,8 @@ namespace NetRewind
         public uint SimulationTickRate => simulationTickRate;
         public uint ClientServerOffsetBuffer => clientServerOffsetBuffer;
         public uint MaxTickRecalculation => maxTickRecalculation;
+        public uint InputBufferOnClient => inputBufferOnClient;
+        public uint InputBufferOnServer => inputBufferOnServer;
         #endif
         
         /// <summary>
@@ -57,6 +59,8 @@ namespace NetRewind
         [Header("Buffers")] 
         [SerializeField] private uint clientServerOffsetBuffer = 3;
         [SerializeField] private uint maxTickRecalculation = 10;
+        [SerializeField] private uint inputBufferOnClient = 128;
+        [SerializeField] private uint inputBufferOnServer = 1024;
         [Space(10)] 
         [Header("Input")] 
         [SerializeField] private string networkInputMapName = "Networked";

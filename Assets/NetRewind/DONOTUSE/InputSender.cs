@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NetRewind.Utils;
+﻿using NetRewind.Utils;
 using Unity.Netcode;
 
 namespace NetRewind.DONOTUSE
@@ -8,11 +7,13 @@ namespace NetRewind.DONOTUSE
     {
         #if Client
         private static InputSender local;
-        
-        private static Dictionary<uint, ClientInputState> inputs = new Dictionary<uint, ClientInputState>();
+
+        private static ClientInputState[] inputs;
 
         public override void OnNetworkSpawn()
         {
+            inputs = new ClientInputState[NetworkRunner.Runner.InputBufferOnServer];
+            
             if (IsOwner)
                 local = this;
         }
@@ -56,10 +57,9 @@ namespace NetRewind.DONOTUSE
             {
                 // Check if this input is in the future and if we don't already have this input
                 if (clientInput.Tick < NetworkRunner.Runner.CurrentTick) continue;
-                if (inputs.ContainsKey(clientInput.Tick)) continue;
                 
-                // Add the input to list
-                inputs.Add(clientInput.Tick, clientInput);
+                // TryAdd (if it doesn't exist, add it)
+                inputs[clientInput.Tick % inputs.Length] = clientInput;
             }
             #endif
         }
