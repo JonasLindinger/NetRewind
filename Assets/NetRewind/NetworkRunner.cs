@@ -8,6 +8,7 @@ using NetRewind.Utils;
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 
 namespace NetRewind
@@ -30,7 +31,8 @@ namespace NetRewind
         public ulong ServerClientId => networkTransport.ServerClientId;
         public ulong GetRTTToServer() => GetCurrentRtt(ServerClientId);
         public uint SimulationTickRate => simulationTickRate;
-        public uint ClientServerOffsetBuffer => clientServerOffsetBuffer;
+        public uint InputsPerSecond => inputsPerSecond;
+        public uint ClientServerInputBuffer => clientServerInputBuffer;
         public uint MaxTickRecalculation => maxTickRecalculation;
         public uint InputBufferOnClient => inputBufferOnClient;
         public uint InputBufferOnServer => inputBufferOnServer;
@@ -57,7 +59,7 @@ namespace NetRewind
         [SerializeField] private uint stateTickRate = 32;
         [Space(10)] 
         [Header("Buffers")] 
-        [SerializeField] private uint clientServerOffsetBuffer = 3;
+        [SerializeField] private uint clientServerInputBuffer = 3;
         [SerializeField] private uint maxTickRecalculation = 10;
         [SerializeField] private uint inputBufferOnClient = 128;
         [SerializeField] private uint inputBufferOnServer = 1024;
@@ -86,6 +88,10 @@ namespace NetRewind
         private TickSystem simulationTickSystem;
         #if Client
         private TickSystem inputTickSystem;
+        /// <summary>
+        /// The amount of inputs one input package (rpc) should contain. ((sendInterval / tickInterval) x (k + margin))
+        /// </summary>
+        private uint inputsPerSecond;
         #endif
         #if Server
         private TickSystem stateTickSystem;
@@ -132,6 +138,14 @@ namespace NetRewind
 
             // SetUp Values
             networkTickRate = (uint) Mathf.Max(inputTickRate, stateTickRate);
+            
+            #if Client
+            float sendInterval = 1f / inputTickRate;
+            float tickInterval = 1f / simulationTickRate;
+            float k = 3; // The amount of input packages that can be lost in a streak. Todo: expose this in a setting. and update this inputsPerSecond
+            float safetyMargin = ClientServerInputBuffer;
+            inputsPerSecond = (uint) Mathf.CeilToInt(((sendInterval / tickInterval) * k) + safetyMargin);
+            #endif
             
             SetUpNetworkManager();
             #if Client

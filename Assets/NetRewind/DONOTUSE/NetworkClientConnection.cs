@@ -30,7 +30,7 @@ namespace NetRewind.DONOTUSE
             int passedTicks = (int)(ms / msPerTick);
             
             uint simulationTickOffsetWithBuffer = (uint) (simulationTickOffset + passedTicks);
-            simulationTickOffsetWithBuffer += NetworkRunner.Runner.ClientServerOffsetBuffer; // Add an offset, just for possible future jitter
+            simulationTickOffsetWithBuffer += NetworkRunner.Runner.InputsPerSecond; // Offset for input loss and extra buffer
             
             OnStartTickSystem?.Invoke(simulationTickOffsetWithBuffer);
             #endif

@@ -46,7 +46,7 @@ namespace NetRewind.DONOTUSE
             float msPerTick = 1000f / NetworkRunner.Runner.SimulationTickRate;
             int passedTicks = (int)(ms / msPerTick);
 
-            uint buffer = NetworkRunner.Runner.ClientServerOffsetBuffer;
+            uint buffer = NetworkRunner.Runner.InputsPerSecond;
             
             uint targetSimulationTick = (uint) (simulationTick + passedTicks);
             targetSimulationTick += buffer; // Add an offset, just for possible future jitter

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using NetRewind.Utils;
 using Unity.Netcode;
+using UnityEngine;
 
 namespace NetRewind.DONOTUSE
 {
@@ -102,7 +103,7 @@ namespace NetRewind.DONOTUSE
             else
             {
                 // Get the current and last inputs
-                ClientInputState[] inputsToSent = InputCollector.GetInputStatesToSend(10);
+                ClientInputState[] inputsToSent = InputCollector.GetInputStatesToSend(NetworkRunner.Runner.InputsPerSecond);
             
                 // Check if the list has content to save bandwidth
                 if (inputsToSent.Length == 0) return;
