@@ -7,7 +7,10 @@ namespace _Demo
     {
         protected override void OnTick(uint tick, ClientInputState input)
         {
-            Debug.Log(tick + " " + input.DirectionalInputs["Move"]);
+            foreach (var v in input.DirectionalInputs)
+            {
+                Debug.Log(v.Key + " " + v.Value);
+            }
         }
 
         protected override IState GetCurrentState()
