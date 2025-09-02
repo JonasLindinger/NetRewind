@@ -293,6 +293,32 @@ namespace NetRewind.DONOTUSE
             
             // Recalculate every tick between the serverState.Tick to the NetworkRunner.Runner.CurrentTick
         }
+
+        /// <summary>
+        /// All states in the given GameState will be saved in the local GameState array. But all States that are in the local array, but not in the GameState we got, will still be in the GameState and not cleared.
+        /// </summary>
+        /// <param name="gameState"></param>
+        private void SaveGameStateSoft(GameState gameState)
+        {
+            GameState listGameState = gameStates[gameState.Tick % gameStates.Length];
+            
+            // validate
+            if (listGameState == null || listGameState.Tick != gameState.Tick)
+            {
+                listGameState = gameState;
+                return;
+            }
+            
+            // Apply the state additive
+            foreach (var kvp in gameState.States)
+            {
+                ulong id = kvp.Key;
+                var state = kvp.Value;
+                
+                // Add the state to the list
+                listGameState.States[id] = state;
+            }
+        }
         #endif
         
         [Rpc(SendTo.Server, Delivery = RpcDelivery.Reliable)]
@@ -309,8 +335,9 @@ namespace NetRewind.DONOTUSE
             isReconciling = false;
             
             // Save the game state
-            gameStates[gameState.Tick % gameStates.Length] = gameState;
+            SaveGameStateSoft(gameState);
             
+            // Do the actual reconciliation
             Reconcile(gameState);
         }
     }
