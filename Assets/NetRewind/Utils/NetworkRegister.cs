@@ -7,6 +7,11 @@ namespace NetRewind.Utils
         private static Dictionary<ulong, NetworkEntity> presentNetworkEntities = new Dictionary<ulong, NetworkEntity>(); // Unique Network Id to Entity
         private static Dictionary<ulong, ulong> allNetworkEntities = new Dictionary<ulong, ulong>(); // Unique to Object Network Id
 
+        public static NetworkEntity GetNetworkEntityFromId(ulong networkObjectId)
+        {
+            return presentNetworkEntities[networkObjectId];
+        }
+        
         public static void Register(ulong uniqueDeterministicNetworkId, ulong networkObjectId,
             NetworkEntity networkEntity)
         {
@@ -17,6 +22,11 @@ namespace NetRewind.Utils
         public static void Unregister(ulong uniqueDeterministicNetworkId)
         {
             presentNetworkEntities.Remove(uniqueDeterministicNetworkId);
+        }
+
+        public static Dictionary<ulong, NetworkEntity> GetRegisteredEntities()
+        {
+            return presentNetworkEntities;
         }
     }
 }

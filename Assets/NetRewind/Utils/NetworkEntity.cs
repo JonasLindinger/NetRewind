@@ -6,6 +6,12 @@ namespace NetRewind.Utils
 {
     public abstract class NetworkEntity : NetworkBehaviour
     {
+        public SyncType SyncType => syncType;
+        
+        [Header("Network Sync")] 
+        [SerializeField] private SyncType syncType;
+        [Space(10)]
+        
         private static List<NetworkEntity> networkEntities = new List<NetworkEntity>();
         private ulong uniqueDeterministicId;
 
@@ -115,8 +121,8 @@ namespace NetRewind.Utils
         protected virtual void InternalOnPostRegister() {}
         protected virtual void OnTick(uint tick) {}
 
-        protected abstract IState GetCurrentState();
-        protected abstract void SetState(uint tick, IState state);
-        protected abstract void StateUpdate(uint tick, IState state);
+        public abstract IState GetCurrentState();
+        public abstract void SetState(uint tick, IState state);
+        public abstract void StateUpdate(uint tick, IState state);
     }
 }

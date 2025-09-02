@@ -24,6 +24,6 @@ namespace NetRewind.Utils
         protected virtual void InternalOnSpawn() {}
             
         protected abstract bool ShouldBePredicted();
-        protected abstract bool DoWeNeedToReconcile(uint tick, IState predictedState, IState serverState);
+        public abstract bool DoWeNeedToReconcile(uint tick, IState predictedState, IState serverState);
     }
 }

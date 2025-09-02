@@ -18,22 +18,22 @@ namespace _Demo
             return null;
         } 
 
-        protected override IState GetCurrentState()
+        public override IState GetCurrentState()
         {
             return null; // Todo: replace
         }
 
-        protected override void SetState(uint tick, IState state)
+        public override void SetState(uint tick, IState state)
         {
             // Todo: replace
         }
 
-        protected override void StateUpdate(uint tick, IState state)
+        public override void StateUpdate(uint tick, IState state)
         {
             // Todo: replace
         }
 
-        protected override bool DoWeNeedToReconcile(uint tick, IState predictedState, IState serverState)
+        public override bool DoWeNeedToReconcile(uint tick, IState predictedState, IState serverState)
         {
             return false;  // Todo: replace
         }

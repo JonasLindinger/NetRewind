@@ -35,9 +35,11 @@ namespace NetRewind
         public uint ClientServerInputBuffer => clientServerInputBuffer;
         public uint MaxTickRecalculation => maxTickRecalculation;
         public uint InputBufferOnClient => inputBufferOnClient;
+        public uint StateBufferOnClient => stateBufferOnClient;
         #endif
         #if Server
         public uint InputBufferOnServer => inputBufferOnServer;
+        public uint StateBufferOnServer => stateBufferOnServer;
         #endif
         
         /// <summary>
@@ -64,7 +66,9 @@ namespace NetRewind
         [SerializeField] private uint clientServerInputBuffer = 3;
         [SerializeField] private uint maxTickRecalculation = 10;
         [SerializeField] private uint inputBufferOnClient = 128;
-        [SerializeField] private uint inputBufferOnServer = 1024;
+        [SerializeField] private uint inputBufferOnServer = 256;
+        [SerializeField] private uint stateBufferOnClient = 256;
+        [SerializeField] private uint stateBufferOnServer = 256;
         [Space(10)] 
         [Header("Input")] 
         [SerializeField] private string networkInputMapName = "Networked";
@@ -394,10 +398,11 @@ namespace NetRewind
         private void StartSimulationTickSystem(uint simulationTickOffset)
         {
             simulationTickSystem = new TickSystem(simulationTickRate, simulationTickOffset);
+            simulationTickSystem.OnTick += GameStateSync.SaveGameState; // Save the state
             #if Client
             simulationTickSystem.OnTick += InputCollector.Collect; // Collect input (first)
             #endif
-            simulationTickSystem.OnTick += NetworkEntity.TriggerSimulationTick; // Do the Tick (second)
+            simulationTickSystem.OnTick += NetworkEntity.TriggerSimulationTick; // Do the Tick
         }
         
         #if Client
