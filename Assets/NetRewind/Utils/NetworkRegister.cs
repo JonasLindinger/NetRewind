@@ -5,7 +5,6 @@ namespace NetRewind.Utils
     public static class NetworkRegister
     {
         private static Dictionary<ulong, NetworkEntity> presentNetworkEntities = new Dictionary<ulong, NetworkEntity>(); // Unique Network Id to Entity
-        private static Dictionary<ulong, ulong> allNetworkEntities = new Dictionary<ulong, ulong>(); // Unique to Object Network Id
 
         public static NetworkEntity GetNetworkEntityFromId(ulong networkObjectId)
         {
@@ -16,7 +15,6 @@ namespace NetRewind.Utils
             NetworkEntity networkEntity)
         {
             presentNetworkEntities.Add(uniqueDeterministicNetworkId, networkEntity);
-            allNetworkEntities.Add(uniqueDeterministicNetworkId, networkObjectId);
         }
 
         public static void Unregister(ulong uniqueDeterministicNetworkId)
@@ -27,6 +25,11 @@ namespace NetRewind.Utils
         public static Dictionary<ulong, NetworkEntity> GetRegisteredEntities()
         {
             return presentNetworkEntities;
+        }
+
+        public static bool IsRegistered(ulong id)
+        {
+            return presentNetworkEntities.ContainsKey(id);
         }
     }
 }

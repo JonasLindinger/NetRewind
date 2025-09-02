@@ -7,6 +7,7 @@ namespace NetRewind.Utils
     public abstract class NetworkEntity : NetworkBehaviour
     {
         public SyncType SyncType => syncType;
+        public ulong UniqueDeterministicId => uniqueDeterministicId;
 
         [Header("Network Sync")] 
         [SerializeField] private SyncType syncType = SyncType.Full;

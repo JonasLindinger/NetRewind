@@ -26,6 +26,7 @@ namespace NetRewind
         /// Getters
         public DebugMode DebugMode => debugMode;
         public uint CurrentTick => simulationTickSystem.Tick;
+        public PredictionType PredictionType => predictionType;
         #if Client
         public ulong GetCurrentRtt(ulong connectionId) => networkTransport.GetCurrentRtt(connectionId);
         public ulong ServerClientId => networkTransport.ServerClientId;
@@ -53,10 +54,13 @@ namespace NetRewind
         private const float START_SERVER_TIMEOUT = 5f;
         private const float START_CLIENT_TIMEOUT = 5f;
         private const float START_HOST_TIMEOUT = 5f;
-        
+
         /// <summary>
         /// Unity Editor Settings
         /// </summary>
+        [Header("General")] 
+        [SerializeField] private PredictionType predictionType = PredictionType.Player;
+        [Space(10)]
         [Header("Tick Rates")] 
         [SerializeField] private uint simulationTickRate = 64;
         [SerializeField] private uint inputTickRate = 32;
