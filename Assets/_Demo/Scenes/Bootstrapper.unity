@@ -840,6 +840,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: NetworkRunner
       objectReference: {fileID: 0}
+    - target: {fileID: 4119305493566237774, guid: 1fb6338cb6317ca4fb27590756ec5d7d, type: 3}
+      propertyPath: m_Actions
+      value: 
+      objectReference: {fileID: -944628639613478452, guid: 69b1bb00c53073f4e9867dc300d2e110, type: 3}
+    - target: {fileID: 4119305493566237774, guid: 1fb6338cb6317ca4fb27590756ec5d7d, type: 3}
+      propertyPath: m_DefaultActionMap
+      value: 9160f4ba-5027-4bb1-9ede-b38da1b87411
+      objectReference: {fileID: 0}
+    - target: {fileID: 4119305493566237774, guid: 1fb6338cb6317ca4fb27590756ec5d7d, type: 3}
+      propertyPath: m_DefaultControlScheme
+      value: Keyboard&Mouse
+      objectReference: {fileID: 0}
     - target: {fileID: 5406076578113223618, guid: 1fb6338cb6317ca4fb27590756ec5d7d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

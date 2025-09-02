@@ -419,11 +419,7 @@ namespace NetRewind
         
         private void SetUpNetworkInput()
         {
-            InputActionMap networkMap = playerInput.actions.FindActionMap(networkInputMapName, throwIfNotFound: true);
-
-            List<InputAction> networkActions = networkMap.actions.ToList();
-            
-            InputCollector.SetUp(networkActions);
+            InputCollector.SetUp(networkInputMapName, playerInput);
         }
         
         #endregion

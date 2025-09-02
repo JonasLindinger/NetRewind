@@ -41,7 +41,7 @@ namespace NetRewind.Utils
         }
 
         protected override void OnTick(uint tick)
-        {
+        { 
             // Check if this player is owner or the executer is a server (or host)
             if (!(IsServer || IsOwner)) return;
 
@@ -55,11 +55,10 @@ namespace NetRewind.Utils
 
         private void OnTickSimpleClient(uint tick)
         {
-            #if Client && !Server
+            #if Client
             // If this is a simple client (not host)
             ClientInputState input = InputCollector.GetInput(tick);
-            if (input != null)
-                Local.OnTick(tick, input);
+            OnTick(tick, input ?? InputCollector.EmptyInputState);
             #endif
         }
 
@@ -73,16 +72,14 @@ namespace NetRewind.Utils
                     #if Client
                     // This is the host player, so we use the local input
                     ClientInputState input = InputCollector.GetInput(tick);
-                    if (input != null)
-                        player.OnTick(tick, input);
+                    player.OnTick(tick, input ?? InputCollector.EmptyInputState);
                     #endif
                 }
                 else
                 {
                     // Just a player who (hopefully) sent an input for this player
                     ClientInputState input = InputSender.GetInputFromClient(player.OwnerClientId, tick);
-                    if (input != null)
-                        player.OnTick(tick, input);
+                    player.OnTick(tick, input ?? InputCollector.EmptyInputState);
                 }
             }
             #endif

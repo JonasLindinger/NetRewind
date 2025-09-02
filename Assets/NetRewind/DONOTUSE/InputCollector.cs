@@ -22,9 +22,9 @@ namespace NetRewind.DONOTUSE
         private static Dictionary<string, Vector2> directionalInputs = new Dictionary<string, Vector2>();
         private static Dictionary<string, bool> inputFlags = new Dictionary<string, bool>();
         
-        #if Client
-        private static Dictionary<string, InputAction> inputs = new Dictionary<string, InputAction>();
+        private static PlayerInput playerInput;
         
+        #if Client
         private static Queue<ClientInputState> lastInputStates = new Queue<ClientInputState>();
         private static ClientInputState[] localInputBuffer;
         
@@ -33,7 +33,7 @@ namespace NetRewind.DONOTUSE
         private static uint inputBufferOnClient;
         #endif
         
-        private static ClientInputState emptyInputState;
+        public static ClientInputState EmptyInputState { get; private set; }
         
         #if Client
         public static void Enable()
@@ -47,7 +47,7 @@ namespace NetRewind.DONOTUSE
         }
         #endif
         
-        public static void SetUp(List<InputAction> inputActions)
+        public static void SetUp(string networkInputMapName, PlayerInput playerInput)
         {
             #if Client
             if (setUp) return;
@@ -56,12 +56,13 @@ namespace NetRewind.DONOTUSE
             localInputBuffer = new ClientInputState[inputBufferOnClient];
             
             setUp = true;
-
-            foreach (var input in inputActions)
-                inputs.Add(input.name, input);
             #endif
             
-            foreach (var action in inputActions)
+            InputCollector.playerInput = playerInput;
+            InputActionMap networkMap = playerInput.actions.FindActionMap(networkInputMapName, throwIfNotFound: true);
+            List<InputAction> networkActions = networkMap.ToList();
+            
+            foreach (var action in networkActions)
             {
                 switch (action.type)
                 {
@@ -88,7 +89,7 @@ namespace NetRewind.DONOTUSE
                 }
             }
 
-            emptyInputState = new ClientInputState()
+            EmptyInputState = new ClientInputState()
             {
                 Tick = 0,
                 LatestReceivedServerGameStateTick = 0,
@@ -114,23 +115,23 @@ namespace NetRewind.DONOTUSE
             {
                 // Update boolean's
                 foreach (var inputFlag in inputFlags.Keys.ToArray())
+                    inputFlags[inputFlag] = playerInput.actions[inputFlag].ReadValue<bool>();
+
+                // Update Vector2's
+                foreach (var inputFlag in directionalInputs.Keys.ToArray())
+                    directionalInputs[inputFlag] = playerInput.actions[inputFlag].ReadValue<Vector2>();
+            }
+            else
+            {
+                // Update boolean's
+                foreach (var inputFlag in inputFlags.Keys.ToArray())
                     inputFlags[inputFlag] = false;
 
                 // Update Vector2's
                 foreach (var inputFlag in directionalInputs.Keys.ToArray())
                     directionalInputs[inputFlag] = Vector2.zero.normalized;
             }
-            else
-            {
-                // Update boolean's
-                foreach (var inputFlag in inputFlags.Keys.ToArray())
-                    inputFlags[inputFlag] = inputs[inputFlag].ReadValue<bool>();
-
-                // Update Vector2's
-                foreach (var inputFlag in directionalInputs.Keys.ToArray())
-                    directionalInputs[inputFlag] = inputs[inputFlag].ReadValue<Vector2>();
-            }
-
+            
             // Get the Player IData (if a local player exists)
             IData playerData = PlayerNetworkEntity.Local == null ? null : PlayerNetworkEntity.Local.GetPlayerData();
             
