@@ -13,6 +13,11 @@ namespace _Demo
             }
         }
 
+        public override IData GetPlayerData()
+        {
+            return null;
+        } 
+
         protected override IState GetCurrentState()
         {
             return null; // Todo: replace

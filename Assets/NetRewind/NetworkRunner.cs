@@ -372,7 +372,7 @@ namespace NetRewind
         #endif
         #endregion
         
-         #region Private Methods
+        #region Private Methods
 
         private void InstantiateTransportPrefab(ulong clientId)
         {
@@ -413,7 +413,7 @@ namespace NetRewind
         private void StartServerTickSystem()
         {
             stateTickSystem = new TickSystem(stateTickRate);
-            stateTickSystem.OnTick += TickSystemHandler.OnStateTick;
+            stateTickSystem.OnTick += GameStateSync.SendGameState;
             uint syncTickRate = 1; // Sync every second
             syncTickSystem = new TickSystem(syncTickRate);
             syncTickSystem.OnTick += SyncTickSystem.UpdateSystem;
