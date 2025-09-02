@@ -150,9 +150,7 @@ namespace NetRewind
             #endif
             
             SetUpNetworkManager();
-            #if Client
             SetUpNetworkInput();
-            #endif
             
             #if Server
             // Subscribe to events
@@ -419,7 +417,6 @@ namespace NetRewind
         }
         #endif
         
-        #if Client
         private void SetUpNetworkInput()
         {
             InputActionMap networkMap = playerInput.actions.FindActionMap(networkInputMapName, throwIfNotFound: true);
@@ -428,7 +425,6 @@ namespace NetRewind
             
             InputCollector.SetUp(networkActions);
         }
-        #endif
         
         #endregion
     }
