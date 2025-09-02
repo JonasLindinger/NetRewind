@@ -148,8 +148,15 @@ namespace NetRewind.DONOTUSE
         
         private void ProcessGameState(GameState gameState)
         {
-            if (NetworkRunner.Runner.PredictionType == PredictionType.Player)
+            if (NetworkRunner.Runner.PredictionType == PredictionType.All)
             {
+                // Apply every gameState and recalculate to the current tick.
+                Reconcile(gameState);
+            }
+            else
+            {
+                // Update entity states that aren't predicted entity's and check if predicted entity's need a reconciliation.
+                // If they do, request the full GameState and reconcile everyting until we are back at the current tick.
                 if (isReconciling) return;
             
                 // Safety checks
@@ -160,8 +167,7 @@ namespace NetRewind.DONOTUSE
                 
                 Dictionary<NetworkEntity, IState> nonPredictiveStates = new Dictionary<NetworkEntity, IState>();
                 Dictionary<PredictedNetworkEntity, IState> predictedClientStates = new Dictionary<PredictedNetworkEntity, IState>();
-                Dictionary<PredictedNetworkEntity, IState> predictedServerStates = new Dictionary<PredictedNetworkEntity, IState>();
-                bool shouldReconcile = false;
+                Dictionary<PredictedNetworkEntity, IState> serverStates = new Dictionary<PredictedNetworkEntity, IState>();
     
                 // Sort all server game state states into predictive and non-predictive states
                 foreach (var kvp in gameState.States)
@@ -187,7 +193,7 @@ namespace NetRewind.DONOTUSE
                         PredictedNetworkEntity predictedEntity = entity as PredictedNetworkEntity;
                         IState predictedState = localGameState.States[objectId];
                         predictedClientStates.Add(predictedEntity, predictedState);
-                        predictedServerStates.Add(predictedEntity, serverState);
+                        serverStates.Add(predictedEntity, serverState);
                     }
                     else
                     {
@@ -199,15 +205,13 @@ namespace NetRewind.DONOTUSE
                 // Apply All non-predictive states
                 UpdateEntityWithState(gameState.Tick, nonPredictiveStates, false);
             
-                // Todo: If there is a need for reconciliation, request the full Game State and reconcile
-                isReconciling = true;
-            
-                // Todo: Where it makes sense: call the SaveServerGameState method
-            }
-            else
-            {
-                // Todo: Do rocket league reconciliation.
-                // Apply the server changes and every object that is not in the server GameState we just apply the saved State at the Server GameState Tick
+                // Check if we need to reconcile
+                if (ReconciliationNeeded(gameState.Tick, predictedClientStates, serverStates))
+                {
+                    // Initialize reconciliation
+                    isReconciling = true;
+                    OnGameStateRequest(gameState.Tick);
+                }
             }
         }
 
@@ -229,6 +233,30 @@ namespace NetRewind.DONOTUSE
                 listGameState.States[entity.UniqueDeterministicId] = state;
             }
         }
+
+        private bool ReconciliationNeeded(uint tick, Dictionary<PredictedNetworkEntity, IState> predictedStates,
+            Dictionary<PredictedNetworkEntity, IState> serverStates)
+        {
+            foreach (var kvp in predictedStates)
+            {
+                var entity = kvp.Key;
+                var predictedState = kvp.Value;
+                var serverState = serverStates[entity];
+
+                // Check if the predicted state matches / is in tolerance to the serverState
+                if (entity.DoWeNeedToReconcile(tick, predictedState, serverState))
+                    return true;
+            }
+            
+            return false;
+        }
+
+        private void Reconcile(GameState serverState)
+        {
+            // Apply the server State and for every object, that isn't
+            
+            // Recalculate every tick between the serverState.Tick to the NetworkRunner.Runner.CurrentTick
+        }
         #endif
         
         [Rpc(SendTo.Server, Delivery = RpcDelivery.Reliable)]
@@ -244,7 +272,10 @@ namespace NetRewind.DONOTUSE
         {
             isReconciling = false;
             
-            // Todo: Reconcile (either apply)
+            // Save the game state
+            gameStates[gameState.Tick % gameStates.Length] = gameState;
+            
+            Reconcile(gameState);
         }
     }
 }
