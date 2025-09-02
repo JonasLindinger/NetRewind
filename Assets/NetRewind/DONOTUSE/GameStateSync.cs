@@ -150,6 +150,8 @@ namespace NetRewind.DONOTUSE
         {
             if (NetworkRunner.Runner.PredictionType == PredictionType.All)
             {
+                SaveGameStateSoft(gameState);
+                
                 // Apply every gameState and recalculate to the current tick.
                 Reconcile(gameState);
             }
@@ -203,7 +205,7 @@ namespace NetRewind.DONOTUSE
                 }
             
                 // Apply All non-predictive states
-                UpdateEntityWithState(gameState.Tick, nonPredictiveStates, false);
+                UpdateEntityWithStateAndSave(gameState.Tick, nonPredictiveStates, false);
             
                 // Check if we need to reconcile
                 if (ReconciliationNeeded(gameState.Tick, predictedClientStates, serverStates))
@@ -215,7 +217,7 @@ namespace NetRewind.DONOTUSE
             }
         }
 
-        private void UpdateEntityWithState(uint tick, Dictionary<NetworkEntity, IState> states, bool force)
+        private void UpdateEntityWithStateAndSave(uint tick, Dictionary<NetworkEntity, IState> states, bool force)
         {
             GameState listGameState = gameStates[tick % gameStates.Length];
             
