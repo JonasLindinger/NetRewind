@@ -7,9 +7,9 @@ namespace NetRewind.Utils
     public abstract class NetworkEntity : NetworkBehaviour
     {
         public SyncType SyncType => syncType;
-        
+
         [Header("Network Sync")] 
-        [SerializeField] private SyncType syncType;
+        [SerializeField] private SyncType syncType = SyncType.Full;
         [Space(10)]
         
         private static List<NetworkEntity> networkEntities = new List<NetworkEntity>();
