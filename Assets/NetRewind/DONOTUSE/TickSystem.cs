@@ -25,6 +25,14 @@ namespace NetRewind.DONOTUSE
             TickRate = tickRate;
             TimeBetweenTicks = 1f / TickRate;
             currentTimeBetweenTicks = TimeBetweenTicks;
+
+            GameStateSync.OnRecalculateTicks += RecalculateTicks;
+        }
+
+        public void Stop()
+        {
+            // Todo: call this!!!!
+            GameStateSync.OnRecalculateTicks -= RecalculateTicks;
         }
         
         public void Update(float deltaTime)
@@ -88,5 +96,14 @@ namespace NetRewind.DONOTUSE
         }
         
         public void SetTick(uint tick) => Tick = tick;
+
+        /// <summary>
+        /// Recalculates ticks between the startTick and the CurrentTick INCLUDING THE STARTTICK!
+        /// </summary>
+        /// <param name="startTick"></param>
+        public void RecalculateTicks(uint startTick)
+        {
+            // Todo: Recalculate every tick between the serverState.Tick to the NetworkRunner.Runner.CurrentTick
+        }
     }
 }

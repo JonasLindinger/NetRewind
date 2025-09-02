@@ -9,6 +9,10 @@ namespace NetRewind.DONOTUSE
     public class GameStateSync : NetworkBehaviour
     {
         #if Client
+        /// <summary>
+        /// the uint is included and is the first tick to run!
+        /// </summary>
+        public static event Action<uint> OnRecalculateTicks = delegate { };
         public static uint latestReceavedServerGameStateTick;
         private static bool isReconciling;
         #endif
@@ -253,18 +257,18 @@ namespace NetRewind.DONOTUSE
             return false;
         }
 
-        private void Reconcile(GameState serverState)
+        private void Reconcile(GameState gameState)
         {
             // Get the local GameState on that tick and check if we can use it.
-            GameState predictedGameState = gameStates[serverState.Tick % gameStates.Length];
-            bool canUsePredictedGameState = predictedGameState == null;
+            GameState listGameState = gameStates[gameState.Tick % gameStates.Length];
+            bool canUsePredictedGameState = listGameState == null;
             if (canUsePredictedGameState)
             {
-                if (predictedGameState.Tick != serverState.Tick) 
+                if (listGameState.Tick != gameState.Tick) 
                     canUsePredictedGameState = false;
-                if (predictedGameState.States == null)
+                if (listGameState.States == null)
                     canUsePredictedGameState = false;
-                if (predictedGameState.States.Count == 0)
+                if (listGameState.States.Count == 0)
                     canUsePredictedGameState = false;
             }
             
@@ -275,15 +279,15 @@ namespace NetRewind.DONOTUSE
                 ulong id = kvp.Key;
                 var entity = kvp.Value;
 
-                if (serverState.States.ContainsKey(id))
+                if (gameState.States.ContainsKey(id))
                 {
                     // Apply the server state
-                    entity.SetState(serverState.Tick, serverState.States[id]);
+                    entity.SetState(gameState.Tick, gameState.States[id]);
                 }
-                else if (canUsePredictedGameState && predictedGameState.States.ContainsKey(id))
+                else if (canUsePredictedGameState && listGameState.States.ContainsKey(id))
                 {
                     // Apply the local predicted state
-                    entity.SetState(serverState.Tick, predictedGameState.States[id]);
+                    entity.SetState(gameState.Tick, listGameState.States[id]);
                 }
                 else
                 {
@@ -293,7 +297,11 @@ namespace NetRewind.DONOTUSE
                 }
             }
             
+            // Override the local GameState with the Server Game State
+            listGameState = gameState;
+            
             // Recalculate every tick between the serverState.Tick to the NetworkRunner.Runner.CurrentTick
+            OnRecalculateTicks?.Invoke(gameState.Tick + 1);
         }
 
         /// <summary>
