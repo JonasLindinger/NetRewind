@@ -9,7 +9,7 @@ namespace _Demo
         {
             foreach (var v in input.DirectionalInputs)
             {
-                Debug.Log(v.Key + " " + v.Value);
+                Debug.Log(OwnerClientId + " -> " + v.Key + " " + v.Value);
             }
         }
 
