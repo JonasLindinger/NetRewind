@@ -165,6 +165,9 @@ namespace NetRewind
             #endif
             
             #if Server && !Client
+            // Limit fps
+            Application.targetFrameRate = (int) simulationTickRate;
+            
             // Auto Start Server
             if (autoStartServer)
                 StartServer();
@@ -369,7 +372,7 @@ namespace NetRewind
         #endif
         #endregion
         
-        #region Private Methods
+         #region Private Methods
 
         private void InstantiateTransportPrefab(ulong clientId)
         {
