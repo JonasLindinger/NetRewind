@@ -253,7 +253,43 @@ namespace NetRewind.DONOTUSE
 
         private void Reconcile(GameState serverState)
         {
+            // Get the local GameState on that tick and check if we can use it.
+            GameState predictedGameState = gameStates[serverState.Tick % gameStates.Length];
+            bool canUsePredictedGameState = predictedGameState == null;
+            if (canUsePredictedGameState)
+            {
+                if (predictedGameState.Tick != serverState.Tick) 
+                    canUsePredictedGameState = false;
+                if (predictedGameState.States == null)
+                    canUsePredictedGameState = false;
+                if (predictedGameState.States.Count == 0)
+                    canUsePredictedGameState = false;
+            }
+            
             // Apply the server State and for every object, that isn't
+            var entities = NetworkRegister.GetRegisteredEntities();
+            foreach (var kvp in entities)
+            {
+                ulong id = kvp.Key;
+                var entity = kvp.Value;
+
+                if (serverState.States.ContainsKey(id))
+                {
+                    // Apply the server state
+                    entity.SetState(serverState.Tick, serverState.States[id]);
+                }
+                else if (canUsePredictedGameState && predictedGameState.States.ContainsKey(id))
+                {
+                    // Apply the local predicted state
+                    entity.SetState(serverState.Tick, predictedGameState.States[id]);
+                }
+                else
+                {
+                    // No valid state found for that entity!
+                    if (NetworkRunner.Runner.DebugMode == DebugMode.All || NetworkRunner.Runner.DebugMode == DebugMode.ErrorsOnly)
+                        Debug.LogWarning("Entity state for entity: " + entity.name + " is missing. So reconciliation might fail!");
+                }
+            }
             
             // Recalculate every tick between the serverState.Tick to the NetworkRunner.Runner.CurrentTick
         }
