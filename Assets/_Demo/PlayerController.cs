@@ -23,7 +23,7 @@ namespace _Demo
             // Todo: replace
         }
 
-        protected override void ApplyState(uint tick, IState state)
+        protected override void StateUpdate(uint tick, IState state)
         {
             // Todo: replace
         }

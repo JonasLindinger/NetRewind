@@ -117,6 +117,6 @@ namespace NetRewind.Utils
 
         protected abstract IState GetCurrentState();
         protected abstract void SetState(uint tick, IState state);
-        protected abstract void ApplyState(uint tick, IState state);
+        protected abstract void StateUpdate(uint tick, IState state);
     }
 }
