@@ -90,8 +90,9 @@ namespace NetRewind.DONOTUSE
         #endif
         
         #if Client
-        public static void SendInputs(uint _)
+        public static void SendInputs(uint _, bool isReconciliation)
         {
+            if (isReconciliation) return;
             local.SendInputs();
         }
         

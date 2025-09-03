@@ -26,8 +26,10 @@ namespace NetRewind.DONOTUSE
             instances.Remove(this);
         }
 
-        public static void UpdateSystem(uint _)
+        public static void UpdateSystem(uint _, bool isReconciliation)
         {
+            if (isReconciliation) return;
+            
             uint serverTick = NetworkRunner.Runner.CurrentTick;
             
             foreach (var instance in instances)

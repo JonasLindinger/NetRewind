@@ -39,7 +39,7 @@ namespace NetRewind.DONOTUSE
         }
 
         #if Server
-        public static void SaveGameState(uint tick)
+        public static void SaveGameState(uint tick, bool isReconciliation)
         {
             #region Create GameState List
             
@@ -103,8 +103,10 @@ namespace NetRewind.DONOTUSE
             return rawGameState;
         }
         
-        public static void SendGameState(uint _)
+        public static void SendGameState(uint _, bool isReconciliation)
         {
+            if (isReconciliation) return;
+            
             GameState gameState = GetGameStateToSend();
             
             if (gameState == null) return;

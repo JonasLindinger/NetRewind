@@ -109,7 +109,7 @@ namespace NetRewind.Utils
             groupEntity.NetworkUnGroupFromAParent();
         }
         
-        public static void TriggerSimulationTick(uint tick)
+        public static void TriggerSimulationTick(uint tick, bool isReconciliation)
         {
             foreach (var entity in networkEntities)
                 entity.OnTick(tick);

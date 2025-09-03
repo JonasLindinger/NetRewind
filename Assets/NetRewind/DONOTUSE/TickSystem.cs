@@ -6,7 +6,7 @@ namespace NetRewind.DONOTUSE
 {
     public class TickSystem
     {
-        public event Action<uint> OnTick = delegate { };
+        public event Action<uint, bool> OnTick = delegate { };
         public uint Tick { get; private set; }
         public float TimeBetweenTicks { get; private set; }
         public uint TickRate { get; private set; }
@@ -66,7 +66,7 @@ namespace NetRewind.DONOTUSE
         {
             Tick++;
                 
-            OnTick?.Invoke(Tick);
+            OnTick?.Invoke(Tick, false);
         }
 
         /// <summary>
@@ -101,9 +101,10 @@ namespace NetRewind.DONOTUSE
         /// Recalculates ticks between the startTick and the CurrentTick INCLUDING THE STARTTICK!
         /// </summary>
         /// <param name="startTick"></param>
-        public void RecalculateTicks(uint startTick)
+        private void RecalculateTicks(uint startTick)
         {
-            // Todo: Recalculate every tick between the serverState.Tick to the NetworkRunner.Runner.CurrentTick
+            for (uint tick = startTick; tick < Tick + 1; tick++)
+                OnTick?.Invoke(tick, true);
         }
     }
 }

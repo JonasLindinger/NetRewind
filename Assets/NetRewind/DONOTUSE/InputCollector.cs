@@ -104,8 +104,10 @@ namespace NetRewind.DONOTUSE
         }
         
         #if Client
-        public static void Collect(uint tick)
+        public static void Collect(uint tick, bool isReconciliation)
         {
+            if (isReconciliation) return;
+            
             // Check if SetUp
             if (!setUp)
                 return;
