@@ -26,6 +26,7 @@ namespace NetRewind
         /// Getters
         public DebugMode DebugMode => debugMode;
         public uint CurrentTick => simulationTickSystem.Tick;
+        public float TimeBetweenTicks => simulationTickSystem.TimeBetweenTicks;
         public PredictionType PredictionType => predictionType;
         #if Client
         public ulong GetCurrentRtt(ulong connectionId) => networkTransport.GetCurrentRtt(connectionId);

@@ -79,6 +79,7 @@ namespace NetRewind.DONOTUSE
             latestSavedGameStateTick = gameState.Tick;
         }
         
+        #if Server
         private static GameState GetGameStateToSend()
         {
             if (gameStates == null) return null;
@@ -95,13 +96,13 @@ namespace NetRewind.DONOTUSE
 
                 var entity = NetworkRegister.GetNetworkEntityFromId(id);
                 
-                bool shouldUpdate = latestReceavedServerGameStateTick % (byte) entity.SyncType == 0;
+                bool shouldUpdate = NetworkRunner.Runner.CurrentTick % (byte) entity.SyncType == 0;
                 if (!shouldUpdate)
                     rawGameState.States.Remove(id);
             }
-
             return rawGameState;
         }
+        #endif
         
         public static void SendGameState(uint _, bool isReconciliation)
         {
@@ -166,7 +167,8 @@ namespace NetRewind.DONOTUSE
                 // Update entity states that aren't predicted entity's and check if predicted entity's need a reconciliation.
                 // If they do, request the full GameState and reconcile everyting until we are back at the current tick.
                 if (isReconciling) return;
-            
+                if (gameStates == null) return;
+                
                 // Safety checks
                 GameState localGameState = gameStates[gameState.Tick % gameStates.Length];
                 if (localGameState == null) return;
@@ -344,6 +346,7 @@ namespace NetRewind.DONOTUSE
         [Rpc(SendTo.Owner, Delivery = RpcDelivery.Reliable)]
         private void OnGameStateResponseRPC(GameState gameState)
         {
+            #if Client
             isReconciling = false;
             
             // Save the game state
@@ -351,6 +354,7 @@ namespace NetRewind.DONOTUSE
             
             // Do the actual reconciliation
             Reconcile(gameState);
+            #endif
         }
     }
 }

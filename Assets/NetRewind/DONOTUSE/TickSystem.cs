@@ -26,13 +26,16 @@ namespace NetRewind.DONOTUSE
             TimeBetweenTicks = 1f / TickRate;
             currentTimeBetweenTicks = TimeBetweenTicks;
 
+            #if Client
             GameStateSync.OnRecalculateTicks += RecalculateTicks;
+            #endif
         }
-
-        public void Stop()
+        
+        public void Stop() // Todo: call this!!!!
         {
-            // Todo: call this!!!!
+            #if Client
             GameStateSync.OnRecalculateTicks -= RecalculateTicks;
+            #endif
         }
         
         public void Update(float deltaTime)
