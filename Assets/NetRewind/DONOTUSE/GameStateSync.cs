@@ -218,7 +218,7 @@ namespace NetRewind.DONOTUSE
                 {
                     // Initialize reconciliation
                     isReconciling = true;
-                    OnGameStateRequest(gameState.Tick);
+                    OnGameStateRequestRPC(gameState.Tick);
                 }
             }
         }
@@ -334,15 +334,15 @@ namespace NetRewind.DONOTUSE
         #endif
         
         [Rpc(SendTo.Server, Delivery = RpcDelivery.Reliable)]
-        private void OnGameStateRequest(uint tick)
+        private void OnGameStateRequestRPC(uint tick)
         {
             #if Server
-            OnGameStateResponse(gameStates[tick % gameStates.Length]);
+            OnGameStateResponseRPC(gameStates[tick % gameStates.Length]);
             #endif
         }
 
         [Rpc(SendTo.Owner, Delivery = RpcDelivery.Reliable)]
-        private void OnGameStateResponse(GameState gameState)
+        private void OnGameStateResponseRPC(GameState gameState)
         {
             isReconciling = false;
             
