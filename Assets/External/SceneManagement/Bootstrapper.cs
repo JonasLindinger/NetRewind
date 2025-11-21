@@ -1,4 +1,4 @@
-using Singletons;
+using NetRewind.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
