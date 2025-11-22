@@ -7,7 +7,6 @@ namespace NetRewind.Utils.Input
     [Serializable]
     public class InputActionEntry
     {
-        public string name;
         public InputActionReference actionReference;
 
         private Action<InputAction.CallbackContext> _vector2Callback;
@@ -15,14 +14,14 @@ namespace NetRewind.Utils.Input
 
         public InputAction Action => actionReference?.action;
 
-        public bool IsVector2 => Action?.expectedControlType == "Vector2";
-        public bool IsButton => Action?.expectedControlType == "Button";
+        public bool IsVector2 => Action?.type == InputActionType.Value && Action?.expectedControlType == "Vector2";
+        public bool IsButton => Action?.type == InputActionType.Button;
 
         public Vector2 ReadVector2() => IsVector2 && Action != null ? Action.ReadValue<Vector2>() : Vector2.zero;
         public bool ReadButton() => IsButton && Action != null && Action.ReadValue<float>() > 0.4f;
 
         [HideInInspector] public int id;
-
+        
         // Subscribe to events
         public void Subscribe(Action<Vector2, InputActionEntry> onVector2, Action<bool, InputActionEntry> onButton)
         {
@@ -32,7 +31,7 @@ namespace NetRewind.Utils.Input
             {
                 _vector2Callback = ctx => onVector2?.Invoke(ctx.ReadValue<Vector2>(), this);
                 Action.performed += _vector2Callback;
-                Action.canceled += ctx => onVector2?.Invoke(Vector2.zero, this); // optional
+                Action.canceled += ctx => onVector2?.Invoke(Vector2.zero, this);
             }
             else if (IsButton)
             {

@@ -58,8 +58,6 @@ namespace NetRewind.Utils.Input
             foreach (InputState input in statesToSend) 
                 builder += input.Tick + ",";
             
-            Debug.Log("Sending input package with "+ statesToSend.Length + " inputs. Ticks: " + builder);
-            
             // Send input package to the server
             SendInputPackageRPC(statesToSend);
         }
@@ -81,8 +79,6 @@ namespace NetRewind.Utils.Input
             // Save the inputs.
             foreach (InputState input in inputs)
                 _inputBuffer.Store(input.Tick, input);
-            
-            Debug.Log("Received input package with "+ inputs.Length + " inputs.");
             
             #endif
         }

@@ -527,9 +527,11 @@ MonoBehaviour:
   dontDestroy: 1
   actions:
   - name: Move
-    actionReference: {fileID: 8868954236797462151, guid: 3da5b598d9350d2c286a29880315eb0d, type: 3}
+    actionReference: {fileID: -6381344077358329315, guid: 741ac862a871070bda537f69601651f9, type: 3}
+    id: 0
   - name: Sprint
-    actionReference: {fileID: -6766444813560785448, guid: 3da5b598d9350d2c286a29880315eb0d, type: 3}
+    actionReference: {fileID: -4147878630075907145, guid: 741ac862a871070bda537f69601651f9, type: 3}
+    id: 0
 --- !u!1 &830192428
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace NetRewind.Utils.Input
@@ -53,10 +54,7 @@ namespace NetRewind.Utils.Input
             _data = new byte[_byteArraySize];
         }
 
-        public byte[] CollectInput()
-        {
-            return _data;
-        }
+        public byte[] CollectInput() => _data;
 
         private void OnVector2(Vector2 vector, InputActionEntry entry)
         {
@@ -72,15 +70,15 @@ namespace NetRewind.Utils.Input
             SetBit(entry.id, button);
         }
         
-        public bool GetButton(int id)
+        public bool GetButton(int id, byte[] data)
         {
-            return GetBits(id, 1) != 0;
+            return GetBits(id, 1, data) != 0;
         }
 
-        public Vector2 GetVector2(int id)
+        public Vector2 GetVector2(int id, byte[] data)
         {
             // Vector2
-            int packed = GetBits(id, 4);
+            int packed = GetBits(id, 4, data);
             int vx = (packed >> 2) & 0x03;
             int vy = packed & 0x03;
             float x = vx == 1 ? -1f : vx == 2 ? 1f : 0f;
@@ -111,14 +109,14 @@ namespace NetRewind.Utils.Input
         }
 
         // Get N bits starting at bitIndex
-        int GetBits(int bitIndex, int bitCount)
+        int GetBits(int bitIndex, int bitCount, byte[] data)
         {
             int result = 0;
             for (int i = 0; i < bitCount; i++)
             {
                 int byteIndex = (bitIndex + i) / 8;
                 int bitInByte = (bitIndex + i) % 8;
-                if ((_data[byteIndex] & (1 << bitInByte)) != 0)
+                if ((data[byteIndex] & (1 << bitInByte)) != 0)
                     result |= (1 << i);
             }
             return result;
