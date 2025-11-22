@@ -1,23 +1,31 @@
-using System;
 using NetRewind.Utils.CustomDataStructures;
+using NetRewind.Utils.Simulation;
 using Unity.Netcode;
 using UnityEngine;
 
 namespace NetRewind.Utils.Input
 {
+    [RequireComponent(typeof(SimulationTransportLayer))]
     public class InputTransportLayer : TickSystem
     {
         private const uint MaxInputPackageSize = 20; // Todo: Configurable
         
-        #if Server
-        private const uint LocalInputBufferSize = 1024;
-        #endif
+        [Header("Input sending")]
+        [SerializeField] private InputSendingMode sendingMode = InputSendingMode.Full;
+        [SerializeField] private uint inputPackageLoss = 4;
         
         #if Server
+        private const uint LocalInputBufferSize = 1024;
+        
         private const uint InputCheckAmount = 5; // Every [InputCheckAmount]th input package is checked for validity. // Todo: Configurable
         private uint _inputsReceived;
         
         private CircularBuffer<InputState> _inputBuffer;
+        #endif
+        
+        #if Client
+        private SimulationTransportLayer _transportLayer;
+        private uint _amountOfInputsToSend;
         #endif
         
         [HideInInspector] public NetworkVariable<bool> isAllowedToSendInputs;
@@ -33,7 +41,11 @@ namespace NetRewind.Utils.Input
             
             #if Client
             if (!IsOwner) return;
-            StartTickSystem(60);
+            _transportLayer = GetComponent<SimulationTransportLayer>();
+            int tickRate = _transportLayer.TickRate / (byte) sendingMode;
+            Debug.Log((byte) sendingMode + " -> " + tickRate);
+            StartTickSystem(tickRate);
+            _amountOfInputsToSend = (byte)sendingMode * inputPackageLoss;
             #endif
         }
 
@@ -52,11 +64,9 @@ namespace NetRewind.Utils.Input
             if (!InputContainer.CollectedInputs) return;
 
             // Get input states to send.
-            InputState[] statesToSend = InputContainer.GetInputsToSend();
-
-            string builder = "";
-            foreach (InputState input in statesToSend) 
-                builder += input.Tick + ",";
+            InputState[] statesToSend = InputContainer.GetInputsToSend(_amountOfInputsToSend);
+            
+            Debug.Log(statesToSend.Length);
             
             // Send input package to the server
             SendInputPackageRPC(statesToSend);

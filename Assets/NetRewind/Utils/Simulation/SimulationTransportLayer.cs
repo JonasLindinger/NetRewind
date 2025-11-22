@@ -5,10 +5,11 @@ namespace NetRewind.Utils.Simulation
     public class SimulationTransportLayer : TickSystem
     {
         private uint _currentTick;
+        public int TickRate { get; private set; } = 60;
 
         private void Start()
         {
-            StartTickSystem(60);
+            StartTickSystem(TickRate);
         }
 
         protected override void OnTick()

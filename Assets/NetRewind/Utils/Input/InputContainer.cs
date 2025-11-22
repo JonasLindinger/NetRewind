@@ -26,10 +26,10 @@ namespace NetRewind.Utils.Input
             CollectedInputs = true;
         }
 
-        public static InputState[] GetInputsToSend()
+        public static InputState[] GetInputsToSend(uint amount)
         {
             // Todo: Account for latency and packet loss.
-            return InputBuffer.GetLatestItems(10);
+            return InputBuffer.GetLatestItems(amount);
         }
         #endif
     }
