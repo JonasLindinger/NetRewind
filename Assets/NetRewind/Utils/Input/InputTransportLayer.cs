@@ -43,7 +43,6 @@ namespace NetRewind.Utils.Input
             if (!IsOwner) return;
             _transportLayer = GetComponent<SimulationTransportLayer>();
             int tickRate = _transportLayer.TickRate / (byte) sendingMode;
-            Debug.Log((byte) sendingMode + " -> " + tickRate);
             StartTickSystem(tickRate);
             _amountOfInputsToSend = (byte)sendingMode * inputPackageLoss;
             #endif
@@ -65,8 +64,6 @@ namespace NetRewind.Utils.Input
 
             // Get input states to send.
             InputState[] statesToSend = InputContainer.GetInputsToSend(_amountOfInputsToSend);
-            
-            Debug.Log(statesToSend.Length);
             
             // Send input package to the server
             SendInputPackageRPC(statesToSend);
