@@ -89,3 +89,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetRewind.Utils.Simulation.SimulationTransportLayer
   ShowTopMostFoldoutHeaderGroup: 1
+  inputTransportLayer: {fileID: 5614727052516344268}

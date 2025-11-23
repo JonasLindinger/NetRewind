@@ -1,3 +1,4 @@
+using System;
 using NetRewind.Utils.CustomDataStructures;
 using NetRewind.Utils.Simulation;
 using Unity.Netcode;
@@ -29,7 +30,7 @@ namespace NetRewind.Utils.Input
         #endif
         
         [HideInInspector] public NetworkVariable<bool> isAllowedToSendInputs;
-        
+
         private void Start()
         {
             #if Server
@@ -38,11 +39,14 @@ namespace NetRewind.Utils.Input
             
             _inputBuffer = new CircularBuffer<InputState>(LocalInputBufferSize);
             #endif
-            
+        }
+
+        public void StartInputSending(uint simulationTickRate)
+        {
             #if Client
             if (!IsOwner) return;
             _transportLayer = GetComponent<SimulationTransportLayer>();
-            int tickRate = _transportLayer.TickRate / (byte) sendingMode;
+            int tickRate = Mathf.CeilToInt(simulationTickRate / (byte) sendingMode) ;
             StartTickSystem(tickRate);
             _amountOfInputsToSend = (byte)sendingMode * inputPackageLoss;
             #endif

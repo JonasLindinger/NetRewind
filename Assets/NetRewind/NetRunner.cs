@@ -1,5 +1,6 @@
 using NetRewind.Utils;
 using NetRewind.Utils.Input;
+using NetRewind.Utils.Simulation;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -13,12 +14,30 @@ namespace NetRewind
         [Space(5)]
         [Header("Transport Layer")]
         [SerializeField] private GameObject transportLayerPrefab;
+        [Space(5)]
+        [SerializeField] private uint simulationTickRate = 60;
 
+        #region Getters
+
+        public ulong GetRTT(ulong clientId) => transport.GetCurrentRtt(clientId);
+        public ulong ServerClientId => transport.ServerClientId;
+        public ulong ServerRTT => GetRTT(ServerClientId);
+        public uint TicksPassedBetweenServerAndClientRPC(uint tickRate)  {
+            ulong ms = GetInstance().ServerRTT / 2;
+            float msPerTick = 1000f / tickRate;
+            uint passedTicks = (uint) (ms / msPerTick);
+            return passedTicks;
+        }
+        
+        #endregion
+        
         private void OnDestroy()
         {
             #if Server
             if (networkManager.IsServer)
                 networkManager.OnClientConnectedCallback -= CreateTransportLayer;
+
+            Simulation.StopTickSystem();
             #endif
         }
 
@@ -59,6 +78,7 @@ namespace NetRewind
         {
             networkManager.StartServer();
             networkManager.OnClientConnectedCallback += CreateTransportLayer;
+            Simulation.StartTickSystem(simulationTickRate, 0);
         }
         #endif
 
@@ -73,6 +93,8 @@ namespace NetRewind
         private void RunAsHost()
         {
             networkManager.StartHost();
+            networkManager.OnClientConnectedCallback += CreateTransportLayer;
+            Simulation.StartTickSystem(simulationTickRate, 0);
         }
         #endif
         

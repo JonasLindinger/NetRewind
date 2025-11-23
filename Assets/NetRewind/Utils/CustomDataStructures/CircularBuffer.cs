@@ -10,7 +10,7 @@ namespace NetRewind.Utils.CustomDataStructures
     /// <typeparam name="T">Type of items stored in the buffer.</typeparam>
     public class CircularBuffer<T>
     {
-        private T[] _buffer;
+        private CircularBufferEntry<T>[] _buffer;
         private uint _head;
         private uint _count;
 
@@ -20,7 +20,7 @@ namespace NetRewind.Utils.CustomDataStructures
         /// <param name="size">The maximum number of items the buffer can hold.</param>
         public CircularBuffer(uint size)
         {
-            _buffer = new T[size];
+            _buffer = new CircularBufferEntry<T>[size];
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace NetRewind.Utils.CustomDataStructures
         /// <param name="item">The item to store.</param>
         public void Store(uint id, T item)
         {
-            _buffer[id % _buffer.Length] = item;
+            _buffer[id % _buffer.Length] = new CircularBufferEntry<T>(id, item);
             _head = id;
             _count++;
         }
@@ -43,7 +43,16 @@ namespace NetRewind.Utils.CustomDataStructures
         /// <returns>The item stored at the given ID.</returns>
         public T Get(int id)
         {
-            return _buffer[id % _buffer.Length];
+            CircularBufferEntry<T> entry = _buffer[id % _buffer.Length];
+            if (id == entry.Id)
+            {
+                // Correct item found
+                return entry.Entry;
+            }
+            else
+            {
+                return default;
+            }
         }
 
         /// <summary>
@@ -54,30 +63,51 @@ namespace NetRewind.Utils.CustomDataStructures
         /// <returns>An array of the latest items, up to <paramref name="targetLength"/>.</returns>
         public T[] GetLatestItems(uint targetLength)
         {
-            // Clamp targetLength to current count
-            if (targetLength > _count) targetLength = _count;
-            T[] array = new T[targetLength];
+            if (targetLength == 0 || _count == 0)
+                return Array.Empty<T>();
 
-            int bufferLength = _buffer.Length;
-            int length = (int)targetLength;
+            uint bufferSize = (uint)_buffer.Length;
 
-            // Calculate the starting index in the circular buffer
-            int start = (int)((_head + 1 - targetLength) % (uint)bufferLength);
-            if (start < 0) start += bufferLength; // handle negative modulo
+            if (targetLength > bufferSize)
+                targetLength = bufferSize;
 
-            // If items are contiguous (no wrap-around)
-            if (start + length <= bufferLength)
+            T[] result = new T[targetLength];
+            int found = 0;
+
+            // currentId is the global ID we expect at each step (start at head, then head-1, ...)
+            long currentId = _head; // use long to safely decrement below 0 check
+
+            // Iterate at most bufferSize times (can't have more contiguous valid entries than buffer length)
+            for (uint i = 0; i < bufferSize && found < targetLength; i++, currentId--)
             {
-                Array.Copy(_buffer, start, array, 0, length);
-            }
-            else // wrap-around
-            {
-                int firstPart = bufferLength - start;
-                Array.Copy(_buffer, start, array, 0, firstPart);
-                Array.Copy(_buffer, 0, array, firstPart, length - firstPart);
+                if (currentId < 0) // no older IDs available
+                    break;
+
+                uint arrIndex = (uint)(currentId % (long)bufferSize);
+                CircularBufferEntry<T> entry = _buffer[arrIndex];
+
+                // If the slot doesn't match the expected global ID, it's a gap or overwritten -> stop
+                if (entry.Id != (uint)currentId)
+                    break;
+
+                // If the stored entry is null/default -> stop (keeps contiguous guarantee)
+                // "is null" works for reference types and nullable; it will be false for value types with non-null default
+                if (entry.Entry is null)
+                    break;
+
+                result[found++] = entry.Entry;
             }
 
-            return array;
+            if (found == 0)
+                return Array.Empty<T>();
+
+            if (found != result.Length)
+                Array.Resize(ref result, found);
+
+            // We collected newest → oldest, reverse to oldest → newest.
+            Array.Reverse(result);
+
+            return result;
         }
     }
 }
