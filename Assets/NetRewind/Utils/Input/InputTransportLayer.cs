@@ -11,6 +11,11 @@ namespace NetRewind.Utils.Input
     {
         private const uint MaxInputPackageSize = 20; // Todo: Configurable
         
+        #if Client
+        public InputSendingMode SendingMode => sendingMode;
+        public uint InputPackageLoss => inputPackageLoss;
+        #endif
+        
         [Header("Input sending")]
         [SerializeField] private InputSendingMode sendingMode = InputSendingMode.Full;
         [SerializeField] private uint inputPackageLoss = 4;
