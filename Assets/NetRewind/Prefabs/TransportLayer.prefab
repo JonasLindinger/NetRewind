@@ -72,7 +72,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetRewind.Utils.Input.InputTransportLayer
   ShowTopMostFoldoutHeaderGroup: 1
-  sendingMode: 2
+  sendingMode: 1
   inputPackageLoss: 4
   isAllowedToSendInputs:
     m_InternalValue: 0
