@@ -17,13 +17,9 @@ namespace NetRewind.Utils.Input
         private const uint MaxInputPackageSize = 20; // Todo: Configurable
         
         #if Client
-        public InputSendingMode SendingMode => sendingMode;
-        public uint InputPackageLoss => inputPackageLoss;
+        public InputSendingMode SendingMode => NetRunner.GetInstance().SendingMode;
+        public uint InputPackageLoss => NetRunner.GetInstance().InputPackageLoss;
         #endif
-        
-        [Header("Input sending")]
-        [SerializeField] private InputSendingMode sendingMode = InputSendingMode.Full;
-        [SerializeField] private uint inputPackageLoss = 4;
         
         #if Server
         private const uint LocalInputBufferSize = 1024;
@@ -70,9 +66,9 @@ namespace NetRewind.Utils.Input
             #if Client
             if (!IsOwner) return;
             _transportLayer = GetComponent<SimulationTransportLayer>();
-            int tickRate = Mathf.CeilToInt(simulationTickRate / (byte) sendingMode) ;
+            int tickRate = Mathf.CeilToInt(simulationTickRate / (byte) SendingMode) ;
             StartTickSystem(tickRate);
-            _amountOfInputsToSend = (byte)sendingMode * inputPackageLoss;
+            _amountOfInputsToSend = (byte)SendingMode * InputPackageLoss;
             #endif
         }
 

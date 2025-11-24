@@ -9,17 +9,25 @@ namespace NetRewind
 {
     public class NetRunner : MonoBehaviourSingleton<NetRunner>
     {
-        [Header("Network connection")]
-        [SerializeField] private NetworkManager networkManager;
-        [SerializeField] private NetworkTransport transport;
+        
+        [Header("Simulation")]
+        [SerializeField] private uint simulationTickRate = 60;
+        [Space(5)]
+        [Header("Input sending")]
+        [SerializeField] private InputSendingMode sendingMode = InputSendingMode.Full;
+        [SerializeField] private uint inputPackageLoss = 4;
         [Space(5)]
         [Header("Transport Layer")]
         [SerializeField] private GameObject transportLayerPrefab;
         [Space(5)]
-        [SerializeField] private uint simulationTickRate = 60;
+        [Header("Network connection")]
+        [SerializeField] private NetworkManager networkManager;
+        [SerializeField] private NetworkTransport transport;
 
         #region Getters
 
+        public InputSendingMode SendingMode => sendingMode;
+        public uint InputPackageLoss => inputPackageLoss;
         public ulong GetRTT(ulong clientId) => transport.GetCurrentRtt(clientId);
         public ulong ServerClientId => transport.ServerClientId;
         public ulong ServerRTT => GetRTT(ServerClientId);
