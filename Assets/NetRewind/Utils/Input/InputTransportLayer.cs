@@ -17,7 +17,7 @@ namespace NetRewind.Utils.Input
         private const uint MaxInputPackageSize = 20; // Todo: Configurable
         
         #if Client
-        public InputSendingMode SendingMode => NetRunner.GetInstance().SendingMode;
+        public SendingMode SendingMode => NetRunner.GetInstance().InputSendingMode;
         public uint InputPackageLoss => NetRunner.GetInstance().InputPackageLoss;
         #endif
         

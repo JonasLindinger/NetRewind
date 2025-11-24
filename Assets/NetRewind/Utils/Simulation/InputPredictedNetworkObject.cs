@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NetRewind.Utils.Simulation
 {
-    public abstract class InputPredictedNetworkObject : RegisteredNetworkObject
+    public abstract class InputPredictedNetworkObject : PredictedNetworkObject
     {
         private byte[] _input;
         

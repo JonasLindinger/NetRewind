@@ -4,6 +4,7 @@ using NetRewind.Utils.Input;
 using NetRewind.Utils.Simulation;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NetRewind
 {
@@ -12,9 +13,11 @@ namespace NetRewind
         
         [Header("Simulation")]
         [SerializeField] private uint simulationTickRate = 60;
+        [SerializeField] private bool controlPhysics = true;
+        [FormerlySerializedAs("sendingMode")]
         [Space(5)]
         [Header("Input sending")]
-        [SerializeField] private InputSendingMode sendingMode = InputSendingMode.Full;
+        [SerializeField] private SendingMode inputSendingMode = SendingMode.Full;
         [SerializeField] private uint inputPackageLoss = 4;
         [Space(5)]
         [Header("Transport Layer")]
@@ -26,7 +29,8 @@ namespace NetRewind
 
         #region Getters
 
-        public InputSendingMode SendingMode => sendingMode;
+        public bool ControlPhysics => controlPhysics;
+        public SendingMode InputSendingMode => inputSendingMode;
         public uint InputPackageLoss => inputPackageLoss;
         public ulong GetRTT(ulong clientId) => transport.GetCurrentRtt(clientId);
         public ulong ServerClientId => transport.ServerClientId;

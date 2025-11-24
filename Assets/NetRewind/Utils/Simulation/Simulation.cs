@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using NetRewind.Utils.Input;
+using NetRewind.Utils.Simulation.State;
 using UnityEngine;
 
 namespace NetRewind.Utils.Simulation
@@ -60,10 +61,19 @@ namespace NetRewind.Utils.Simulation
 
         private static void OnTick(uint tick)
         {
+            // 1. Simulation physics
+            if (NetRunner.GetInstance().ControlPhysics)
+                Physics.Simulate(TimeBetweenTicks);
+            
+            // 2. Save Game State
+            SnapshotContainer.TakeSnapshot(tick);
+            
             #if Client
+            // 2.5 Collect local client input
             InputContainer.Collect(tick);
             #endif
             
+            // 3. Run updates
             RegisteredNetworkObject.RunTick(tick);
         }
 

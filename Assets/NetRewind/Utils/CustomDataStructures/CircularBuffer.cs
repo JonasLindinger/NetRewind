@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NetRewind.Utils.CustomDataStructures
@@ -51,7 +52,7 @@ namespace NetRewind.Utils.CustomDataStructures
             }
             else
             {
-                throw new Exception("Item not found");
+                throw new KeyNotFoundException();
             }
         }
 

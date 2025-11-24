@@ -1,6 +1,6 @@
 namespace NetRewind.Utils.Input
 {
-    public enum InputSendingMode : byte
+    public enum SendingMode : byte
     {
         Full = 1,
         Half = 2,

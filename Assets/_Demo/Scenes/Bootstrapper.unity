@@ -735,10 +735,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetRewind.NetRunner
   dontDestroy: 1
+  simulationTickRate: 60
+  sendingMode: 4
+  inputPackageLoss: 4
+  transportLayerPrefab: {fileID: 2438693781863390696, guid: d3de0dcb464daabed9695fb5253c7cbc, type: 3}
   networkManager: {fileID: 1020746082}
   transport: {fileID: 1020746081}
-  transportLayerPrefab: {fileID: 2438693781863390696, guid: d3de0dcb464daabed9695fb5253c7cbc, type: 3}
-  simulationTickRate: 60
 --- !u!114 &1020746081
 MonoBehaviour:
   m_ObjectHideFlags: 0
