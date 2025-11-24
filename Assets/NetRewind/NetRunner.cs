@@ -1,3 +1,4 @@
+using System;
 using NetRewind.Utils;
 using NetRewind.Utils.Input;
 using NetRewind.Utils.Simulation;
@@ -30,6 +31,11 @@ namespace NetRewind
         }
         
         #endregion
+        
+        private void Update()
+        {
+            Simulation.Update(Time.deltaTime);   
+        }
         
         private void OnDestroy()
         {

@@ -41,7 +41,7 @@ namespace NetRewind.Utils.CustomDataStructures
         /// </summary>
         /// <param name="id">The ID representing the position of the item.</param>
         /// <returns>The item stored at the given ID.</returns>
-        public T Get(int id)
+        public T Get(uint id)
         {
             CircularBufferEntry<T> entry = _buffer[id % _buffer.Length];
             if (id == entry.Id)
@@ -51,7 +51,7 @@ namespace NetRewind.Utils.CustomDataStructures
             }
             else
             {
-                return default;
+                throw new Exception("Item not found");
             }
         }
 

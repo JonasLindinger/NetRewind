@@ -45,14 +45,18 @@ namespace NetRewind.Utils.Simulation
             }
             else Debug.LogWarning("No InputTransportLayer found! -> no input will be sent.");
 
-            uint localTargetTick = 
-                serverTick + 
-                NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(TickRate) + 
-                _inputSendingTickOffset + 
-                1;
+            uint maxTicksTheClientIsAllowedToBeAhead =
+                (uint)Mathf.Max((int)(NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(Simulation.TickRate) / 2), 3);
+            uint headRoom = maxTicksTheClientIsAllowedToBeAhead / 2;
+            uint localTargetTick =
+                serverTick +
+                NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(TickRate) +
+                _inputSendingTickOffset;
+            
+            localTargetTick += headRoom;
 
-            Simulation.StartTickSystem(tickRate, localTargetTick);
             TickRate = tickRate;
+            Simulation.StartTickSystem(tickRate, localTargetTick);
             
             if (inputTransportLayer != null)
                 inputTransportLayer.StartInputSending(tickRate);
@@ -63,53 +67,49 @@ namespace NetRewind.Utils.Simulation
         private void SendTickToClientRPC(uint serverTick)
         {
             #if Client
-            if (TickRate == 0) return; // Not enough info. & Tick System hasn't started yet.
-            uint currentTick = Simulation.CurrentTick;
-            uint theServerTickNow = serverTick;
+            if (TickRate == 0) return;
 
-            int bufferLessCurrentTickAtServerSendingTime = (int)(
-                currentTick - 
-                NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(TickRate) -
-                _inputSendingTickOffset
-            );
-            
-            uint localTargetTick = 
-                serverTick + 
-                NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(TickRate) + 
+            uint localTargetTick =
+                serverTick +
+                NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(TickRate) +
                 _inputSendingTickOffset;
-            
-            int difference = (int)bufferLessCurrentTickAtServerSendingTime - (int)theServerTickNow;
+
+            int difference = (int) (localTargetTick - Simulation.CurrentTick); // Positive means we are behind, negative means we are ahead.
             uint absDifference = (uint) Mathf.Abs(difference);
-            uint maxTicksTheClientIsAllowedToBeAhead = (uint) Mathf.Max((int) (NetRunner.GetInstance().ServerRTT / 2), 3); // Must be at least 3 ticks ahead of the server.
+
+            uint maxTicksTheClientIsAllowedToBeAhead =
+                (uint)Mathf.Max((int)(NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(Simulation.TickRate) / 2), 3);
+
+            uint headRoom = maxTicksTheClientIsAllowedToBeAhead / 2;
             
-            if (difference < 0)
+            if (difference > 0)
             {
                 // Skip to the server tick if we have to calculate too many ticks to get to the server tick
-                if (absDifference > 6) // Todo: Make the 6 configurable
+                if (absDifference > 20) // Todo: Make the 20 configurable
                 {
                     Debug.LogWarning("Setting tick, because we are too far behind the server");
-                    Simulation.SetTick(localTargetTick + (maxTicksTheClientIsAllowedToBeAhead / 2));
+                    Simulation.SetTick(localTargetTick + headRoom);
                 }
                 // Calculate extra ticks if the difference to the server tick isn't that big
                 else
                 {
                     Debug.LogWarning("Calculating extra ticks, because we are a bit behind the server");
-                    Simulation.CalculateExtraTicks(absDifference + (maxTicksTheClientIsAllowedToBeAhead / 2), false);
+                    Simulation.CalculateExtraTicks(absDifference + headRoom);
                 }
             }
-            else if (difference > maxTicksTheClientIsAllowedToBeAhead) // Check if we are too far ahead.
+            else if (difference < -maxTicksTheClientIsAllowedToBeAhead) // Check if we are too far ahead.
             {
                 // Skip to the server tick if we have to calculate too many ticks to get to the server tick
-                if (absDifference > 6) // Todo: Make the 6 configurable
+                if (absDifference > 20) // Todo: Make the 20 configurable
                 {
                     Debug.LogWarning("Setting tick, because we are too far in front of the server");
-                    Simulation.SetTick(localTargetTick + (maxTicksTheClientIsAllowedToBeAhead / 2));
+                    Simulation.SetTick(localTargetTick + headRoom);
                 }
                 // Calculate extra ticks if the difference to the server tick isn't that big
                 else
                 {
                     Debug.LogWarning("Skipping ticks, because we are a bit in front of the server");
-                    Simulation.SkipTicks(absDifference + 1, false);
+                    Simulation.SkipTicks(absDifference - headRoom);
                 }
             }
             else

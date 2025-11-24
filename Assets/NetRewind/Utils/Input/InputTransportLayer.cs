@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NetRewind.Utils.CustomDataStructures;
 using NetRewind.Utils.Simulation;
 using Unity.Netcode;
@@ -9,6 +10,10 @@ namespace NetRewind.Utils.Input
     [RequireComponent(typeof(SimulationTransportLayer))]
     public class InputTransportLayer : TickSystem
     {
+        #if Server
+        private static Dictionary<ulong, InputTransportLayer> _inputTransportLayers = new Dictionary<ulong, InputTransportLayer>();
+        #endif
+        
         private const uint MaxInputPackageSize = 20; // Todo: Configurable
         
         #if Client
@@ -46,6 +51,20 @@ namespace NetRewind.Utils.Input
             #endif
         }
 
+        public override void OnNetworkSpawn()
+        {
+            #if Server
+            _inputTransportLayers.Add(OwnerClientId, this);
+            #endif
+        }
+        
+        public override void OnNetworkDespawn()
+        {
+            #if Server
+            _inputTransportLayers.Remove(OwnerClientId);
+            #endif
+        }
+
         public void StartInputSending(uint simulationTickRate)
         {
             #if Client
@@ -73,7 +92,7 @@ namespace NetRewind.Utils.Input
 
             // Get input states to send.
             InputState[] statesToSend = InputContainer.GetInputsToSend(_amountOfInputsToSend);
-            
+
             // Send input package to the server
             SendInputPackageRPC(statesToSend);
         }
@@ -84,7 +103,7 @@ namespace NetRewind.Utils.Input
         {
             #if Server
             // Validate the input package every [InputCheckAmount]th time.
-            if (_inputsReceived % InputCheckAmount != 0 && !IsValidInputPackage(inputs))
+            if (_inputsReceived % InputCheckAmount == 0 && !IsValidInputPackage(inputs))
             {
                 // This input package is invalid.
                 // Todo: Punish the player.
@@ -93,17 +112,42 @@ namespace NetRewind.Utils.Input
             _inputsReceived++;
 
             // Save the inputs.
-            foreach (InputState input in inputs)
-                _inputBuffer.Store(input.Tick, input);
+            foreach (InputState input in inputs) 
+            {
+                if (input.Tick != 0)
+                    _inputBuffer.Store(input.Tick, input);
+            }
             
             #endif
         }
         
+        #if Server
         private bool IsValidInputPackage(InputState[] inputs)
         {
             if (inputs.Length == 0) return false;   
             if (inputs.Length > MaxInputPackageSize) return false;
             return true;
         }
+        #endif
+        
+        #if Server
+        public static InputState GetInput(ulong clientId, uint tick)
+        {
+            try
+            {
+                return _inputTransportLayers[clientId]._inputBuffer.Get(tick);
+            }
+            catch (Exception e)
+            {
+                // Try to reuse the last input state.
+                Debug.Log("Try to reuse the last input state.");
+                InputState lastState = _inputTransportLayers[clientId]._inputBuffer.Get(tick - 1);
+                lastState.Tick = tick;
+                _inputTransportLayers[clientId]._inputBuffer.Store(tick, lastState);
+                
+                return lastState;
+            }
+        }
+        #endif
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using NetRewind.Utils.CustomDataStructures;
 
 namespace NetRewind.Utils.Input
@@ -13,11 +14,13 @@ namespace NetRewind.Utils.Input
         {
             if (InputSender.GetInstance() == null) return;
 
+            byte[] source = InputSender.GetInstance().CollectInput();
+            
             // Collect the current input state
             InputState inputState = new InputState()
             {
                 Tick = tick,
-                Input = InputSender.GetInstance().CollectInput(),
+                Input = (byte[]) source.Clone(),
             };
             
             // Store the input state
@@ -31,6 +34,8 @@ namespace NetRewind.Utils.Input
             // Todo: Account for latency and packet loss.
             return InputBuffer.GetLatestItems(amount);
         }
+
+        public static InputState GetInput(uint tick) => InputBuffer.Get(tick);
         #endif
     }
 }
