@@ -9,7 +9,11 @@ namespace NetRewind.Utils.Simulation
     public static class Simulation
     {
         private const uint MaxTicksToCalculateInOneSecond = 140;
+        private const uint MaxTicksToReconcile = 300;
         
+        /// <summary>
+        /// DON'T USE THIS IN A OnTick method. Depending on your logic, this might cause problems, since this is not changed during reconciliation, so its always the highest tick.
+        /// </summary>
         public static uint CurrentTick { get; private set; }
         public static uint TickRate { get; private set; }
         public static float TimeBetweenTicks { get; private set; }
@@ -19,6 +23,8 @@ namespace NetRewind.Utils.Simulation
         private static float _timer;
         #if Client
         private static bool _isAdjusting;
+        public static bool IsCorrectingGameState => _reconciliationSnapshot.Tick != 0;
+        private static Snapshot _reconciliationSnapshot = new Snapshot(0);
         #endif
         
         public static void StartTickSystem(uint tickRate, uint startingTick)
@@ -45,6 +51,14 @@ namespace NetRewind.Utils.Simulation
             while (_timer >= _timeBetweenTicks)
             {
                 _timer -= _timeBetweenTicks;
+
+                if (_reconciliationSnapshot.Tick != 0)
+                {
+                    Reconcile(_reconciliationSnapshot);
+                    
+                    // Reset
+                    _reconciliationSnapshot = new Snapshot(0);
+                }
                 
                 CurrentTick++;
                 OnTick(CurrentTick);
@@ -59,7 +73,7 @@ namespace NetRewind.Utils.Simulation
             #endif
         }
 
-        private static void OnTick(uint tick)
+        private static void OnTick(uint tick, bool isReconciliation = false)
         {
             // 1. Simulation physics
             if (NetRunner.GetInstance().ControlPhysics)
@@ -69,12 +83,15 @@ namespace NetRewind.Utils.Simulation
             SnapshotContainer.TakeSnapshot(tick);
             
             #if Client
-            // 2.5 Collect local client input
-            InputContainer.Collect(tick);
+            if (!isReconciliation)
+            {
+                // 2.5 Collect local client input
+                InputContainer.Collect(tick);
+            }
             #endif
             
             // 3. Run updates
-            RegisteredNetworkObject.RunTick(tick);
+            NetObject.RunTick(tick);
         }
 
         #if Client
@@ -114,6 +131,41 @@ namespace NetRewind.Utils.Simulation
             
             _timeBetweenTicks = TimeBetweenTicks;
             _isAdjusting = false;
+        }
+
+        public static void InitReconciliation(Snapshot snapshot)
+            => _reconciliationSnapshot = snapshot;
+
+        private static void Reconcile(Snapshot snapshot)
+        {
+            Debug.LogWarning("Reconciling...");
+            
+            // --- Apply the snapshot. ---
+            foreach (var kvp in snapshot.States)
+                NetObject.ApplyState(kvp.Key, kvp.Value);
+            
+            // --- Save the snapshot. ---
+            SnapshotContainer.StoreSnapshot(snapshot);
+            
+            // --- Recalculate the tick(s). ---
+            
+            // -> Line up the simulation rhythm
+            // 3. Run updates
+            NetObject.RunTick(snapshot.Tick);
+            
+            // Check if the amount of ticks that we have to recalculate is too big, so that it potentially crashes the game or is bad player experience.
+            uint ticksToRecalculate = CurrentTick - snapshot.Tick + 1;
+            if (ticksToRecalculate > MaxTicksToReconcile)
+            {
+                Debug.LogError("Too many ticks to reconcile (" + ticksToRecalculate + "). Max allowed is: " + MaxTicksToReconcile);
+                
+                // Todo: Kick the player / force rejoin...?
+                return;
+            }
+            
+            // -> Recalculate every tick
+            for (uint tick = snapshot.Tick + 1; tick <= CurrentTick; tick++)
+                OnTick(tick, true);
         }
         #endif
     }

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace NetRewind.Utils.Simulation
 {
-    public abstract class PredictedNetworkObject : RegisteredNetworkObject
+    public abstract class PredictedNetworkObject : NetObject
     {
         protected override void OnStateReceived(IState localState, IState serverState)
         {
@@ -64,8 +64,7 @@ namespace NetRewind.Utils.Simulation
         private void SendSnapshotRPC(Snapshot snapshot, RpcParams rpcParams = default)
         {
             #if Client
-            // Todo: Apply the snapshot.
-            // Todo: Do reconciliation. and save the snapshot.
+            Simulation.InitReconciliation(snapshot);
             #endif
         }
     }

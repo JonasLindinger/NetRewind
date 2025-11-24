@@ -18,6 +18,8 @@ namespace NetRewind.Utils.Simulation.State
             _snapshots.Store(tick, snapshot);
             _latestTakenSnapshotTick = tick;
         }
+        
+        public static void StoreSnapshot(Snapshot snapshot) => _snapshots.Store(snapshot.Tick, snapshot);
 
         public static Snapshot GetLatestSnapshot()
         {
@@ -29,10 +31,10 @@ namespace NetRewind.Utils.Simulation.State
         {
             Snapshot snapshot = new Snapshot(tick);
 
-            foreach (var kvp in RegisteredNetworkObject.NetworkObjects)
+            foreach (var kvp in NetObject.NetworkObjects)
             {
                 ulong networkId = kvp.Key;
-                RegisteredNetworkObject networkedObject = kvp.Value;
+                NetObject networkedObject = kvp.Value;
 
                 try
                 {

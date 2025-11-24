@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NetRewind.Utils.CustomDataStructures;
 using NetRewind.Utils.Input;
@@ -7,15 +8,17 @@ using UnityEngine;
 
 namespace NetRewind.Utils.Simulation
 {
-    public abstract class RegisteredNetworkObject : NetworkBehaviour
+    public abstract class NetObject : NetworkBehaviour
     {
-        public static Dictionary<ulong, RegisteredNetworkObject> NetworkObjects = new Dictionary<ulong, RegisteredNetworkObject>();
+        public static Dictionary<ulong, NetObject> NetworkObjects = new Dictionary<ulong, NetObject>();
         
         [Header("State sync")]
         [SerializeField] private SendingMode stateSendingMode = SendingMode.Full;
         
         #if Client
         private CircularBuffer<ObjectState> _states = new CircularBuffer<ObjectState>(SnapshotContainer.SnapshotBufferSize);
+        private uint _lastReceivedStateTick;
+        private uint _firstRecordedState;
         #endif
 
         #if Server
@@ -32,11 +35,23 @@ namespace NetRewind.Utils.Simulation
             NetworkObjects.Remove(NetworkObjectId);
         }
 
+        public static void ApplyState(ulong clientId, IState state)
+        {
+            try
+            {
+                NetworkObjects[clientId].ApplyState(state);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("Failed to apply state: " + e);
+            }
+        }
+
         public static void RunTick(uint tick)
         {
             foreach (var kvp in NetworkObjects)
             {
-                RegisteredNetworkObject obj = kvp.Value;
+                NetObject obj = kvp.Value;
                 obj.InternalTick(tick);
             }
         }
@@ -55,6 +70,30 @@ namespace NetRewind.Utils.Simulation
         private void SendStateRPC(ObjectState serverObjectState)
         {
             #if Client
+            // Only accept new states!
+            if (serverObjectState.Tick <= _lastReceivedStateTick)
+                return;
+            
+            if (serverObjectState.Tick > Simulation.CurrentTick)
+            {
+                Debug.LogWarning("Received state for tick " + serverObjectState.Tick + " but we are at tick " + Simulation.CurrentTick + "! IGNORING / Waiting for tick adjustments!");
+                return;
+            }
+            
+            // Check if our buffer is even capable of containing the snapshot at that tick.
+            if (serverObjectState.Tick <= Simulation.CurrentTick - SnapshotContainer.SnapshotBufferSize) 
+                return;
+            
+            // Check if we should have the snapshot at that tick.
+            if (serverObjectState.Tick < _firstRecordedState) 
+                return;
+            
+            // Only accept if we don't already do correction.
+            if (Simulation.IsCorrectingGameState) return;
+            
+            // --- Accept the state ---
+            _lastReceivedStateTick = serverObjectState.Tick;
+            
             IState serverState = serverObjectState.State;
             
             ObjectState clientObjectState = _states.Get(serverObjectState.Tick);
@@ -82,6 +121,9 @@ namespace NetRewind.Utils.Simulation
             }
             #endif
             #if Client
+            if (_firstRecordedState == 0)
+                _firstRecordedState = tick;
+            
             if (!IsServer)
             {
                 // Todo: only save this in here, when the tick % sendingMode == 0 ...? Should help performance.
@@ -110,5 +152,7 @@ namespace NetRewind.Utils.Simulation
         {
             throw new System.NotImplementedException("Implement the ApplyPartialState method in your subclass, when implementing the GetCurrentState method and using the CompareResult.PartialCorrection result!");
         }
+
+        protected abstract bool IsPredicted();
     }
 }

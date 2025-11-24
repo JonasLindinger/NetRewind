@@ -1,6 +1,6 @@
 namespace NetRewind.Utils.Simulation
 {
-    public abstract class NetworkObject : RegisteredNetworkObject
+    public abstract class NetworkObject : NetObject
     {
         protected override void OnTickTriggered(uint tick)
         {
@@ -8,5 +8,6 @@ namespace NetRewind.Utils.Simulation
         }
 
         protected abstract void OnTick(uint tick);
+        protected override bool IsPredicted() => false;
     }
 }
