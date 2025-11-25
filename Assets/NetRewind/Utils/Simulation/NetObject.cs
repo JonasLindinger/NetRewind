@@ -112,7 +112,7 @@ namespace NetRewind.Utils.Simulation
             
             if (serverObjectState.Tick > Simulation.CurrentTick)
             {
-                Debug.LogWarning("Received state for tick " + serverObjectState.Tick + " but we are at tick " + Simulation.CurrentTick + "! IGNORING / Waiting for tick adjustments!");
+                // Debug.LogWarning("Received state for tick " + serverObjectState.Tick + " but we are at tick " + Simulation.CurrentTick + "! IGNORING / Waiting for tick adjustments!");
                 return;
             }
             
@@ -132,10 +132,14 @@ namespace NetRewind.Utils.Simulation
             
             IState serverState = serverObjectState.State;
             
-            ObjectState clientObjectState = _states.Get(serverObjectState.Tick);
-            IState localState = clientObjectState.State;
-            
-            OnStateReceived(localState, serverState);
+            try
+            {
+                ObjectState clientObjectState = _states.Get(serverObjectState.Tick);
+                IState localState = clientObjectState.State;
+                
+                OnStateReceived(localState, serverState);
+            }
+            catch (KeyNotFoundException e) { }
             #endif
         }
 
