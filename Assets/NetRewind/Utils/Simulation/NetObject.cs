@@ -12,8 +12,9 @@ namespace NetRewind.Utils.Simulation
     {
         public static Dictionary<ulong, NetObject> NetworkObjects = new Dictionary<ulong, NetObject>();
         
-        [Header("State sync")]
+        [Header("Networking")]
         [SerializeField] private SendingMode stateSendingMode = SendingMode.Full;
+        [Space(10)]
         
         #if Client
         private CircularBuffer<ObjectState> _states = new CircularBuffer<ObjectState>(SnapshotContainer.SnapshotBufferSize);
@@ -28,11 +29,13 @@ namespace NetRewind.Utils.Simulation
         public override void OnNetworkSpawn()
         {
             NetworkObjects.Add(NetworkObjectId, this);
+            OnSpawn();
         }
 
         public override void OnNetworkDespawn()
         {
             NetworkObjects.Remove(NetworkObjectId);
+            OnDespawn();
         }
 
         public static void ApplyState(ulong clientId, IState state)
@@ -133,7 +136,15 @@ namespace NetRewind.Utils.Simulation
             #endif
             return state;
         }
-        
+
+        protected virtual void OnSpawn()
+        {
+            
+        }
+        protected virtual void OnDespawn()
+        {
+            
+        }
         protected abstract void OnTickTriggered(uint tick);
         protected virtual IState GetCurrentState()
         {

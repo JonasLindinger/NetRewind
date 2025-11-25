@@ -7,25 +7,40 @@ namespace _Demo.Scripts.State
     public class PlayerState : IState
     {
         public Vector3 Position;
+        public float YRotation;
+        public Vector3 Velocity;
+        public Vector3 AngularVelocity;
         
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref Position);
+            serializer.SerializeValue(ref YRotation);
+            serializer.SerializeValue(ref Velocity);
+            serializer.SerializeValue(ref AngularVelocity);
         }
 
         public (CompareResult, uint) Compare(IState localState, IState serverState)
         {
             PlayerState local = (PlayerState) localState;
             PlayerState server = (PlayerState) serverState;
-
+            
             if (Vector3.Distance(local.Position, server.Position) > 0.1f)
             {
-                // Predicted position is wrong
-                Debug.Log("Player state is wrong");
+                return (CompareResult.WorldCorrection, 0);
+            }
+            if (Mathf.Abs(local.YRotation - server.YRotation) > 0.1f)
+            {
+                return (CompareResult.WorldCorrection, 0);
+            }
+            if (Vector3.Distance(local.Velocity, server.Velocity) > 0.1f)
+            {
+                return (CompareResult.WorldCorrection, 0);
+            }
+            if (Vector3.Distance(local.AngularVelocity, server.AngularVelocity) > 0.1f)
+            {
                 return (CompareResult.WorldCorrection, 0);
             }
 
-            Debug.Log("Player state is correct");
             return (CompareResult.Equal, 0);
         }
         

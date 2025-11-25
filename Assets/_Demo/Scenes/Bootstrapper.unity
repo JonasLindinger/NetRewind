@@ -576,6 +576,10 @@ MonoBehaviour:
     id: 0
   - actionReference: {fileID: -4147878630075907145, guid: 741ac862a871070bda537f69601651f9, type: 3}
     id: 0
+  - actionReference: {fileID: -2300400830912934927, guid: 741ac862a871070bda537f69601651f9, type: 3}
+    id: 0
+  - actionReference: {fileID: -7191921382912718973, guid: 741ac862a871070bda537f69601651f9, type: 3}
+    id: 0
 --- !u!1 &830192428
 GameObject:
   m_ObjectHideFlags: 0
@@ -736,7 +740,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetRewind.NetRunner
   dontDestroy: 1
   simulationTickRate: 60
-  sendingMode: 4
+  controlPhysics: 1
+  inputSendingMode: 4
   inputPackageLoss: 4
   transportLayerPrefab: {fileID: 2438693781863390696, guid: d3de0dcb464daabed9695fb5253c7cbc, type: 3}
   networkManager: {fileID: 1020746082}
