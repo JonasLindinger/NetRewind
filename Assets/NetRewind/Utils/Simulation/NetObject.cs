@@ -10,6 +10,9 @@ namespace NetRewind.Utils.Simulation
 {
     public abstract class NetObject : NetworkBehaviour
     {
+        // Todo: Add child NetObject...?
+        
+        
         public static Dictionary<ulong, NetObject> NetworkObjects = new Dictionary<ulong, NetObject>();
         
         [Header("Networking")]
