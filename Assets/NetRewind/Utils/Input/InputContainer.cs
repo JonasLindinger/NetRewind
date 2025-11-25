@@ -31,7 +31,6 @@ namespace NetRewind.Utils.Input
 
         public static InputState[] GetInputsToSend(uint amount)
         {
-            // Todo: Account for latency and packet loss.
             return InputBuffer.GetLatestItems(amount);
         }
 

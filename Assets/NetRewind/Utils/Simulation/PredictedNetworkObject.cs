@@ -43,9 +43,6 @@ namespace NetRewind.Utils.Simulation
                     // Request a full Snapshot and do reconciliation.
                     SnapshotTransportLayer.RequestSnapshot();
                     break;
-                
-                default:
-                    throw new System.NotImplementedException();
             }
 #endif
         }

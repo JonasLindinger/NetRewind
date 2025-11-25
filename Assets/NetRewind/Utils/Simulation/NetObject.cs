@@ -204,7 +204,6 @@ namespace NetRewind.Utils.Simulation
         {
             throw new System.NotImplementedException("Implement the ApplyPartialState method in your subclass, when implementing the GetCurrentState method and using the CompareResult.PartialCorrection result!");
         }
-
         protected abstract bool IsPredicted();
     }
 }

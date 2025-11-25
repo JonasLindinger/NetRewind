@@ -6,7 +6,6 @@ namespace NetRewind.Utils.Simulation
 {
     public abstract class InputPredictedNetworkObject : PredictedNetworkObject
     {
-        // Todo: Separate visuals from the real input.
         private byte[] _input;
         
         protected override void OnTickTriggered(uint tick)
