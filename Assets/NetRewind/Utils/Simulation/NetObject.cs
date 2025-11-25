@@ -69,6 +69,7 @@ namespace NetRewind.Utils.Simulation
         [Rpc(SendTo.NotServer, Delivery = RpcDelivery.Reliable)]
         private void SendStateRPC(ObjectState serverObjectState)
         {
+            // Todo: make this an option to toggle between predict everything (Sending one snapshot) and predict predicted objects only (this) (sending single states)
             #if Client
             // Only accept new states!
             if (serverObjectState.Tick <= _lastReceivedStateTick)
