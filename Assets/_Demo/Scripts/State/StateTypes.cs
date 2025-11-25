@@ -1,6 +1,6 @@
 namespace _Demo.Scripts.State
 {
-    public enum StateTypes
+    public enum StateTypes : ushort
     {
         Player,
     }

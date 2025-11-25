@@ -9,7 +9,14 @@ namespace _Demo.Scripts.Player
     {
         protected override void OnTick(uint tick)
         {
-            Debug.Log("> " + tick + " -> " + GetButton(4));
+            Vector2 move = GetVector2(0);
+            bool sprint = GetButton(4);
+
+            Vector3 newPosition = transform.position;
+            newPosition.x += move.x * (sprint ? 10 : 5);
+            newPosition.z += move.y * (sprint ? 10 : 5);
+            
+            transform.position = newPosition;
         }
 
         protected override void UpdateState(IState state)

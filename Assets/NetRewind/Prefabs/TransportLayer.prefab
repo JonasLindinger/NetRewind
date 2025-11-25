@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 795153371105688531}
   - component: {fileID: 5614727052516344268}
   - component: {fileID: 2613202397754236276}
+  - component: {fileID: 4654754169504864989}
   m_Layer: 0
   m_Name: TransportLayer
   m_TagString: Untagged
@@ -88,3 +89,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetRewind.Utils.Simulation.SimulationTransportLayer
   ShowTopMostFoldoutHeaderGroup: 1
   inputTransportLayer: {fileID: 5614727052516344268}
+--- !u!114 &4654754169504864989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2438693781863390696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f2ebeee5875404db364cb5529829805, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetRewind.Utils.Simulation.State.SnapshotTransportLayer
+  ShowTopMostFoldoutHeaderGroup: 1

@@ -29,6 +29,9 @@ namespace NetRewind.Utils.Simulation
         
         public static void StartTickSystem(uint tickRate, uint startingTick)
         {
+            if (NetRunner.GetInstance().ControlPhysics)
+                Physics.simulationMode = SimulationMode.Script;
+            
             CurrentTick = startingTick;
             TickRate = tickRate;
             TimeBetweenTicks = 1f / tickRate;
@@ -52,6 +55,7 @@ namespace NetRewind.Utils.Simulation
             {
                 _timer -= _timeBetweenTicks;
 
+                #if Client
                 if (_reconciliationSnapshot.Tick != 0)
                 {
                     Reconcile(_reconciliationSnapshot);
@@ -59,6 +63,7 @@ namespace NetRewind.Utils.Simulation
                     // Reset
                     _reconciliationSnapshot = new Snapshot(0);
                 }
+                #endif
                 
                 CurrentTick++;
                 OnTick(CurrentTick);
@@ -67,6 +72,9 @@ namespace NetRewind.Utils.Simulation
 
         public static void StopTickSystem()
         {
+            if (NetRunner.GetInstance().ControlPhysics)
+                Physics.simulationMode = SimulationMode.FixedUpdate;
+            
             _isRunning = false;
             #if Client
             _isAdjusting = false;

@@ -44,6 +44,9 @@ namespace NetRewind.Utils.Simulation.State
             }
             else // Receiving side
             {
+                if (States == null)
+                    States = new Dictionary<ulong, IState>();
+                
                 int count = 0;
                 serializer.SerializeValue(ref count); // Read the count
 

@@ -21,9 +21,11 @@ namespace _Demo.Scripts.State
             if (Vector3.Distance(local.Position, server.Position) > 0.1f)
             {
                 // Predicted position is wrong
+                Debug.Log("Player state is wrong");
                 return (CompareResult.WorldCorrection, 0);
             }
 
+            Debug.Log("Player state is correct");
             return (CompareResult.Equal, 0);
         }
         

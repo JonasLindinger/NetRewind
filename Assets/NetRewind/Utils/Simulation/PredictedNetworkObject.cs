@@ -10,6 +10,7 @@ namespace NetRewind.Utils.Simulation
     {
         protected override void OnStateReceived(IState localState, IState serverState)
         {
+            #if Client
             (CompareResult result, uint part) result = localState.Compare(localState, serverState);
             
             switch (result.result)
@@ -33,38 +34,12 @@ namespace NetRewind.Utils.Simulation
                     break;
                 case CompareResult.WorldCorrection:
                     // Request a full Snapshot and do reconciliation.
-                    RequestSnapshotRPC();
+                    SnapshotTransportLayer.RequestSnapshot();
                     break;
                 
                 default:
                     throw new System.NotImplementedException();
             }
-        }
-
-        [Rpc(SendTo.Server, Delivery = RpcDelivery.Reliable, RequireOwnership = false)]
-        private void RequestSnapshotRPC()
-        {
-            #if Server
-            try 
-            {
-                Snapshot snapshot = SnapshotContainer.GetLatestSnapshot();
-
-                ulong sender = NetworkManager.Singleton.LocalClientId;
-                
-                SendSnapshotRPC(snapshot, RpcTarget.Single(sender, RpcTargetUse.Temp));
-            }
-            catch (KeyNotFoundException e) 
-            {
-                Debug.LogWarning("Latest Snapshot not found!");
-            }
-            #endif
-        }
-        
-        [Rpc(SendTo.SpecifiedInParams, Delivery = RpcDelivery.Reliable)]
-        private void SendSnapshotRPC(Snapshot snapshot, RpcParams rpcParams = default)
-        {
-            #if Client
-            Simulation.InitReconciliation(snapshot);
             #endif
         }
     }
