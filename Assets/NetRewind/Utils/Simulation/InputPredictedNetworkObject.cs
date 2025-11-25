@@ -22,7 +22,7 @@ namespace NetRewind.Utils.Simulation
             }
             #endif
             #if Server 
-            if (!IsOwner)
+            if (!IsOwner && InputTransportLayer.SentInput(OwnerClientId))
             {
                 // Not local client -> get input from InputTransportLayer
                 try

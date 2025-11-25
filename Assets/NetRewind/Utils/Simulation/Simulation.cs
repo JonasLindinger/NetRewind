@@ -23,7 +23,7 @@ namespace NetRewind.Utils.Simulation
         private static float _timer;
         #if Client
         private static bool _isAdjusting;
-        public static bool IsCorrectingGameState => _reconciliationSnapshot.Tick != 0;
+        public static bool IsCorrectingGameState { get; private set; }
         private static Snapshot _reconciliationSnapshot = new Snapshot(0);
         #endif
         
@@ -142,7 +142,10 @@ namespace NetRewind.Utils.Simulation
         }
 
         public static void InitReconciliation(Snapshot snapshot)
-            => _reconciliationSnapshot = snapshot;
+        {
+            _reconciliationSnapshot = snapshot;
+            IsCorrectingGameState = true;
+        }
 
         private static void Reconcile(Snapshot snapshot)
         {
@@ -174,6 +177,8 @@ namespace NetRewind.Utils.Simulation
             // -> Recalculate every tick
             for (uint tick = snapshot.Tick + 1; tick <= CurrentTick; tick++)
                 OnTick(tick, true);
+
+            IsCorrectingGameState = false;
         }
         #endif
     }

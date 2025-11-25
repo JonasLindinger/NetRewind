@@ -144,6 +144,19 @@ namespace NetRewind.Utils.Input
                 return lastState;
             }
         }
+
+        public static bool SentInput(ulong clientId)
+        {
+            try
+            {
+                return _inputTransportLayers[clientId]._inputsReceived != 0;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("Player not found!");
+                return false;
+            }
+        }
         #endif
     }
 }

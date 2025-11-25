@@ -26,9 +26,7 @@ namespace NetRewind.Utils.Simulation.State
                 serializer.SerializeValue(ref stateType); // Read the state type
                 
                 State = StateFactory.Create(stateType);
-                if (State == null)
-                    Debug.LogWarning("Failed to create state of type id: " + stateType + ". Please add your state type to the StateFactory!");
-                else
+                if (State != null)
                     State.NetworkSerialize(serializer);
             }
             else

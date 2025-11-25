@@ -14,6 +14,7 @@ namespace NetRewind.Utils.Simulation
         
         [Header("Networking")]
         [SerializeField] private SendingMode stateSendingMode = SendingMode.Full;
+        [SerializeField] private Transform visual;
         [Space(10)]
         
         #if Client
@@ -26,16 +27,47 @@ namespace NetRewind.Utils.Simulation
         private ObjectState _latestSavedState;
         #endif
         
+        private Vector3 _visualVelocity;
+        
         public override void OnNetworkSpawn()
         {
             NetworkObjects.Add(NetworkObjectId, this);
-            OnSpawn();
+            
+            visual.SetParent(null); // Unparent from here.
+            DontDestroyOnLoad(visual.gameObject);
+            
+            NetSpawn();
         }
 
         public override void OnNetworkDespawn()
         {
             NetworkObjects.Remove(NetworkObjectId);
-            OnDespawn();
+            
+            DontDestroyOnLoad(visual.gameObject);
+            visual.SetParent(gameObject.transform);
+            Destroy(visual.gameObject);
+            
+            NetDespawn();
+        }
+
+        private void Update()
+        {
+            #if Client
+            if (Simulation.IsCorrectingGameState)
+                return;
+            #endif
+            
+            if (visual != null)
+            {
+                visual.position = Vector3.SmoothDamp(
+                    visual.position,
+                    transform.position,
+                    ref _visualVelocity,
+                    Simulation.TimeBetweenTicks // seconds
+                );
+            }
+
+            NetUpdate();
         }
 
         public static void ApplyState(ulong clientId, IState state)
@@ -137,11 +169,15 @@ namespace NetRewind.Utils.Simulation
             return state;
         }
 
-        protected virtual void OnSpawn()
+        protected virtual void NetSpawn()
         {
             
         }
-        protected virtual void OnDespawn()
+        protected virtual void NetDespawn()
+        {
+            
+        }
+        protected virtual void NetUpdate()
         {
             
         }

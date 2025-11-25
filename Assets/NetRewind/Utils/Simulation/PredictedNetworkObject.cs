@@ -11,6 +11,13 @@ namespace NetRewind.Utils.Simulation
         protected override void OnStateReceived(IState localState, IState serverState)
         {
             #if Client
+            // Check if we are predicting this object.
+            if (!IsPredicted())
+            {
+                base.OnStateReceived(localState, serverState);
+                return;
+            }
+
             (CompareResult result, uint part) result = localState.Compare(localState, serverState);
             
             switch (result.result)
@@ -40,7 +47,7 @@ namespace NetRewind.Utils.Simulation
                 default:
                     throw new System.NotImplementedException();
             }
-            #endif
+#endif
         }
     }
 }

@@ -28,7 +28,7 @@ namespace _Demo.Scripts.Player
         private bool _grounded;
         private float _jumpCooldownTimer;
         
-        protected override void OnSpawn()
+        protected override void NetSpawn()
         {
             _rb = GetComponent<Rigidbody>();
             _rb.freezeRotation = true;
