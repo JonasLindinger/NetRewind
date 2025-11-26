@@ -28,14 +28,6 @@ namespace _Demo.Scripts.State
             {
                 return (CompareResult.WorldCorrection, 0);
             }
-            if (Vector3.Distance(local.Velocity, server.Velocity) > 0.1f)
-            {
-                return (CompareResult.WorldCorrection, 0);
-            }
-            if (Vector3.Distance(local.AngularVelocity, server.AngularVelocity) > 0.1f)
-            {
-                return (CompareResult.WorldCorrection, 0);
-            }
 
             return (CompareResult.Equal, 0);
         }
