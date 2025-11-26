@@ -1,4 +1,4 @@
-using NetRewind.Utils.Simulation.Data;
+using NetRewind.Utils.Input.Data;
 using Unity.Netcode;
 
 namespace _Demo.Scripts.Player

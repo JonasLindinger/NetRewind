@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace NetRewind.Utils.Simulation.Data
+namespace NetRewind.Utils.Input.Data
 {
     public static class DataTypeRegistry
     {

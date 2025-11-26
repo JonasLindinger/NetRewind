@@ -2,7 +2,6 @@ using System;
 using NetRewind.Utils.CustomDataStructures;
 using NetRewind.Utils.Player;
 using NetRewind.Utils.Simulation;
-using NetRewind.Utils.Simulation.Data;
 
 namespace NetRewind.Utils.Input
 {

@@ -1,6 +1,6 @@
 using System;
 using NetRewind.Utils.Input;
-using NetRewind.Utils.Simulation.Data;
+using NetRewind.Utils.Input.Data;
 using UnityEngine;
 
 namespace NetRewind.Utils.Simulation

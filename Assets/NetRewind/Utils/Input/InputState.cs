@@ -1,5 +1,5 @@
 using System;
-using NetRewind.Utils.Simulation.Data;
+using NetRewind.Utils.Input.Data;
 using Unity.Netcode;
 using UnityEngine;
 

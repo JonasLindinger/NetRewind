@@ -1,6 +1,6 @@
 using Unity.Netcode;
 
-namespace NetRewind.Utils.Simulation.Data
+namespace NetRewind.Utils.Input.Data
 {
     public interface IData : INetworkSerializable
     {
