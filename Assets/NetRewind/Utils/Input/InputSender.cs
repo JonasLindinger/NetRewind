@@ -1,14 +1,16 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace NetRewind.Utils.Input
 {
     public class InputSender : MonoBehaviourSingleton<InputSender>
     {
+        public static Dictionary<string, InputAction> Actions = new Dictionary<string, InputAction>();
+        
         [Header("Inputs")]
-        [SerializeField] private List<InputActionEntry> actions = new List<InputActionEntry>();
+        [SerializeField] private List<InputActionEntry> networked = new List<InputActionEntry>();
+        [SerializeField] private List<InputActionEntry> local = new List<InputActionEntry>();
 
         private int _byteArraySize;
         private byte[] _data;
@@ -16,22 +18,34 @@ namespace NetRewind.Utils.Input
         private void OnEnable()
         {
             // Enable all actions
-            foreach (var entry in actions)
+            foreach (var entry in networked)
                 entry.Action?.Enable();
+
+            foreach (var entry in local)
+            {
+                Actions.Add(entry.Action.name, entry.Action);
+                entry.Action?.Enable();
+            }
         }
 
         private void OnDisable()
         {
             // Disable all actions
-            foreach (var entry in actions)
+            foreach (var entry in local)
                 entry.Action?.Disable();
+            
+            foreach (var entry in local)
+            {
+                Actions.Remove(entry.Action.name);
+                entry.Action?.Enable();
+            }
         }
         
         private void Start()
         {
             // Calculate how many bits we need
             int id = 0;
-            foreach (var entry in actions)
+            foreach (var entry in networked)
             {
                 if (entry.IsButton)
                 {

@@ -1,15 +1,21 @@
+using System.Collections.Generic;
 using _Demo.Scripts.State;
 using NetRewind.Utils.Input.Data;
 using NetRewind.Utils.Player;
 using NetRewind.Utils.Simulation;
 using NetRewind.Utils.Simulation.State;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace _Demo.Scripts.Player
 {
     [RequireComponent(typeof(Rigidbody))]
     public class PlayerController : NetPlayer
     {
+        [Header("Mouse Settings")]
+        [SerializeField] private float xSensitivity = 6;
+        [SerializeField] private float ySensitivity = 6;
+        [Space(5)]
         [Header("Move Settings")]
         [SerializeField] private float walkSpeed;
         [SerializeField] private float sprintSpeed;
@@ -19,7 +25,10 @@ namespace _Demo.Scripts.Player
         [SerializeField] private float jumpForce; 
         [SerializeField] private float jumpCooldown;
         [SerializeField] private float airMultiplier;
-        [Space(10)]
+        [Space(5)] 
+        [Header("Camera")] 
+        [SerializeField] private Camera playerCamera;
+        [Space(5)]
         [Header("References")]
         [SerializeField] private Transform orientation;
         [SerializeField] private LayerMask whatIsGround;
@@ -30,14 +39,61 @@ namespace _Demo.Scripts.Player
         private bool _grounded;
         private float _jumpCooldownTimer;
         
+        private float _xRotation;
+        private float _yRotation;
+        
         protected override void NetSpawn()
         {
-            PlayerData data = new PlayerData();
+            playerCamera.enabled = IsOwner;
+            if (IsOwner)
+            {
+                Cursor.visible = false;
+                Cursor.lockState = CursorLockMode.Locked;
+            }
             
             _rb = GetComponent<Rigidbody>();
             _rb.freezeRotation = true;
             // _rb.interpolation = RigidbodyInterpolation.Interpolate;
         }
+
+        protected override void NetUpdate()
+        {
+            #if Client
+            Look();
+            #endif
+        }
+
+        protected override void OnTick(uint tick)
+        {
+            // GetPlayer data
+            PlayerData data = GetData<PlayerData>();
+            
+            // Rotate player
+            Vector3 newRotation = transform.eulerAngles;
+            newRotation.y = data.YRotation;
+            transform.eulerAngles = newRotation;
+            
+            // Move player
+            Move();
+        }
+        
+        #if Client
+        private void Look()
+        {
+            // Looking
+            float mouseX = InputActions["Look"].ReadValue<Vector2>().x * Time.deltaTime * xSensitivity;
+            float mouseY = InputActions["Look"].ReadValue<Vector2>().y * Time.deltaTime * ySensitivity;
+            
+            _yRotation += mouseX;
+            
+            _xRotation -= mouseY;
+            _xRotation = Mathf.Clamp(_xRotation, -90f, 90f);
+            
+            playerCamera.transform.rotation = Quaternion.Euler(_xRotation, _yRotation, 0);
+            orientation.rotation = Quaternion.Euler(0, _yRotation, 0);
+            transform.rotation = Quaternion.Euler(0, _yRotation, 0);
+        }
+        #endif        
 
         private void Move()
         {
@@ -89,20 +145,6 @@ namespace _Demo.Scripts.Player
                 // Applying Cooldown
                 _jumpCooldownTimer = jumpCooldown;
             }
-        }
-        
-        protected override void OnTick(uint tick)
-        {
-            // GetPlayer data
-            PlayerData data = GetData<PlayerData>();
-            
-            // Rotate player
-            Vector3 newRotation = transform.eulerAngles;
-            newRotation.y = data.YRotation;
-            transform.eulerAngles = newRotation;
-            
-            // Move player
-            Move();
         }
 
         protected override IData GetAdditionalData()

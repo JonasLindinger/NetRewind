@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using NetRewind.Utils.Input;
 using NetRewind.Utils.Input.Data;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace NetRewind.Utils.Simulation
 {
@@ -9,6 +11,8 @@ namespace NetRewind.Utils.Simulation
     {
         private byte[] _input;
         private IData _data;
+        
+        public Dictionary<string, InputAction> InputActions => InputSender.Actions;
         
         protected override void OnTickTriggered(uint tick)
         {

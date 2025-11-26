@@ -28,10 +28,6 @@ namespace _Demo.Scripts.State
             {
                 return (CompareResult.WorldCorrection, 0);
             }
-            if (Mathf.Abs(local.YRotation - server.YRotation) > 0.1f)
-            {
-                return (CompareResult.WorldCorrection, 0);
-            }
             if (Vector3.Distance(local.Velocity, server.Velocity) > 0.1f)
             {
                 return (CompareResult.WorldCorrection, 0);
