@@ -24,7 +24,7 @@ namespace _Demo.Scripts.State
             PlayerState local = (PlayerState) localState;
             PlayerState server = (PlayerState) serverState;
             
-            if (Vector3.Distance(local.Position, server.Position) > 0.1f)
+            if (Vector3.Distance(local.Position, server.Position) > 0.25f)
             {
                 return (CompareResult.WorldCorrection, 0);
             }
