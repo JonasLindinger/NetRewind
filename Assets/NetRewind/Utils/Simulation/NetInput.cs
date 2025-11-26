@@ -13,7 +13,17 @@ namespace NetRewind.Utils.Simulation
         private IData _data;
         
         public Dictionary<string, InputAction> InputActions => InputSender.Actions;
-        
+
+        protected override void InternalUpdate()
+        {
+            #if Client
+            if (IsOwner)
+            {
+                NetLocalUpdate();
+            }
+            #endif
+        }
+
         protected override void OnTickTriggered(uint tick)
         {
             #if Client
@@ -54,6 +64,11 @@ namespace NetRewind.Utils.Simulation
             _input = input;
             _data = data;
             OnTick(tick);
+        }
+
+        protected virtual void NetLocalUpdate()
+        {
+            
         }
         
         protected override bool IsPredicted() => IsOwner;

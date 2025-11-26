@@ -70,6 +70,7 @@ namespace NetRewind.Utils.Simulation
                 );
             }
 
+            InternalUpdate();
             NetUpdate();
         }
 
@@ -193,6 +194,11 @@ namespace NetRewind.Utils.Simulation
             
         }
         protected virtual void NetUpdate()
+        {
+            
+        }
+        
+        protected virtual void InternalUpdate()
         {
             
         }

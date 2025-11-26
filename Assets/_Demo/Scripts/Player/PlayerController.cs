@@ -56,7 +56,7 @@ namespace _Demo.Scripts.Player
             // _rb.interpolation = RigidbodyInterpolation.Interpolate;
         }
 
-        protected override void NetUpdate()
+        protected override void NetLocalUpdate()
         {
             #if Client
             Look();
