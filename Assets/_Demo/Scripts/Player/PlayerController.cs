@@ -1,12 +1,14 @@
 using _Demo.Scripts.State;
+using NetRewind.Utils.Player;
 using NetRewind.Utils.Simulation;
+using NetRewind.Utils.Simulation.Data;
 using NetRewind.Utils.Simulation.State;
 using UnityEngine;
 
 namespace _Demo.Scripts.Player
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class PlayerController : InputPredictedNetworkObject
+    public class PlayerController : NetPlayer
     {
         [Header("Move Settings")]
         [SerializeField] private float walkSpeed;
@@ -30,6 +32,8 @@ namespace _Demo.Scripts.Player
         
         protected override void NetSpawn()
         {
+            PlayerData data = new PlayerData();
+            
             _rb = GetComponent<Rigidbody>();
             _rb.freezeRotation = true;
             // _rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -56,7 +60,6 @@ namespace _Demo.Scripts.Player
             Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
 
             // Applying movement
-
             float moveSpeed = GetButton(4) ? sprintSpeed : GetButton(5) ? crouchSpeed : walkSpeed;
 
             // Grounded
@@ -90,17 +93,24 @@ namespace _Demo.Scripts.Player
         
         protected override void OnTick(uint tick)
         {
+            // GetPlayer data
+            PlayerData data = GetData<PlayerData>();
+            
+            // Rotate player
+            Vector3 newRotation = transform.eulerAngles;
+            newRotation.y = data.YRotation;
+            transform.eulerAngles = newRotation;
+            
+            // Move player
             Move();
-            
-            return;
-            Vector2 move = GetVector2(0);
-            bool sprint = GetButton(4);
+        }
 
-            Vector3 newPosition = transform.position;
-            newPosition.x += move.x * (sprint ? 10 : 5);
-            newPosition.z += move.y * (sprint ? 10 : 5);
-            
-            transform.position = newPosition;
+        protected override IData GetAdditionalData()
+        {
+            return new PlayerData()
+            {
+                YRotation = transform.eulerAngles.y,
+            };
         }
 
         protected override void UpdateState(IState state)

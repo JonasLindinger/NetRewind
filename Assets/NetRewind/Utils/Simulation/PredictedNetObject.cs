@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace NetRewind.Utils.Simulation
 {
-    public abstract class PredictedNetworkObject : NetObject
+    public abstract class PredictedNetObject : NetBehaviour
     {
         protected override void OnStateReceived(IState localState, IState serverState)
         {

@@ -31,14 +31,14 @@ namespace NetRewind.Utils.Simulation.State
         {
             Snapshot snapshot = new Snapshot(tick);
 
-            foreach (var kvp in NetObject.NetworkObjects)
+            foreach (var kvp in NetBehaviour.NetworkObjects)
             {
                 ulong networkId = kvp.Key;
-                NetObject networkedObject = kvp.Value;
+                NetBehaviour networkedBehaviour = kvp.Value;
 
                 try
                 {
-                    IState state = networkedObject.GetSnapshotState(tick);
+                    IState state = networkedBehaviour.GetSnapshotState(tick);
                     snapshot.States.Add(networkId, state);
                 }
                 catch (NotImplementedException e)

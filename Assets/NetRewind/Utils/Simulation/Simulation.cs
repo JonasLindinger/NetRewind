@@ -99,7 +99,7 @@ namespace NetRewind.Utils.Simulation
             #endif
             
             // 3. Run updates
-            NetObject.RunTick(tick);
+            NetBehaviour.RunTick(tick);
         }
 
         #if Client
@@ -153,7 +153,7 @@ namespace NetRewind.Utils.Simulation
             
             // --- Apply the snapshot. ---
             foreach (var kvp in snapshot.States)
-                NetObject.ApplyState(kvp.Key, kvp.Value);
+                NetBehaviour.ApplyState(kvp.Key, kvp.Value);
             
             // --- Save the snapshot. ---
             SnapshotContainer.StoreSnapshot(snapshot);
@@ -162,7 +162,7 @@ namespace NetRewind.Utils.Simulation
             
             // -> Line up the simulation rhythm
             // 3. Run updates
-            NetObject.RunTick(snapshot.Tick);
+            NetBehaviour.RunTick(snapshot.Tick);
             
             // Check if the amount of ticks that we have to recalculate is too big, so that it potentially crashes the game or is bad player experience.
             uint ticksToRecalculate = CurrentTick - snapshot.Tick + 1;

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NetRewind.Utils.Simulation.State
 {
-    public class SnapshotTransportLayer : NetworkBehaviour
+    public class SnapshotTransportLayer : Unity.Netcode.NetworkBehaviour
     {
         #if Client
         private static SnapshotTransportLayer _localInstance;
