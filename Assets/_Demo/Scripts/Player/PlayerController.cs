@@ -149,6 +149,8 @@ namespace _Demo.Scripts.Player
             transform.rotation = Quaternion.Euler(0, _yRotation, 0);
         }
         #endif
+
+        #region State
         
         public IData OnInputData()
         {
@@ -191,6 +193,8 @@ namespace _Demo.Scripts.Player
         {
             throw new System.NotImplementedException();
         }
+        
+        #endregion
 
         protected override bool IsPredicted() => IsOwner;
     }
