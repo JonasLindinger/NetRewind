@@ -45,6 +45,9 @@ namespace _Demo.Scripts.Player
         protected override void NetSpawn()
         {
             playerCamera.enabled = IsOwner;
+            if (playerCamera != null && playerCamera.TryGetComponent(out AudioListener audioListener))
+                audioListener.enabled = IsOwner;
+            
             if (IsOwner)
             {
                 Cursor.visible = false;
