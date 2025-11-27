@@ -1,16 +1,13 @@
-using System.Collections.Generic;
 using _Demo.Scripts.State;
 using NetRewind.Utils.Input.Data;
-using NetRewind.Utils.Player;
 using NetRewind.Utils.Simulation;
 using NetRewind.Utils.Simulation.State;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace _Demo.Scripts.Player
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class PlayerController : NetPlayer
+    public class PlayerController : NetObject, ITick, IStateHolder, IInputListener, IInputDataSource
     {
         [Header("Mouse Settings")]
         [SerializeField] private float xSensitivity = 6;
@@ -34,6 +31,9 @@ namespace _Demo.Scripts.Player
         [SerializeField] private LayerMask whatIsGround;
         [SerializeField] private float playerHeight;
 
+        public byte[] InputData { get; set; }
+        public IData Data { get; set; }
+        
         private Rigidbody _rb;
         
         private bool _grounded;
@@ -55,15 +55,8 @@ namespace _Demo.Scripts.Player
             _rb.freezeRotation = true;
             // _rb.interpolation = RigidbodyInterpolation.Interpolate;
         }
-
-        protected override void NetLocalUpdate()
-        {
-            #if Client
-            Look();
-            #endif
-        }
-
-        protected override void OnTick(uint tick)
+        
+        public void Tick(uint tick)
         {
             // GetPlayer data
             PlayerData data = GetData<PlayerData>();
@@ -77,24 +70,6 @@ namespace _Demo.Scripts.Player
             Move();
         }
         
-        #if Client
-        private void Look()
-        {
-            // Looking
-            float mouseX = InputActions["Look"].ReadValue<Vector2>().x * Time.deltaTime * xSensitivity;
-            float mouseY = InputActions["Look"].ReadValue<Vector2>().y * Time.deltaTime * ySensitivity;
-            
-            _yRotation += mouseX;
-            
-            _xRotation -= mouseY;
-            _xRotation = Mathf.Clamp(_xRotation, -90f, 90f);
-            
-            playerCamera.transform.rotation = Quaternion.Euler(_xRotation, _yRotation, 0);
-            orientation.rotation = Quaternion.Euler(0, _yRotation, 0);
-            transform.rotation = Quaternion.Euler(0, _yRotation, 0);
-        }
-        #endif        
-
         private void Move()
         {
             if (_jumpCooldownTimer > 0)
@@ -146,8 +121,33 @@ namespace _Demo.Scripts.Player
                 _jumpCooldownTimer = jumpCooldown;
             }
         }
-
-        protected override IData GetAdditionalData()
+        
+        public void NetOwnerUpdate()
+        {
+            #if Client
+            Look();
+            #endif
+        }
+        
+        #if Client
+        private void Look()
+        {
+            // Looking
+            float mouseX = InputActions["Look"].ReadValue<Vector2>().x * Time.deltaTime * xSensitivity;
+            float mouseY = InputActions["Look"].ReadValue<Vector2>().y * Time.deltaTime * ySensitivity;
+            
+            _yRotation += mouseX;
+            
+            _xRotation -= mouseY;
+            _xRotation = Mathf.Clamp(_xRotation, -90f, 90f);
+            
+            playerCamera.transform.rotation = Quaternion.Euler(_xRotation, _yRotation, 0);
+            orientation.rotation = Quaternion.Euler(0, _yRotation, 0);
+            transform.rotation = Quaternion.Euler(0, _yRotation, 0);
+        }
+        #endif
+        
+        public IData OnInputData()
         {
             return new PlayerData()
             {
@@ -155,25 +155,7 @@ namespace _Demo.Scripts.Player
             };
         }
 
-        protected override void UpdateState(IState state)
-        {
-            PlayerState playerState = (PlayerState) state;
-            transform.position = playerState.Position;
-            transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
-            _rb.linearVelocity = playerState.Velocity;
-            _rb.angularVelocity = playerState.AngularVelocity;
-        }
-
-        protected override void ApplyState(IState state)
-        {
-            PlayerState playerState = (PlayerState) state;
-            transform.position = playerState.Position;
-            transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
-            _rb.linearVelocity = playerState.Velocity;
-            _rb.angularVelocity = playerState.AngularVelocity;
-        }
-        
-        protected override IState GetCurrentState()
+        public IState GetCurrentState()
         {
             return new PlayerState()
             {
@@ -184,9 +166,29 @@ namespace _Demo.Scripts.Player
             };
         }
 
-        protected override void ApplyPartialState(IState state, uint part)
+        public void UpdateState(IState state)
+        {
+            PlayerState playerState = (PlayerState) state;
+            transform.position = playerState.Position;
+            transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
+            _rb.linearVelocity = playerState.Velocity;
+            _rb.angularVelocity = playerState.AngularVelocity;
+        }
+
+        public void ApplyState(IState state)
+        {
+            PlayerState playerState = (PlayerState) state;
+            transform.position = playerState.Position;
+            transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
+            _rb.linearVelocity = playerState.Velocity;
+            _rb.angularVelocity = playerState.AngularVelocity;
+        }
+
+        public void ApplyPartialState(IState state, uint part)
         {
             throw new System.NotImplementedException();
         }
+
+        protected override bool IsPredicted() => IsOwner;
     }
 }

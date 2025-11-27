@@ -97,6 +97,7 @@ namespace NetRewind
             networkManager.StartServer();
             networkManager.OnClientConnectedCallback += CreateTransportLayer;
             Simulation.StartTickSystem(simulationTickRate, 0);
+            Application.targetFrameRate = (int) simulationTickRate;
         }
         #endif
 

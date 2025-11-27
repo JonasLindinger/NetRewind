@@ -1,6 +1,4 @@
-using System;
 using NetRewind.Utils.CustomDataStructures;
-using NetRewind.Utils.Player;
 using NetRewind.Utils.Simulation;
 
 namespace NetRewind.Utils.Input
@@ -22,7 +20,7 @@ namespace NetRewind.Utils.Input
             InputState inputState = new InputState(
                 tick, 
                 (byte[]) source.Clone(), 
-                NetPlayer.TryGetAdditionalData()
+                NetObject.GetPlayerInputData()
             );
             
             // Store the input state

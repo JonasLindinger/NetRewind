@@ -31,19 +31,19 @@ namespace NetRewind.Utils.Simulation.State
         {
             Snapshot snapshot = new Snapshot(tick);
 
-            foreach (var kvp in NetBehaviour.NetworkObjects)
+            foreach (var kvp in NetObject.NetworkObjects)
             {
                 ulong networkId = kvp.Key;
-                NetBehaviour networkedBehaviour = kvp.Value;
+                NetObject networkedObject = kvp.Value;
 
                 try
                 {
-                    IState state = networkedBehaviour.GetSnapshotState(tick);
+                    IState state = networkedObject.GetSnapshotState(tick);
                     snapshot.States.Add(networkId, state);
                 }
                 catch (NotImplementedException e)
                 {
-                    // We found a stateless object. Ignore it.'
+                    // We found a stateless object. Ignore it.
                 }
             }
             
