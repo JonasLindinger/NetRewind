@@ -42,7 +42,6 @@ namespace NetRewind.Utils.Simulation
         {
             TryGetComponent(out _tickInterface);
             TryGetComponent(out _inputListener);
-            Debug.Log(_inputListener == null);
             TryGetComponent(out _stateHolder);
             
             if (IsOwner && _inputDataSource == null)
@@ -150,9 +149,12 @@ namespace NetRewind.Utils.Simulation
                     }
                 }
                 #endif
+                
+                if (_inputListener.InputData != null && _inputListener.Data != null)
+                    _tickInterface?.Tick(tick);
             }
-            
-            _tickInterface?.Tick(tick);
+            else
+                _tickInterface?.Tick(tick);
         }
 
         [Rpc(SendTo.NotServer, Delivery = RpcDelivery.Reliable)]

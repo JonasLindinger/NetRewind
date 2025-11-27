@@ -29,6 +29,10 @@ namespace NetRewind.Utils.Simulation
         
         public static void StartTickSystem(uint tickRate, uint startingTick)
         {
+            #if Client
+            InputContainer.Init();
+            #endif
+            
             if (NetRunner.GetInstance().ControlPhysics)
                 Physics.simulationMode = SimulationMode.Script;
             

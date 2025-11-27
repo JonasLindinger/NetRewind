@@ -10,16 +10,21 @@ namespace NetRewind.Utils.Input
         private static CircularBuffer<InputState> _inputBuffer = new CircularBuffer<InputState>(InputBufferSize);
         public static bool CollectedInputs { get; private set;} = false;
 
+        private static byte[] _playerInputSource;
+        
+        public static void Init()
+        {
+            _playerInputSource = InputSender.GetInstance().CollectInput();
+        }
+        
         public static void Collect(uint tick)
         {
             if (InputSender.GetInstance() == null) return;
-
-            byte[] source = InputSender.GetInstance().CollectInput();
             
             // Collect the current input state
             InputState inputState = new InputState(
                 tick, 
-                (byte[]) source.Clone(), 
+                (byte[]) _playerInputSource.Clone(),
                 NetObject.GetPlayerInputData()
             );
             
