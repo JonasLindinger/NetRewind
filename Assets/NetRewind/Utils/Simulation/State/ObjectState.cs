@@ -25,14 +25,14 @@ namespace NetRewind.Utils.Simulation.State
                 int stateType = 0;
                 serializer.SerializeValue(ref stateType); // Read the state type
                 
-                State = StateFactory.Create(stateType);
+                State = StateTypeRegistry.Create(stateType);
                 if (State != null)
                     State.NetworkSerialize(serializer);
             }
             else
             {
                 // Writer
-                int stateType = State.GetStateType();
+                int stateType = StateTypeRegistry.GetId(State.GetType());
                 serializer.SerializeValue(ref stateType);
                 
                 State.NetworkSerialize(serializer);

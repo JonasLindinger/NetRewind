@@ -35,7 +35,7 @@ namespace NetRewind.Utils.Simulation.State
                     serializer.SerializeValue(ref networkId);
         
                     // Serialize the state type
-                    int stateType = state.GetStateType();
+                    int stateType = StateTypeRegistry.GetId(state.GetType());
                     serializer.SerializeValue(ref stateType);
 
                     // Let the state serialize itself
@@ -59,7 +59,7 @@ namespace NetRewind.Utils.Simulation.State
                     serializer.SerializeValue(ref stateType); // Read the state type
 
                     // Create an instance using a factory/registry
-                    IState state = StateFactory.Create(stateType);
+                    IState state = StateTypeRegistry.Create(stateType);
                     if (state == null) continue;
                     state.NetworkSerialize(serializer);
                     States[networkId] = state;

@@ -4,8 +4,6 @@ namespace NetRewind.Utils.Simulation.State
 {
     public interface IState : INetworkSerializable
     {
-        int GetStateType();
-
         /// <summary>
         /// Compares the server state with the predicted local state at that tick.
         /// CompareResult is used to determine the action to take.

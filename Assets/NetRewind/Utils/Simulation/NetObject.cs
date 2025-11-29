@@ -117,6 +117,9 @@ namespace NetRewind.Utils.Simulation
 
         private void InternalTick(uint tick)
         {
+            if (!(IsServer || IsPredicted()))
+                return;
+            
             #if Server
             if (tick % (byte) stateSendingMode == 0 && IsServer)
                 SendStateRPC(_latestSavedState);
@@ -211,32 +214,40 @@ namespace NetRewind.Utils.Simulation
             }
             
             // Prediction -> compare to prediction.
-            (CompareResult result, uint part) result = localState.Compare(localState, serverState);
-            
-            switch (result.result)
+            try
             {
-                case CompareResult.Equal:
-                    // Everything is fine.
-                    break;
-                case CompareResult.FullObjectCorrection:
-                    // Apply the entire server state.
-                    // Don't use try catch here, because if we receive states, we should sync them!
-                    _stateHolder.ApplyState(serverState);
-                    break;
-                case CompareResult.PartialObjectCorrection:
-                    // Apply only a part of the server state.
-                    // Don't use try catch here, because if we receive states, we should sync them!
-                    _stateHolder.ApplyPartialState(serverState, result.part);
-                    break;
-                case CompareResult.GroupCorrection:
-                    // Todo: Apply a group of objects.
-                    throw new NotImplementedException();
-                    break;
-                case CompareResult.WorldCorrection:
-                    // Request a full Snapshot and do reconciliation.
-                    SnapshotTransportLayer.RequestSnapshot();
-                    break;
+                (CompareResult result, uint part) result = localState.Compare(localState, serverState);
+
+                switch (result.result)
+                {
+                    case CompareResult.Equal:
+                        // Everything is fine.
+                        break;
+                    case CompareResult.FullObjectCorrection:
+                        // Apply the entire server state.
+                        // Don't use try catch here, because if we receive states, we should sync them!
+                        _stateHolder.ApplyState(serverState);
+                        break;
+                    case CompareResult.PartialObjectCorrection:
+                        // Apply only a part of the server state.
+                        // Don't use try catch here, because if we receive states, we should sync them!
+                        _stateHolder.ApplyPartialState(serverState, result.part);
+                        break;
+                    case CompareResult.GroupCorrection:
+                        // Todo: Apply a group of objects.
+                        throw new NotImplementedException();
+                        break;
+                    case CompareResult.WorldCorrection:
+                        // Request a full Snapshot and do reconciliation.
+                        SnapshotTransportLayer.RequestSnapshot();
+                        break;
+                }
             }
+            catch (Exception e)
+            {
+                
+            }
+            
             #endif
         }
         

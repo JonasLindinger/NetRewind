@@ -94,8 +94,9 @@ namespace NetRewind
         #if Server
         private void RunAsServer()
         {
-            networkManager.StartServer();
+            networkManager.NetworkConfig.TickRate = simulationTickRate;
             networkManager.OnClientConnectedCallback += CreateTransportLayer;
+            networkManager.StartServer();
             Simulation.StartTickSystem(simulationTickRate, 0);
             Application.targetFrameRate = (int) simulationTickRate;
         }
@@ -104,6 +105,7 @@ namespace NetRewind
         #if Client
         private void RunAsClient()
         {
+            networkManager.NetworkConfig.TickRate = simulationTickRate;
             networkManager.StartClient();
         }
         #endif        
@@ -111,8 +113,9 @@ namespace NetRewind
         #if Client && Server
         private void RunAsHost()
         {
-            networkManager.StartHost();
+            networkManager.NetworkConfig.TickRate = simulationTickRate;
             networkManager.OnClientConnectedCallback += CreateTransportLayer;
+            networkManager.StartHost();
             Simulation.StartTickSystem(simulationTickRate, 0);
         }
         #endif

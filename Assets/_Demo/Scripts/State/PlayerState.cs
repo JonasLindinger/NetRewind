@@ -4,7 +4,8 @@ using UnityEngine;
 
 namespace _Demo.Scripts.State
 {
-    public class PlayerState : IState
+    [StateType]
+    public struct PlayerState : IState
     {
         public Vector3 Position;
         public float YRotation;
@@ -31,9 +32,5 @@ namespace _Demo.Scripts.State
 
             return (CompareResult.Equal, 0);
         }
-        
-        static PlayerState() => StateFactory.Register((int)StateTypes.Player, () => new PlayerState());
-        
-        public int GetStateType() => (int) StateTypes.Player;
     }
 }
