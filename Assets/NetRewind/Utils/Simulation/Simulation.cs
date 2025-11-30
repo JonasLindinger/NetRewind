@@ -76,7 +76,7 @@ namespace NetRewind.Utils.Simulation
 
         public static void StopTickSystem()
         {
-            if (NetRunner.GetInstance().ControlPhysics)
+            if (NetRunner.GetInstance() != null && NetRunner.GetInstance().ControlPhysics)
                 Physics.simulationMode = SimulationMode.FixedUpdate;
             
             _isRunning = false;

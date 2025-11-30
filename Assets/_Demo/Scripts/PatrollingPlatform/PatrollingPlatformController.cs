@@ -20,22 +20,27 @@ namespace _Demo.Scripts.PatrollingPlatform
         private bool _movingForward = true;
         private Rigidbody _rb;
 
+        private void Awake()
+        {
+            _rb = GetComponent<Rigidbody>();
+            _rb.useGravity = false;
+            _rb.isKinematic = true;
+            _rb.interpolation = RigidbodyInterpolation.None;
+        }
+
         private void Start()
         {
             SetPoints(PatrollingPlatformSpawner.PointA, PatrollingPlatformSpawner.PointB);
-            
-            _rb = GetComponent<Rigidbody>();
-            _rb.isKinematic = true;
         }
 
         public void Tick(uint tick)
         {
             if (pointA == null || pointB == null)
                 return;
-
+    
             // Distance between points, used to convert speed in units/sec to t/sec
             float distance = Vector3.Distance(pointA.position, pointB.position);
-            if (distance < 0.0001f)
+            if (distance < 0.01f)
                 return;
 
             float dt = (speed / distance) * Simulation.TimeBetweenTicks;
@@ -59,26 +64,26 @@ namespace _Demo.Scripts.PatrollingPlatform
                 }
             }
 
-            // Interpolate position on the line
-            Vector3 newPos = Vector3.Lerp(pointA.position, pointB.position, _t);
+            // Interpolate position on the line (purely deterministic math)
             Vector3 oldPos = _rb.position;
+            Quaternion oldRot = _rb.rotation;
 
-            // Move via Rigidbody so physics knows about the motion
-            _rb.MovePosition(newPos);
+            Vector3 newPos = Vector3.Lerp(pointA.position, pointB.position, _t);
+            Quaternion newRot = oldRot;
 
             if (orientToPath)
             {
                 Vector3 moveDir = (newPos - oldPos);
                 if (moveDir.sqrMagnitude > 0.000001f)
                 {
-                    Quaternion newRot = Quaternion.LookRotation(moveDir.normalized, Vector3.up);
-                    _rb.MoveRotation(newRot);
+                    newRot = Quaternion.LookRotation(moveDir.normalized, Vector3.up);
                 }
             }
 
-            // No need to set linearVelocity for a kinematic body.
-            // The swept movement between oldPos and newPos is what makes
-            // other rigidbodies ride along with the platform.
+            // Drive a kinematic body deterministically; physics will
+            // handle passengers based on this swept motion.
+            _rb.MovePosition(newPos);
+            _rb.MoveRotation(newRot);
         }
 
         public void SetPoints(Transform a, Transform b)
@@ -90,33 +95,41 @@ namespace _Demo.Scripts.PatrollingPlatform
 
             if (a != null)
             {
-                if (_rb == null) _rb = GetComponent<Rigidbody>();
                 _rb.position = a.position;
+                _rb.rotation = Quaternion.identity;
             }
         }
-        
+    
         #region State
         public IState GetCurrentState()
         {
             return new PatrollingPlatformState()
             {
-                Position = transform.position,
-                Rotation = transform.eulerAngles,
+                Position = _rb.position,
+                Rotation = _rb.rotation.eulerAngles,
+                Time = _t,
+                Direction = _movingForward
             };
         }
 
         public void UpdateState(IState state)
         {
             PatrollingPlatformState platformState = (PatrollingPlatformState) state;
-            transform.position = platformState.Position;
-            transform.eulerAngles = platformState.Rotation;
+
+            _rb.position = platformState.Position;
+            _rb.rotation = Quaternion.Euler(platformState.Rotation);
+            _t = platformState.Time;
+            _movingForward = platformState.Direction;
         }
 
         public void ApplyState(IState state)
         {
             PatrollingPlatformState platformState = (PatrollingPlatformState) state;
-            transform.position = platformState.Position;
-            transform.eulerAngles = platformState.Rotation;
+
+            _rb.position = platformState.Position;
+            _rb.rotation = Quaternion.Euler(platformState.Rotation);
+            _t = platformState.Time;
+            _movingForward = platformState.Direction;
         }
 
         public void ApplyPartialState(IState state, uint part)
@@ -124,7 +137,7 @@ namespace _Demo.Scripts.PatrollingPlatform
             throw new System.NotImplementedException();
         }
         #endregion
-        
+    
         protected override bool IsPredicted() => true;
     }
 }

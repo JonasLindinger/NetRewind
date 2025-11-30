@@ -1,4 +1,3 @@
-using _Demo.Scripts.State;
 using NetRewind.Utils.Input.Data;
 using NetRewind.Utils.Simulation;
 using NetRewind.Utils.Simulation.State;

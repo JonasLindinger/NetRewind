@@ -20,7 +20,8 @@ namespace _Demo.Scripts.Player
         private void OnDestroy()
         {
             #if Server
-            NetworkManager.Singleton.OnClientConnectedCallback -= SpawnPlayer;
+            if (NetworkManager.Singleton != null)
+                NetworkManager.Singleton.OnClientConnectedCallback -= SpawnPlayer;
             #endif
         }
 

@@ -7,7 +7,7 @@ namespace _Demo.Scripts.PatrollingPlatform
     public class PatrollingPlatformSpawner : MonoBehaviourSingleton<PatrollingPlatformSpawner>
     {
         public static Transform PointA => GetInstance().pointA;
-        public static Transform PointB => GetInstance().pointA;
+        public static Transform PointB => GetInstance().pointB;
         
         [Header("References")]
         [SerializeField] private PatrollingPlatformController platformPrefab;
@@ -21,7 +21,8 @@ namespace _Demo.Scripts.PatrollingPlatform
 
         private void OnDestroy()
         {
-            NetworkManager.Singleton.OnServerStarted -= Spawn;
+            if (NetworkManager.Singleton != null)
+                NetworkManager.Singleton.OnServerStarted -= Spawn;
         }
 
         private void Spawn()

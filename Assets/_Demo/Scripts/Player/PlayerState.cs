@@ -2,7 +2,7 @@ using NetRewind.Utils.Simulation.State;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace _Demo.Scripts.State
+namespace _Demo.Scripts.Player
 {
     [StateType]
     public struct PlayerState : IState

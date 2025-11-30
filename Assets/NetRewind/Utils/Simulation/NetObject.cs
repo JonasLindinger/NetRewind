@@ -84,6 +84,8 @@ namespace NetRewind.Utils.Simulation
                     ref _visualVelocity,
                     Simulation.TimeBetweenTicks // seconds
                 );
+                
+                visual.rotation = transform.rotation;
             }
             
             #if Client
