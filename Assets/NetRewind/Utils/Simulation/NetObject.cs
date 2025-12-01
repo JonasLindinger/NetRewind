@@ -218,30 +218,21 @@ namespace NetRewind.Utils.Simulation
             // Prediction -> compare to prediction.
             try
             {
-                (CompareResult result, uint part) result = localState.Compare(localState, serverState);
+                uint result = localState.Compare(localState, serverState);
 
-                switch (result.result)
+                switch (result)
                 {
-                    case CompareResult.Equal:
+                    case (uint) CompareResult.Equal:
                         // Everything is fine.
                         break;
-                    case CompareResult.FullObjectCorrection:
-                        // Apply the entire server state.
-                        // Don't use try catch here, because if we receive states, we should sync them!
-                        _stateHolder.ApplyState(serverState);
+                    case (uint) CompareResult.WorldCorrection:
+                        // Apply the entire server state and recalculate some ticks to be ahead of the server again.
+                        SnapshotTransportLayer.RequestSnapshot();
                         break;
-                    case CompareResult.PartialObjectCorrection:
+                    default:
                         // Apply only a part of the server state.
                         // Don't use try catch here, because if we receive states, we should sync them!
-                        _stateHolder.ApplyPartialState(serverState, result.part);
-                        break;
-                    case CompareResult.GroupCorrection:
-                        // Todo: Apply a group of objects.
-                        throw new NotImplementedException();
-                        break;
-                    case CompareResult.WorldCorrection:
-                        // Request a full Snapshot and do reconciliation.
-                        SnapshotTransportLayer.RequestSnapshot();
+                        _stateHolder.ApplyPartialState(serverState, result);
                         break;
                 }
             }

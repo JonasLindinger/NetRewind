@@ -20,17 +20,17 @@ namespace _Demo.Scripts.Player
             serializer.SerializeValue(ref AngularVelocity);
         }
 
-        public (CompareResult, uint) Compare(IState localState, IState serverState)
+        public uint Compare(IState localState, IState serverState)
         {
             PlayerState local = (PlayerState) localState;
             PlayerState server = (PlayerState) serverState;
             
             if (Vector3.Distance(local.Position, server.Position) > 0.25f)
             {
-                return (CompareResult.WorldCorrection, 0);
+                return 1;
             }
 
-            return (CompareResult.Equal, 0);
+            return 0;
         }
     }
 }

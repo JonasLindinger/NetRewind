@@ -12,6 +12,6 @@ namespace NetRewind.Utils.Simulation.State
         /// <param name="localState"></param>
         /// <param name="serverState"></param>
         /// <returns></returns>
-        public (CompareResult, uint) Compare(IState localState, IState serverState);
+        public uint Compare(IState localState, IState serverState);
     }
 }

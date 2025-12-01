@@ -20,7 +20,7 @@ namespace _Demo.Scripts.PatrollingPlatform
             serializer.SerializeValue(ref Direction);
         }
         
-        public (CompareResult, uint) Compare(IState localState, IState serverState)
+        public uint Compare(IState localState, IState serverState)
         {
             PatrollingPlatformState local = (PatrollingPlatformState) localState;
             PatrollingPlatformState server = (PatrollingPlatformState) serverState;
@@ -28,25 +28,25 @@ namespace _Demo.Scripts.PatrollingPlatform
             // Position tolerance: be MUCH looser than 0.25f if it’s a moving platform
             if (Vector3.Distance(local.Position, server.Position) > 0.5f)
             {
-                return (CompareResult.FullObjectCorrection, 0);
+                return 1;
             }
 
             if (Vector3.Distance(local.Rotation, server.Rotation) > 2f)
             {
-                return (CompareResult.FullObjectCorrection, 0);
+                return 1;
             }
             
             if (local.Direction != server.Direction)
             {
-                return (CompareResult.FullObjectCorrection, 0);
+                return 1;
             }
             
             if (!Mathf.Approximately(local.Time, server.Time))
             {
-                return (CompareResult.FullObjectCorrection, 0);
+                return 1;
             }
 
-            return (CompareResult.Equal, 0);
+            return 0;
         }
     }
 }
