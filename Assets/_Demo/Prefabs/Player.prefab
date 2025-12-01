@@ -390,6 +390,9 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   stateSendingMode: 1
   visual: {fileID: 5508161349560429830}
+  interactableMask:
+    serializedVersion: 2
+    m_Bits: 256
   xSensitivity: 6
   ySensitivity: 6
   walkSpeed: 7

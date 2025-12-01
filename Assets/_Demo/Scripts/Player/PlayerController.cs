@@ -1,3 +1,5 @@
+using _Demo.Scripts.Car;
+using _Demo.Scripts.Game;
 using NetRewind.Utils.Input.Data;
 using NetRewind.Utils.Simulation;
 using NetRewind.Utils.Simulation.State;
@@ -8,6 +10,10 @@ namespace _Demo.Scripts.Player
     [RequireComponent(typeof(Rigidbody))]
     public class PlayerController : NetObject, ITick, IStateHolder, IInputListener, IInputDataSource
     {
+        public bool IsInCar => _currentCar != null;
+        
+        [Header("Interaction")]
+        [SerializeField] private LayerMask interactableMask = ~0;
         [Header("Mouse Settings")]
         [SerializeField] private float xSensitivity = 6;
         [SerializeField] private float ySensitivity = 6;
@@ -40,6 +46,12 @@ namespace _Demo.Scripts.Player
         
         private float _xRotation;
         private float _yRotation;
+
+        private bool _canMove = true;
+        private CarController _currentCar;
+        private Transform _seat;
+        
+        private bool _isInteracting;
         
         protected override void NetSpawn()
         {
@@ -69,7 +81,12 @@ namespace _Demo.Scripts.Player
             transform.eulerAngles = newRotation;
             
             // Move player
-            Move();
+            if (_canMove)
+                Move();
+            else if (IsInCar)
+                transform.position = _seat.position;
+            
+            CheckInteract();
         }
         
         private void Move()
@@ -123,6 +140,53 @@ namespace _Demo.Scripts.Player
                 _jumpCooldownTimer = jumpCooldown;
             }
         }
+
+        private void CheckInteract()
+        {
+            bool interacting = GetButton(7);
+            
+            if (interacting && !_isInteracting)
+            {
+                IInteractable interactable = FindAnyObjectByType<CarController>();
+                if (IsInCar)
+                {
+                    // Hop out of car
+                    _currentCar.Interact(this);
+                }
+                else if (interactable != null)
+                {
+                    // Found an interactable
+                    interactable.Interact(this);
+                }
+                else
+                {
+                    // No interactable in range
+                }
+            }
+            
+            _isInteracting = interacting;
+        }
+
+        public void HopInCar(CarController car, Transform seat)
+        {
+            _canMove = false;
+            _currentCar = car;
+            _seat = seat;
+            _rb.linearVelocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
+            _rb.useGravity = false;
+        }
+
+        public void HopOutCar()
+        {
+            _canMove = true;
+            _currentCar = null;
+            _seat = null;
+            Vector3 newPosition = transform.position;
+            newPosition.y += 3;
+            transform.position = newPosition;
+            _rb.useGravity = true;
+        }
         
         public void NetOwnerUpdate()
         {
@@ -166,7 +230,9 @@ namespace _Demo.Scripts.Player
                 Position = transform.position,
                 YRotation = transform.localRotation.eulerAngles.y,
                 Velocity = _rb.linearVelocity,
-                AngularVelocity = _rb.angularVelocity
+                AngularVelocity = _rb.angularVelocity,
+                CanMove = _canMove,
+                Car = IsInCar ? _currentCar.NetworkObjectId : ulong.MaxValue,
             };
         }
 
@@ -177,6 +243,10 @@ namespace _Demo.Scripts.Player
             transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
             _rb.linearVelocity = playerState.Velocity;
             _rb.angularVelocity = playerState.AngularVelocity;
+            _canMove = playerState.CanMove;
+            _currentCar = playerState.Car != ulong.MaxValue ? CarController.GetCar(playerState.Car) : null;
+            _seat = _currentCar != null ? _currentCar.GetSeatByOwner(OwnerClientId) : null;
+            _rb.useGravity = !IsInCar;
         }
 
         public void ApplyState(IState state)
@@ -186,6 +256,10 @@ namespace _Demo.Scripts.Player
             transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
             _rb.linearVelocity = playerState.Velocity;
             _rb.angularVelocity = playerState.AngularVelocity;
+            _canMove = playerState.CanMove;
+            _currentCar = playerState.Car != ulong.MaxValue ? CarController.GetCar(playerState.Car) : null;
+            _seat = _currentCar != null ? _currentCar.GetSeatByOwner(OwnerClientId) : null;
+            _rb.useGravity = !IsInCar;
         }
 
         public void ApplyPartialState(IState state, uint part)
