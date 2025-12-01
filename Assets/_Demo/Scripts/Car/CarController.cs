@@ -28,7 +28,7 @@ namespace _Demo.Scripts.Car
         
         private Rigidbody _rb;
 
-        private void Start()
+        private void Awake()
         {
             _rb = GetComponent<Rigidbody>();
         }

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6062546069481960019}
   - component: {fileID: 8501204246013750830}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -62,7 +62,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7283233233223727001}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Seat 1 Position
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -96,7 +96,7 @@ GameObject:
   - component: {fileID: 1013073716198405386}
   - component: {fileID: 6975209977115562671}
   - component: {fileID: 6956591604242193418}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -185,7 +185,7 @@ GameObject:
   - component: {fileID: 5807217118882859734}
   - component: {fileID: 7363164315437324763}
   - component: {fileID: 1120308471645522819}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -272,7 +272,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2458748186775769207}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Seat 2 Position
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -306,7 +306,7 @@ GameObject:
   - component: {fileID: 5052887809794073197}
   - component: {fileID: 7654296046468779503}
   - component: {fileID: 785208869300218485}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -396,7 +396,7 @@ GameObject:
   - component: {fileID: 613518259442914192}
   - component: {fileID: 6161861316295523149}
   - component: {fileID: 8406311241906911647}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Car
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -498,7 +498,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4168475530523613133}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
