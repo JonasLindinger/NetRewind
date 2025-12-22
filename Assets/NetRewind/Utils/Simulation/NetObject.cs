@@ -230,7 +230,6 @@ namespace NetRewind.Utils.Simulation
                     case (uint) CompareResult.WorldCorrection:
                         // Apply the entire server state and recalculate some ticks to be ahead of the server again.
                         SnapshotTransportLayer.RequestSnapshot();
-                        Debug.Log(serverStateTick + " recon.");
                         break;
                     default:
                         // Apply only a part of the server state.
