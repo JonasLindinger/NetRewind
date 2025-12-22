@@ -130,16 +130,17 @@ namespace NetRewind.Utils.Simulation
             if (_inputListener != null)
             {
                 #if Client
-                if (IsOwner)
+                if (IsOwner && IsClient)
                 {
                     // -> Local client, get local input
                     InputState inputState = InputContainer.GetInput(tick);
                     _inputListener.InputData = inputState.Input;
                     _inputListener.Data = inputState.Data;
+                    _inputListener.TickOfTheInput = inputState.Tick;
                 }
                 #endif
                 #if Server 
-                if (!IsOwner && InputTransportLayer.SentInput(OwnerClientId))
+                if (IsServer && !IsOwner && InputTransportLayer.SentInput(OwnerClientId))
                 {
                     // Not local client -> get input from InputTransportLayer
                     try
@@ -147,6 +148,7 @@ namespace NetRewind.Utils.Simulation
                         InputState inputState = InputTransportLayer.GetInput(OwnerClientId, tick);
                         _inputListener.InputData = inputState.Input;
                         _inputListener.Data = inputState.Data;
+                        _inputListener.TickOfTheInput = inputState.Tick;
                     }
                     catch (Exception e)
                     {
@@ -173,7 +175,7 @@ namespace NetRewind.Utils.Simulation
             
             if (serverObjectState.Tick > Simulation.CurrentTick)
             {
-                // Debug.LogWarning("Received state for tick " + serverObjectState.Tick + " but we are at tick " + Simulation.CurrentTick + "! IGNORING / Waiting for tick adjustments!");
+                // Debug.LogWarning("Received state for tick " + serverObjectState.TickOfTheInput + " but we are at tick " + Simulation.CurrentTick + "! IGNORING / Waiting for tick adjustments!");
                 return;
             }
             

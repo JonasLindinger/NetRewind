@@ -38,7 +38,8 @@ namespace _Demo.Scripts.Player
 
         public byte[] InputData { get; set; }
         public IData Data { get; set; }
-        
+        public uint TickOfTheInput { get; set; }
+
         private Rigidbody _rb;
         
         private bool _grounded;

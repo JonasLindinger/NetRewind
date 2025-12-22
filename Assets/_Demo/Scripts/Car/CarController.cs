@@ -25,7 +25,8 @@ namespace _Demo.Scripts.Car
         
         public byte[] InputData { get; set; }
         public IData Data { get; set; }
-        
+        public uint TickOfTheInput { get; set; }
+
         private Rigidbody _rb;
 
         private void Awake()
@@ -50,7 +51,11 @@ namespace _Demo.Scripts.Car
         
         public void Tick(uint tick)
         {
-            
+            if (tick == TickOfTheInput)
+            {
+                // Move car.
+                Debug.Log(GetVector2(0));
+            }
         }
         
         public void Interact(PlayerController player)
@@ -62,6 +67,8 @@ namespace _Demo.Scripts.Car
                     _playerOnSeat2 == ulong.MaxValue)
                 {
                     // -> Seat available
+                    
+                    bool seatWithAuthority = _playerOnSeat1 == ulong.MaxValue;
                     
                     // Get new position
                     Transform seat = _playerOnSeat1 == ulong.MaxValue 
@@ -75,6 +82,15 @@ namespace _Demo.Scripts.Car
                     
                     seatOwner = player.OwnerClientId;
                     player.HopInCar(this, seat);
+                    
+                    #if Server
+                    if (IsServer && seatWithAuthority)
+                    {
+                        // Seat 1 -> authority over the car.
+                        // -> give ownership.
+                        NetworkObject.ChangeOwnership(player.OwnerClientId);
+                    }
+                    #endif
                 }
                 else
                 {
@@ -89,6 +105,8 @@ namespace _Demo.Scripts.Car
                 {
                     // -> Let the player leave the car
                     
+                    bool seatWithAuthority = _playerOnSeat1 == player.OwnerClientId;
+                    
                     //Get seat of the player
                     ref ulong seat = ref _playerOnSeat1 == player.OwnerClientId 
                         ? ref _playerOnSeat1 
@@ -98,6 +116,15 @@ namespace _Demo.Scripts.Car
                     seat = ulong.MaxValue;
                     
                     player.HopOutCar();
+                    
+                    #if Server
+                    if (IsServer && seatWithAuthority)
+                    {
+                        // Seat 1 -> authority over the car.
+                        // -> remove ownership.
+                        NetworkObject.RemoveOwnership();
+                    }
+                    #endif
                 }
                 else
                 {

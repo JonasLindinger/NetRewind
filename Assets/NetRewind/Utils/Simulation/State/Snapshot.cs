@@ -17,7 +17,7 @@ namespace NetRewind.Utils.Simulation.State
         
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
-            // Serializing Tick
+            // Serializing TickOfTheInput
             serializer.SerializeValue(ref _tick);
 
             #region Serlialize Dictionary
