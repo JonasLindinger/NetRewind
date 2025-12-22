@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using NetRewind.Utils.Simulation.State;
 using Unity.Netcode;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace _Demo.Scripts.Player
 {
@@ -31,16 +33,19 @@ namespace _Demo.Scripts.Player
             
             if (Vector3.Distance(local.Position, server.Position) > 0.25f)
             {
+                Debug.Log("Player Position: " + local.Position + " vs " + server.Position);
                 return 1;
             }
 
             if (CanMove != server.CanMove)
             {
+                Debug.Log("Player CanMove");
                 return 1;
             }
 
             if (Car != server.Car)
             {
+                Debug.Log("Player Car");
                 return 1;
             }
             

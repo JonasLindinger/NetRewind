@@ -31,21 +31,25 @@ namespace _Demo.Scripts.Car
             
             if (Vector3.Distance(local.Position, server.Position) > 0.25f)
             {
+                Debug.Log("Car Position");
                 return 1;
             }
             
             if (Vector3.Distance(local.Rotation, server.Rotation) > 0.25f)
             {
+                Debug.Log("Car Rotation");
                 return 1;
             }
             
             if (local.Seat1 != server.Seat1)
             {
+                Debug.Log("Car Seat1");
                 return 1;
             }
             
             if (local.Seat2 != server.Seat2)
             {
+                Debug.Log("Car Seat2");
                 return 1;
             }
             

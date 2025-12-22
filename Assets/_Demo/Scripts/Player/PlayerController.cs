@@ -67,11 +67,13 @@ namespace _Demo.Scripts.Player
             
             _rb = GetComponent<Rigidbody>();
             _rb.freezeRotation = true;
-            // _rb.interpolation = RigidbodyInterpolation.Interpolate;
         }
         
         public void Tick(uint tick)
         {
+            if (IsInCar)
+                transform.position = _seat.position;
+            
             // GetPlayer data
             PlayerData data = GetData<PlayerData>();
             
@@ -83,10 +85,8 @@ namespace _Demo.Scripts.Player
             // Move player
             if (_canMove)
                 Move();
-            else if (IsInCar)
-                transform.position = _seat.position;
             
-            CheckInteract();
+            CheckInteract(tick);
         }
         
         private void Move()
@@ -141,7 +141,7 @@ namespace _Demo.Scripts.Player
             }
         }
 
-        private void CheckInteract()
+        private void CheckInteract(uint tick)
         {
             bool interacting = GetButton(7);
             
@@ -169,9 +169,13 @@ namespace _Demo.Scripts.Player
 
         public void HopInCar(CarController car, Transform seat)
         {
-            _canMove = false;
             _currentCar = car;
             _seat = seat;
+                
+            transform.position = seat.position;
+            _rb.position = seat.position;
+    
+            _canMove = false;
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
             _rb.useGravity = false;
@@ -179,12 +183,15 @@ namespace _Demo.Scripts.Player
 
         public void HopOutCar()
         {
-            _canMove = true;
-            _currentCar = null;
-            _seat = null;
             Vector3 newPosition = transform.position;
             newPosition.y += 3;
             transform.position = newPosition;
+            _rb.position = newPosition;
+            
+            _currentCar = null;
+            _seat = null;
+            
+            _canMove = true;
             _rb.useGravity = true;
         }
         

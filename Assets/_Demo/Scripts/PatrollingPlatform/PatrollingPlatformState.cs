@@ -28,21 +28,25 @@ namespace _Demo.Scripts.PatrollingPlatform
             // Position tolerance: be MUCH looser than 0.25f if it’s a moving platform
             if (Vector3.Distance(local.Position, server.Position) > 0.5f)
             {
+                Debug.Log("PatrollingPlatform Position");
                 return 1;
             }
 
             if (Vector3.Distance(local.Rotation, server.Rotation) > 2f)
             {
+                Debug.Log("PatrollingPlatform Rotation");
                 return 1;
             }
             
             if (local.Direction != server.Direction)
             {
+                Debug.Log("PatrollingPlatform Direction");
                 return 1;
             }
             
             if (!Mathf.Approximately(local.Time, server.Time))
             {
+                Debug.Log("PatrollingPlatform Time");
                 return 1;
             }
 

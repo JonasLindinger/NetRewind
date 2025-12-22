@@ -198,13 +198,13 @@ namespace NetRewind.Utils.Simulation
                 ObjectState clientObjectState = _states.Get(serverObjectState.Tick);
                 IState localState = clientObjectState.State;
                 
-                OnStateReceived(localState, serverState);
+                OnStateReceived(serverObjectState.Tick, localState, serverState);
             }
             catch (KeyNotFoundException e) { }
             #endif
         }
 
-        private void OnStateReceived(IState localState, IState serverState)
+        private void OnStateReceived(uint serverStateTick, IState localState, IState serverState)
         {
             #if Client
             // Check if we are predicting this object.
@@ -228,6 +228,7 @@ namespace NetRewind.Utils.Simulation
                     case (uint) CompareResult.WorldCorrection:
                         // Apply the entire server state and recalculate some ticks to be ahead of the server again.
                         SnapshotTransportLayer.RequestSnapshot();
+                        Debug.Log(serverStateTick + " recon.");
                         break;
                     default:
                         // Apply only a part of the server state.

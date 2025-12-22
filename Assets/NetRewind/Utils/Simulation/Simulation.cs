@@ -112,7 +112,7 @@ namespace NetRewind.Utils.Simulation
             CurrentTick = tick;
         }
 
-        public static async void CalculateExtraTicks(uint amount)
+        public static void CalculateExtraTicks(uint amount)
         {
             if (!_isRunning) return;
             if (_isAdjusting) return;

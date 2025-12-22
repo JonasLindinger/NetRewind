@@ -55,42 +55,53 @@ namespace _Demo.Scripts.Car
         
         public void Interact(PlayerController player)
         {
-            if (player.IsInCar)
+            if (!player.IsInCar)
             {
-                // Leave car
-                if (_playerOnSeat1 == player.OwnerClientId)
+                // Check if a seat is available
+                if (_playerOnSeat1 == ulong.MaxValue ||
+                    _playerOnSeat2 == ulong.MaxValue)
                 {
-                    // Player sat in seat 1
-                    _playerOnSeat1 = ulong.MaxValue;
-                }
-                else if (_playerOnSeat2 == player.OwnerClientId)
-                {
-                    // Player sat in seat 1
-                    _playerOnSeat2 = ulong.MaxValue;
-                }
-                
-                player.HopOutCar();
-            }
-            else
-            {
-                // Hop in car
-                if (_playerOnSeat1 == ulong.MaxValue) // Check if seat 1 is free
-                {
-                    // Seat in Seat 1
-                    player.transform.position = seat1.transform.position;
-                    _playerOnSeat1 = player.OwnerClientId;
-                    player.HopInCar(this, seat1.transform);
-                }
-                else if (_playerOnSeat2 == ulong.MaxValue) // Check if seat 2 is free
-                {
-                    // Seat in Seat 2
-                    player.transform.position = seat2.transform.position;
-                    _playerOnSeat2 = player.OwnerClientId;
-                    player.HopInCar(this, seat2.transform);
+                    // -> Seat available
+                    
+                    // Get new position
+                    Transform seat = _playerOnSeat1 == ulong.MaxValue 
+                        ? seat1.transform
+                        : seat2.transform;
+
+                    // Get a reference of the seat
+                    ref ulong seatOwner = ref _playerOnSeat1 == ulong.MaxValue 
+                        ? ref _playerOnSeat1 
+                        : ref _playerOnSeat2;
+                    
+                    seatOwner = player.OwnerClientId;
+                    player.HopInCar(this, seat);
                 }
                 else
                 {
                     // No space
+                }
+            }
+            else
+            {
+                // Verify
+                if (_playerOnSeat1 == player.OwnerClientId ||
+                    _playerOnSeat2 == player.OwnerClientId)
+                {
+                    // -> Let the player leave the car
+                    
+                    //Get seat of the player
+                    ref ulong seat = ref _playerOnSeat1 == player.OwnerClientId 
+                        ? ref _playerOnSeat1 
+                        : ref _playerOnSeat2;
+                    
+                    // Mark seat as available
+                    seat = ulong.MaxValue;
+                    
+                    player.HopOutCar();
+                }
+                else
+                {
+                    // Player didn't sit in the car
                 }
             }
         }
