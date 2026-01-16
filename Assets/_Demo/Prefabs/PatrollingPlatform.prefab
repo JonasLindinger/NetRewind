@@ -74,7 +74,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Demo.Scripts.PatrollingPlatform.PatrollingPlatformController
   ShowTopMostFoldoutHeaderGroup: 1
-  stateSendingMode: 2
+  privateStateSendingMode: 0
+  shouldPredict: 1
+  initialSendingMode: 4
   visual: {fileID: 826714206174901569}
   pointA: {fileID: 0}
   pointB: {fileID: 0}

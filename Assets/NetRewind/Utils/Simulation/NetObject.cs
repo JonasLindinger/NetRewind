@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using NetRewind.Utils.CustomDataStructures;
+using NetRewind.Utils.Features.ShowOnly;
 using NetRewind.Utils.Input;
 using NetRewind.Utils.Input.Data;
 using NetRewind.Utils.Simulation.State;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace NetRewind.Utils.Simulation
 {
@@ -14,11 +17,36 @@ namespace NetRewind.Utils.Simulation
     {
         private static IInputDataSource _inputDataSource;
         
-        // Todo: Add child NetObject...?
         public static Dictionary<ulong, NetObject> NetworkObjects = new Dictionary<ulong, NetObject>();
+        #if Server
+        public static Dictionary<SendingMode, List<NetObject>> StateSendingList = new Dictionary<SendingMode, List<NetObject>>();
+        /// <summary>
+        /// Don't use this!
+        /// </summary>
+        public Dictionary<NetObject, uint> InteractedNetObjects = new Dictionary<NetObject, uint>();
+        #endif
         
-        [Header("Networking")]
-        [SerializeField] private SendingMode stateSendingMode = SendingMode.Full;
+        // Getter
+        public bool IsPredicted => _isPredicted;
+        #if Server
+        [HideInInspector] public SendingMode StateSendingMode => NetObjectSyncGroup != null ? NetObjectSyncGroup.SendingMode : privateStateSendingMode;
+        #endif
+        [FormerlySerializedAs("privateSendingMode")] [HideInInspector] public SendingMode privateStateSendingMode; // The sending mode this object should normally be in
+        
+        #if Server
+        [HideInInspector] public NetObjectSyncGroup NetObjectSyncGroup;
+        #endif
+
+        [Header("Networking")] 
+        [SerializeField] private bool shouldPredict = true; // Default value;
+        #if UNITY_EDITOR
+        [ShowOnly] 
+        #endif
+        private bool _isPredicted;
+        /// <summary>
+        /// Don't change directly via code!
+        /// </summary>
+        [SerializeField] private SendingMode initialSendingMode = SendingMode.Full; // The sending mode this object starts in.
         [SerializeField] private Transform visual;
         [Space(10)]
         
@@ -29,7 +57,7 @@ namespace NetRewind.Utils.Simulation
         #endif
 
         #if Server
-        private ObjectState _latestSavedState;
+        private uint _tickToLeaveGroup = uint.MaxValue;
         #endif
         
         private ITick _tickInterface;
@@ -51,13 +79,39 @@ namespace NetRewind.Utils.Simulation
             
             visual.SetParent(null); // Unparent from here.
             DontDestroyOnLoad(visual.gameObject);
+
+            _isPredicted = shouldPredict;
+            privateStateSendingMode = initialSendingMode;
             
             NetSpawn();
+
+            #if Server
+            if (IsServer)
+            {
+                StateSendingList.TryAdd(StateSendingMode, new List<NetObject>());
+                StateSendingList[StateSendingMode].Add(this);
+            }
+            #endif
         }
 
         public override void OnNetworkDespawn()
         {
             NetworkObjects.Remove(NetworkObjectId);
+            
+            #if Server
+            if (NetObjectSyncGroup != null)
+                LeaveSyncGroup();
+            
+            if (IsServer)
+            {
+                if (StateSendingList.TryGetValue(StateSendingMode, out List<NetObject> list))
+                {
+                    list.Remove(this);
+                    if (list.Count == 0)
+                        StateSendingList.Remove(StateSendingMode);
+                }
+            }            
+            #endif
 
             if (TryGetComponent(out IInputDataSource tempPlayer) && tempPlayer == _inputDataSource)
                 _inputDataSource = null;
@@ -96,6 +150,11 @@ namespace NetRewind.Utils.Simulation
             NetUpdate();
         }
 
+        public void ApplyPartialState(IState serverState, uint result)
+        {
+            _stateHolder.ApplyPartialState(serverState, result);
+        }
+        
         public static void ApplyState(ulong clientId, IState state)
         {
             try
@@ -119,14 +178,14 @@ namespace NetRewind.Utils.Simulation
 
         private void InternalTick(uint tick)
         {
-            if (!(IsServer || IsPredicted()))
+            if (!(IsServer || IsPredicted))
                 return;
-            
-            #if Server
-            if (tick % (byte) stateSendingMode == 0 && IsServer)
-                SendStateRPC(_latestSavedState);
-            #endif
 
+            #if Server
+            if (IsServer && tick >= _tickToLeaveGroup) 
+                LeaveSyncGroup();
+            #endif
+            
             if (_inputListener != null)
             {
                 #if Client
@@ -163,102 +222,13 @@ namespace NetRewind.Utils.Simulation
             else
                 _tickInterface?.Tick(tick);
         }
-
-        [Rpc(SendTo.NotServer, Delivery = RpcDelivery.Reliable)]
-        private void SendStateRPC(ObjectState serverObjectState)
-        {
-            // Todo: make this an option to toggle between predict everything (Sending one snapshot) and predict predicted objects only (this) (sending single states)
-            #if Client
-            // Only accept new states!
-            if (serverObjectState.Tick <= _lastReceivedStateTick)
-                return;
-            
-            if (serverObjectState.Tick > Simulation.CurrentTick)
-            {
-                // Debug.LogWarning("Received state for tick " + serverObjectState.TickOfTheInput + " but we are at tick " + Simulation.CurrentTick + "! IGNORING / Waiting for tick adjustments!");
-                return;
-            }
-            
-            // Check if our buffer is even capable of containing the snapshot at that tick.
-            if (serverObjectState.Tick <= Simulation.CurrentTick - SnapshotContainer.SnapshotBufferSize) 
-                return;
-            
-            // Check if we should have the snapshot at that tick.
-            if (serverObjectState.Tick < _firstRecordedState) 
-                return;
-            
-            // Only accept if we don't already do correction.
-            if (Simulation.IsCorrectingGameState) return;
-            
-            // --- Accept the state ---
-            _lastReceivedStateTick = serverObjectState.Tick;
-            
-            IState serverState = serverObjectState.State;
-            
-            try
-            {
-                ObjectState clientObjectState = _states.Get(serverObjectState.Tick);
-                IState localState = clientObjectState.State;
-                
-                OnStateReceived(serverObjectState.Tick, localState, serverState);
-            }
-            catch (KeyNotFoundException e) { }
-            #endif
-        }
-
-        private void OnStateReceived(uint serverStateTick, IState localState, IState serverState)
-        {
-            #if Client
-            // Check if we are predicting this object.
-            if (!IsPredicted())
-            {
-                // No prediction -> just apply the state.
-                _stateHolder.UpdateState(serverState);
-                return;
-            }
-            
-            // Prediction -> compare to prediction.
-            try
-            {
-                uint result = localState.Compare(localState, serverState);
-
-                switch (result)
-                {
-                    case (uint) CompareResult.Equal:
-                        // Everything is fine.
-                        break;
-                    case (uint) CompareResult.WorldCorrection:
-                        // Apply the entire server state and recalculate some ticks to be ahead of the server again.
-                        SnapshotTransportLayer.RequestSnapshot();
-                        break;
-                    default:
-                        // Apply only a part of the server state.
-                        // Don't use try catch here, because if we receive states, we should sync them!
-                        _stateHolder.ApplyPartialState(serverState, result);
-                        break;
-                }
-            }
-            catch (Exception e)
-            {
-                
-            }
-            
-            #endif
-        }
         
         public IState GetSnapshotState(uint tick)
         {
             if (_stateHolder == null)
-                throw new NotImplementedException();
+                throw new Exception("");
             
             IState state = _stateHolder.GetCurrentState();
-            #if Server
-            if (IsServer) 
-            {
-                ObjectState objectState = new ObjectState(tick, state);
-                _latestSavedState = objectState;
-            }
-            #endif
             #if Client
             if (_firstRecordedState == 0)
                 _firstRecordedState = tick;
@@ -272,6 +242,10 @@ namespace NetRewind.Utils.Simulation
             return state;
         }
 
+        #if Client
+        public IState GetStateAtTick(uint tick) => _states.Get(tick).State;
+        #endif
+        
         public static IData GetPlayerInputData()
         {
             if (_inputDataSource != null)
@@ -289,6 +263,195 @@ namespace NetRewind.Utils.Simulation
 
         protected T GetData<T>() where T : IData => (T) _inputListener.Data;
         protected Dictionary<string, InputAction> InputActions => InputSender.Actions;
-        protected abstract bool IsPredicted();
+        
+        #if Server
+        public static void RegisterInteraction(uint tick, NetObject obj1, NetObject obj2)
+        {
+            if (!NetworkManager.Singleton.IsServer)
+            {
+                Debug.LogError("You can't call this, since you aren't a server!");
+                return;
+            }
+
+            if (obj1.NetObjectSyncGroup != null && obj2.NetObjectSyncGroup != null)
+                if (obj1.NetObjectSyncGroup == obj2.NetObjectSyncGroup) 
+                { /* Ignore, since they are in the same group. */ }
+                else
+                    // Merge groups
+                    obj1.NetObjectSyncGroup.MergeWith(tick, obj2.NetObjectSyncGroup);
+            else if (obj1.NetObjectSyncGroup != null)
+                // Let obj2 join obj1's group.
+                obj2.EnterSyncGroup(tick, obj1.NetObjectSyncGroup);
+            else if (obj2.NetObjectSyncGroup != null)
+                // Let obj1 join obj2's group.
+                obj1.EnterSyncGroup(tick, obj2.NetObjectSyncGroup);
+            else
+            {
+                // Create a new group and let them join.
+                NetObjectSyncGroup newGroup = new NetObjectSyncGroup(obj1.StateSendingMode);
+                obj1.EnterSyncGroup(tick, newGroup);
+                obj2.EnterSyncGroup(tick, newGroup);
+            }
+        }
+        #endif
+
+        #if Server
+        public void EnterSyncGroup(uint tick, NetObjectSyncGroup group)
+        {
+            if (!IsServer)
+            {
+                Debug.LogError("You can't call this, since you aren't a server!");
+                return;
+            }
+
+            if (NetObjectSyncGroup != null)
+            {
+                Debug.LogError("To enter a group, you first have to leave the current one!");
+                return;
+            }
+            
+            // Remove from the current list.
+            StateSendingList[StateSendingMode].Remove(this);
+            if (StateSendingList[StateSendingMode].Count == 0)
+                StateSendingList.Remove(StateSendingMode);
+            
+            NetObjectSyncGroup = group; // -> changes the StateSendingMode
+            NetObjectSyncGroup.Members.Add(this); // Join
+            
+            // Add to the new list
+            StateSendingList.TryAdd(StateSendingMode, new List<NetObject>());
+            StateSendingList[StateSendingMode].Add(this);
+
+            // Change the state sending mode of the group, if needed.
+            if ((byte) privateStateSendingMode < (byte) StateSendingMode)
+                NetObjectSyncGroup.SendingMode = StateSendingMode;
+
+            _tickToLeaveGroup = tick + SnapshotContainer.SnapshotBufferSize;
+        }
+        #endif
+        
+        #if Server
+        public void LeaveSyncGroup()
+        {
+            if (!IsServer)
+            {
+                Debug.LogError("You can't call this, since you aren't a server!");
+                return;
+            }
+
+            if (NetObjectSyncGroup == null)
+            {
+                Debug.LogError("You are not in a group!");
+                return;
+            }
+            
+            // Remove from the current list.
+            StateSendingList[StateSendingMode].Remove(this);
+            if (StateSendingList[StateSendingMode].Count == 0)
+                StateSendingList.Remove(StateSendingMode);
+
+            // Recalculate the sending mode of the group.
+            if (NetObjectSyncGroup.Members.Count > 0) 
+            {
+                byte newSendingMode = byte.MaxValue;
+                foreach (var member in NetObjectSyncGroup.Members)
+                {
+                    if ((byte) member.privateStateSendingMode < newSendingMode)
+                        newSendingMode = (byte) member.privateStateSendingMode;
+                }
+            
+                NetObjectSyncGroup.SendingMode = (SendingMode) newSendingMode;
+            }
+            
+            NetObjectSyncGroup.Members.Remove(this); // Leave
+            NetObjectSyncGroup = null; // -> changes the StateSendingMode
+            
+            // Add to the new list
+            StateSendingList.TryAdd(StateSendingMode, new List<NetObject>());
+            StateSendingList[StateSendingMode].Add(this);
+            
+            _tickToLeaveGroup = uint.MaxValue;
+        }
+        #endif
+        
+        #if Server
+        public void ChangeStateSendingMode(SendingMode newMode)
+        {
+            if (!IsServer)
+            {
+                Debug.LogError("You can't call this, since you aren't a server!");
+                return;
+            }
+
+            if ((byte) privateStateSendingMode == (byte) newMode)
+                return; // Nothing changed.
+
+            if (NetObjectSyncGroup == null)
+            {
+                // Remove from the current list.
+                StateSendingList[StateSendingMode].Remove(this);
+                if (StateSendingList[StateSendingMode].Count == 0)
+                    StateSendingList.Remove(StateSendingMode);
+                
+                // Update variable
+                privateStateSendingMode = newMode;
+                
+                // Add to the new list
+                StateSendingList.TryAdd(StateSendingMode, new List<NetObject>());
+                StateSendingList[StateSendingMode].Add(this);
+            }
+            else
+            {
+                // Update variable
+                privateStateSendingMode = newMode;
+                
+                // -> Switch later when we are no longer in the current group.
+            }
+        }
+        #endif
+        
+        public void ChangePredictionState(bool shouldBePredicted)
+        {
+            bool previousState = _isPredicted;
+            _isPredicted = shouldBePredicted;
+
+            if (previousState == shouldBePredicted)
+                return;
+            
+            // Something changed!
+
+            UpdateObjectHandling();
+        }
+        private void UpdateObjectHandling()
+        {
+            if (_isPredicted)
+            {
+                // Is not predicted
+                if (IsOwner)
+                {
+                    // Owner and predicted
+                    // -> just check the state with the server state.
+                }
+                else
+                {
+                    // Not the owner and predicted
+                    // -> apply states and reconcile (if needed)
+                }
+            }
+            else
+            {
+                // Is no longer predicted
+                if (IsOwner)
+                {
+                    // Owner but not predicted???
+                    Debug.LogWarning("If you are the owner, you should always predict!");
+                }
+                else
+                {
+                    // Not the owner and not predicted
+                    // -> just apply the state.
+                }
+            }
+        }
     }
 }

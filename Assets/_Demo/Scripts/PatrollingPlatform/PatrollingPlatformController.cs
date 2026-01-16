@@ -33,6 +33,12 @@ namespace _Demo.Scripts.PatrollingPlatform
             SetPoints(PatrollingPlatformSpawner.PointA, PatrollingPlatformSpawner.PointB);
         }
 
+        protected override void NetSpawn()
+        {
+            // Not really necessary, because the default value is true. But just in case the value changed in the inspector, set it to true.
+            ChangePredictionState(true);
+        }
+
         public void Tick(uint tick)
         {
             if (pointA == null || pointB == null)
@@ -137,7 +143,5 @@ namespace _Demo.Scripts.PatrollingPlatform
             throw new System.NotImplementedException();
         }
         #endregion
-    
-        protected override bool IsPredicted() => true;
     }
 }

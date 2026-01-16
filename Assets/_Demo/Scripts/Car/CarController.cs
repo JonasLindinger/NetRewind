@@ -18,6 +18,13 @@ namespace _Demo.Scripts.Car
         [Header("References")]
         [SerializeField] private GameObject seat1;
         [SerializeField] private GameObject seat2;
+        [Space(5)]
+        [Header("Move Settings")]
+        [SerializeField] private float walkSpeed;
+        [SerializeField] private float groundDrag;
+        [Space(5)]
+        [Header("References")]
+        [SerializeField] private Transform orientation;
         
         private ulong _playerOnSeat1 = ulong.MaxValue;
         private ulong _playerOnSeat2 = ulong.MaxValue;
@@ -37,6 +44,14 @@ namespace _Demo.Scripts.Car
         protected override void NetSpawn()
         {
             _cars.Add(NetworkObjectId, this);
+        
+            // Not really necessary, because the default value is true. But just in case the value changed in the inspector, set it to true.
+            ChangePredictionState(true);
+        }
+
+        protected override void OnOwnershipChanged(ulong previous, ulong current)
+        {
+            NetOwnerUpdate();
         }
 
         protected override void NetDespawn()
@@ -51,10 +66,32 @@ namespace _Demo.Scripts.Car
         
         public void Tick(uint tick)
         {
-            if (tick == TickOfTheInput)
+            Move();
+        }
+        
+        private void Move()
+        {
+            // Applying movement
+            // Setting the drag
+            _rb.linearDamping = groundDrag;
+
+            // Calculating movement
+            Vector2 moveInput = GetVector2(0).normalized;
+
+            // _orientation.rotation = Quaternion.Euler(0, input.PlayerRotation, 0);
+            Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
+
+            // Applying movement
+            float moveSpeed = walkSpeed;
+
+            _rb.AddForce(moveDirection.normalized * (moveSpeed * 10), ForceMode.Force);
+
+            // Speed Control
+            Vector3 flatVel = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
+            if (flatVel.magnitude > moveSpeed)
             {
-                // Move car.
-                Debug.Log(GetVector2(0));
+                Vector3 limitedVel = flatVel.normalized * moveSpeed;
+                _rb.linearVelocity = new Vector3(limitedVel.x, _rb.linearVelocity.y, limitedVel.z);
             }
         }
         
@@ -174,8 +211,6 @@ namespace _Demo.Scripts.Car
             throw new System.NotImplementedException();
         }
         #endregion
-        
-        protected override bool IsPredicted() => true;
         
         public static CarController GetCar(ulong clientId) => _cars[clientId];
         public Transform GetSeatByOwner(ulong ownerClientId)

@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using NetRewind.Utils.Input;
 using NetRewind.Utils.Simulation.State;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace NetRewind.Utils.Simulation
@@ -87,6 +89,13 @@ namespace NetRewind.Utils.Simulation
 
         private static void OnTick(uint tick, bool isReconciliation = false)
         {
+            // isReconciliation is always false for the server / host.
+            if (isReconciliation && NetworkManager.Singleton.IsHost)
+            {
+                // Something went wrong.
+                throw new Exception("Reconciling as a Server isn't supported!");
+            }
+            
             // 1. Simulation physics
             if (NetRunner.GetInstance().ControlPhysics)
                 Physics.Simulate(TimeBetweenTicks);
@@ -94,10 +103,32 @@ namespace NetRewind.Utils.Simulation
             // 2. Save Game State
             SnapshotContainer.TakeSnapshot(tick);
             
-            #if Client
-            if (!isReconciliation)
+            #if Server
+            // 2.1 Send state
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
             {
-                // 2.5 Collect local client input
+                List<NetObject> objectsToSend = new List<NetObject>();
+                foreach (SendingMode mode in NetObject.StateSendingList.Keys)
+                {
+                    if (tick % (byte) mode == 0)
+                    {
+                        // Send these objects!
+                        List<NetObject> list = NetObject.StateSendingList[mode];
+                        foreach (NetObject obj in list)
+                            objectsToSend.Add(obj);
+                    }
+                }
+
+                if (objectsToSend.Count > 0)
+                    // Send states to the clients
+                    SnapshotTransportLayer.SendStates(tick, objectsToSend.ToArray());
+            }
+            #endif
+            
+            #if Client
+            // 2.2 Collect local client input
+            if (!isReconciliation && NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
+            {
                 InputContainer.Collect(tick);
             }
             #endif

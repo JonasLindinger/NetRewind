@@ -1,3 +1,4 @@
+using System;
 using _Demo.Scripts.Car;
 using _Demo.Scripts.Game;
 using NetRewind.Utils.Input.Data;
@@ -68,7 +69,40 @@ namespace _Demo.Scripts.Player
             
             _rb = GetComponent<Rigidbody>();
             _rb.freezeRotation = true;
+            
+            ChangePredictionState(IsOwner); // Predict if we are the owner. If not, wait for server updates.
         }
+
+        #region Ownership
+        public override void OnLostOwnership()
+        {
+            ChangePredictionState(false);
+        }
+        public override void OnGainedOwnership()
+        {
+            ChangePredictionState(true);
+        }
+        #endregion
+
+        #region Interaction
+        private void OnCollisionStay(Collision other)
+        {
+            #if Server
+            if (!IsServer) return;
+            Transform obj = other.transform;
+            if (obj.TryGetComponent(out NetObject netObject))
+                RegisterInteraction(Simulation.CurrentTick, this, netObject);
+            #endif
+        }
+
+        private Transform GetTotalParent(Transform obj)
+        {
+            if (obj.parent != null)
+                return GetTotalParent(obj.parent);
+            
+            return obj;
+        }
+        #endregion
         
         public void Tick(uint tick)
         {
@@ -105,7 +139,7 @@ namespace _Demo.Scripts.Player
                 _rb.linearDamping = 0;
 
             // Calculating movement
-            Vector2 moveInput = GetVector2(0);
+            Vector2 moveInput = GetVector2(0).normalized;
 
             // _orientation.rotation = Quaternion.Euler(0, input.PlayerRotation, 0);
             Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
@@ -276,7 +310,5 @@ namespace _Demo.Scripts.Player
         }
         
         #endregion
-
-        protected override bool IsPredicted() => IsOwner;
     }
 }

@@ -263,6 +263,37 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6397440674705486721
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1029155746113213707}
+  m_Layer: 6
+  m_Name: orientation
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1029155746113213707
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6397440674705486721}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5964820231929639380}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6736649503964327074
 GameObject:
   m_ObjectHideFlags: 0
@@ -418,6 +449,7 @@ Transform:
   m_Children:
   - {fileID: 4168475530523613133}
   - {fileID: 6062546069481960019}
+  - {fileID: 1029155746113213707}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &613518259442914192
@@ -485,10 +517,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Demo.Scripts.Car.CarController
   ShowTopMostFoldoutHeaderGroup: 1
-  stateSendingMode: 1
+  privateStateSendingMode: 0
+  shouldPredict: 1
+  initialSendingMode: 1
   visual: {fileID: 4168475530523613133}
   seat1: {fileID: 1951886888504385702}
   seat2: {fileID: 6736649503964327074}
+  walkSpeed: 7
+  groundDrag: 0.5
+  orientation: {fileID: 1029155746113213707}
 --- !u!1 &8815314220711218176
 GameObject:
   m_ObjectHideFlags: 0

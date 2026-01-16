@@ -21,6 +21,8 @@ namespace NetRewind.Utils.Simulation.State
         
         public static void StoreSnapshot(Snapshot snapshot) => _snapshots.Store(snapshot.Tick, snapshot);
 
+        public static Snapshot GetSnapshot(uint tick) => _snapshots.Get(tick);
+        
         public static Snapshot GetLatestSnapshot()
         {
             Snapshot snapshot = _snapshots.Get(_latestTakenSnapshotTick);
