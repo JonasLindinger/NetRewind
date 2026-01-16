@@ -29,7 +29,7 @@ namespace NetRewind.Utils.Simulation
         // Getter
         public bool IsPredicted => isPredicted;
         #if Server
-        [HideInInspector] public SendingMode StateSendingMode => NetObjectSyncGroup != null ? NetObjectSyncGroup.SendingMode : privateStateSendingMode;
+        public SendingMode StateSendingMode => NetObjectSyncGroup?.SendingMode ?? privateStateSendingMode;
         #endif
         [FormerlySerializedAs("privateSendingMode")] [HideInInspector] public SendingMode privateStateSendingMode; // The sending mode this object should normally be in
         
