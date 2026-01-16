@@ -90,11 +90,9 @@ namespace NetRewind.Utils.Simulation
         private static void OnTick(uint tick, bool isReconciliation = false)
         {
             // isReconciliation is always false for the server / host.
-            if (isReconciliation && NetworkManager.Singleton.IsHost)
-            {
+            if (isReconciliation && NetworkManager.Singleton.IsServer)
                 // Something went wrong.
                 throw new Exception("Reconciling as a Server isn't supported!");
-            }
             
             // 1. Simulation physics
             if (NetRunner.GetInstance().ControlPhysics)
@@ -105,7 +103,7 @@ namespace NetRewind.Utils.Simulation
             
             #if Server
             // 2.1 Send state
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+            if (NetworkManager.Singleton && NetworkManager.Singleton.IsServer)
             {
                 List<NetObject> objectsToSend = new List<NetObject>();
                 foreach (SendingMode mode in NetObject.StateSendingList.Keys)
@@ -127,7 +125,7 @@ namespace NetRewind.Utils.Simulation
             
             #if Client
             // 2.2 Collect local client input
-            if (!isReconciliation && NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
+            if (!isReconciliation && NetworkManager.Singleton && NetworkManager.Singleton.IsClient)
             {
                 InputContainer.Collect(tick);
             }
@@ -203,10 +201,9 @@ namespace NetRewind.Utils.Simulation
             uint ticksToRecalculate = CurrentTick - snapshot.Tick + 1;
             if (ticksToRecalculate > MaxTicksToReconcile)
             {
-                Debug.LogError("Too many ticks to reconcile (" + ticksToRecalculate + "). Max allowed is: " + MaxTicksToReconcile);
-                
                 // Todo: Kick the player / force rejoin...?
-                return;
+                
+                throw new Exception("Too many ticks to reconcile (" + ticksToRecalculate + "). Max allowed is: " + MaxTicksToReconcile);
             }
             
             // -> Recalculate every tick

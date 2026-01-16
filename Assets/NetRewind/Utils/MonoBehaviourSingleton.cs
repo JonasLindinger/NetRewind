@@ -17,17 +17,7 @@ namespace NetRewind.Utils
             // If instance isn't null, return it.
             if (_instance != null) return _instance;
 
-            return null; // DON'T CREATE INSTANCE IF IT ALREADY EXISTS'
-            // If we have no instance, search for one
-            _instance = FindObjectOfType<T>();
-            if (_instance != null) return _instance;
-            
-            // If we still have no instance, we create one and return it.
-            GameObject obj = new GameObject();
-            obj.name = typeof(T).Name;
-            _instance = obj.AddComponent<T>();
-
-            return _instance;
+            return null;
         }
         
         /* IMPORTANT!!! To use Awake in a derived class you need to do it this way

@@ -107,7 +107,10 @@ namespace _Demo.Scripts.Player
         public void Tick(uint tick)
         {
             if (IsInCar)
+            {
                 transform.position = _seat.position;
+                RegisterInteraction(tick, this, _currentCar);
+            }
             
             // GetPlayer data
             PlayerData data = GetData<PlayerData>();

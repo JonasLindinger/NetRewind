@@ -90,10 +90,7 @@ namespace NetRewind.Utils.Simulation.State
         public static void SendStates(uint tick, NetObject[] netObjects)
         {
             if (_layers == null)
-            {
-                Debug.LogWarning("Failed to send states. No local instance of SnapshotTransportLayer found.");
-                return;
-            }
+                throw new Exception("Failed to send states. No local instance of SnapshotTransportLayer found.");
 
             Snapshot snapshot = GetSnapshotByObjects(tick, netObjects);
             
@@ -171,7 +168,7 @@ namespace NetRewind.Utils.Simulation.State
 
                     IState clientState = netObject.GetStateAtTick(snapshot.Tick);
                     
-                    bool isReconciling = CompareStates(snapshot.Tick, netObject, clientState, serverState);
+                    bool isReconciling = CompareStates(netObject, clientState, serverState);
 
                     if (isReconciling)
                     {
@@ -210,7 +207,7 @@ namespace NetRewind.Utils.Simulation.State
         #endif
         
         #if Client
-        private bool CompareStates(uint tick, NetObject netObject, IState localState, IState serverState)
+        private bool CompareStates(NetObject netObject, IState localState, IState serverState)
         {
             uint result = localState.Compare(localState, serverState);
             bool correctionIsNormal = netObject.IsPredicted && !netObject.IsOwner; // If the object isn't owned but predicted, we can expect a correction.

@@ -165,7 +165,7 @@ namespace NetRewind.Utils.Simulation
             }
             catch (Exception e)
             {
-                Debug.LogWarning("Failed to apply state: " + e);
+                throw new Exception("Failed to apply state: " + e);
             }
         }
 
@@ -270,10 +270,7 @@ namespace NetRewind.Utils.Simulation
         public static void RegisterInteraction(uint tick, NetObject obj1, NetObject obj2)
         {
             if (!NetworkManager.Singleton.IsServer)
-            {
-                Debug.LogError("You can't call this, since you aren't a server!");
-                return;
-            }
+                throw new Exception("You can't call this, since you aren't a server!");
 
             if (obj1.NetObjectSyncGroup != null && obj2.NetObjectSyncGroup != null)
                 if (obj1.NetObjectSyncGroup == obj2.NetObjectSyncGroup) 
@@ -301,16 +298,10 @@ namespace NetRewind.Utils.Simulation
         public void EnterSyncGroup(uint tick, NetObjectSyncGroup group)
         {
             if (!IsServer)
-            {
-                Debug.LogError("You can't call this, since you aren't a server!");
-                return;
-            }
+                throw new Exception("You can't call this, since you aren't a server!");
 
             if (NetObjectSyncGroup != null)
-            {
-                Debug.LogError("To enter a group, you first have to leave the current one!");
-                return;
-            }
+                throw new Exception("To enter a group, you first have to leave the current one!");
             
             // Remove from the current list.
             StateSendingList[StateSendingMode].Remove(this);
@@ -336,16 +327,10 @@ namespace NetRewind.Utils.Simulation
         public void LeaveSyncGroup()
         {
             if (!IsServer)
-            {
-                Debug.LogError("You can't call this, since you aren't a server!");
-                return;
-            }
+                throw new Exception("You can't call this, since you aren't a server!");
 
             if (NetObjectSyncGroup == null)
-            {
-                Debug.LogError("You are not in a group!");
-                return;
-            }
+                throw new Exception("You are not in a group!");
             
             // Remove from the current list.
             StateSendingList[StateSendingMode].Remove(this);
