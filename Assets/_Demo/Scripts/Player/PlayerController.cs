@@ -73,6 +73,15 @@ namespace _Demo.Scripts.Player
             ChangePredictionState(IsOwner); // Predict if we are the owner. If not, wait for server updates.
         }
 
+        protected override void NetDespawn()
+        {
+            if (!(IsOwner || IsServer))
+                return;
+            
+            if (IsInCar)
+                HopOutCar();
+        }
+
         #region Ownership
         public override void OnLostOwnership()
         {
