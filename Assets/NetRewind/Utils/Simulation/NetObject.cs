@@ -27,7 +27,7 @@ namespace NetRewind.Utils.Simulation
         #endif
         
         // Getter
-        public bool IsPredicted => _isPredicted;
+        public bool IsPredicted => isPredicted;
         #if Server
         [HideInInspector] public SendingMode StateSendingMode => NetObjectSyncGroup != null ? NetObjectSyncGroup.SendingMode : privateStateSendingMode;
         #endif
@@ -42,10 +42,7 @@ namespace NetRewind.Utils.Simulation
         #if UNITY_EDITOR
         [ShowOnly] 
         #endif
-        private bool _isPredicted;
-        /// <summary>
-        /// Don't change directly via code!
-        /// </summary>
+        [SerializeField] private bool isPredicted;
         [SerializeField] private SendingMode initialSendingMode = SendingMode.Full; // The sending mode this object starts in.
         [SerializeField] private Transform visual;
         [Space(10)]
@@ -65,7 +62,12 @@ namespace NetRewind.Utils.Simulation
         private IStateHolder _stateHolder;
         
         private Vector3 _visualVelocity;
-        
+
+        private void OnValidate()
+        {
+            isPredicted = shouldPredict;
+        }
+
         public override void OnNetworkSpawn()
         {
             TryGetComponent(out _tickInterface);
@@ -80,7 +82,7 @@ namespace NetRewind.Utils.Simulation
             visual.SetParent(null); // Unparent from here.
             DontDestroyOnLoad(visual.gameObject);
 
-            _isPredicted = shouldPredict;
+            isPredicted = shouldPredict;
             privateStateSendingMode = initialSendingMode;
             
             NetSpawn();
@@ -412,8 +414,8 @@ namespace NetRewind.Utils.Simulation
         
         public void ChangePredictionState(bool shouldBePredicted)
         {
-            bool previousState = _isPredicted;
-            _isPredicted = shouldBePredicted;
+            bool previousState = isPredicted;
+            isPredicted = shouldBePredicted;
 
             if (previousState == shouldBePredicted)
                 return;
@@ -424,7 +426,7 @@ namespace NetRewind.Utils.Simulation
         }
         private void UpdateObjectHandling()
         {
-            if (_isPredicted)
+            if (isPredicted)
             {
                 // Is not predicted
                 if (IsOwner)
