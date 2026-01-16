@@ -44,6 +44,7 @@ namespace _Demo.Scripts.Car
         protected override void NetSpawn()
         {
             _cars.Add(NetworkObjectId, this);
+            NetworkObject.DontDestroyWithOwner = true;
         
             // Not really necessary, because the default value is true. But just in case the value changed in the inspector, set it to true.
             ChangePredictionState(true);

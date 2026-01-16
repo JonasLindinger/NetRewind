@@ -79,7 +79,7 @@ namespace _Demo.Scripts.Player
                 return;
             
             if (IsInCar)
-                HopOutCar();
+                _currentCar.Interact(this);
         }
 
         #region Ownership
@@ -312,6 +312,7 @@ namespace _Demo.Scripts.Player
             _rb.useGravity = !IsInCar;
             
             visual.SetParent(IsInCar ? _seat : null);
+            if (IsInCar) visual.localPosition = Vector3.zero;
             SetVisualSyncMode(!IsInCar);
         }
 
@@ -328,6 +329,7 @@ namespace _Demo.Scripts.Player
             _rb.useGravity = !IsInCar;
 
             visual.SetParent(IsInCar ? _seat : null);
+            if (IsInCar) visual.localPosition = Vector3.zero;
             SetVisualSyncMode(!IsInCar);
         }
 
