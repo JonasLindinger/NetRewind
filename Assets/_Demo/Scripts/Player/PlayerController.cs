@@ -89,7 +89,7 @@ namespace _Demo.Scripts.Player
         {
             #if Server
             if (!IsServer) return;
-            Transform obj = other.transform;
+            Transform obj = GetTotalParent(other.transform);
             if (obj.TryGetComponent(out NetObject netObject))
                 RegisterInteraction(Simulation.CurrentTick, this, netObject);
             #endif
@@ -109,7 +109,9 @@ namespace _Demo.Scripts.Player
             if (IsInCar)
             {
                 transform.position = _seat.position;
+                #if Server
                 RegisterInteraction(tick, this, _currentCar);
+                #endif
             }
             
             // GetPlayer data
@@ -124,7 +126,7 @@ namespace _Demo.Scripts.Player
             if (_canMove)
                 Move();
             
-            CheckInteract(tick);
+            CheckInteract();
         }
         
         private void Move()
@@ -179,7 +181,7 @@ namespace _Demo.Scripts.Player
             }
         }
 
-        private void CheckInteract(uint tick)
+        private void CheckInteract()
         {
             bool interacting = GetButton(7);
             
@@ -209,9 +211,13 @@ namespace _Demo.Scripts.Player
         {
             _currentCar = car;
             _seat = seat;
-                
-            transform.position = seat.position;
-            _rb.position = seat.position;
+         
+            visual.SetParent(_seat);
+            visual.localPosition = Vector3.zero;
+            SetVisualSyncMode(false);
+            
+            transform.position = visual.position;
+            _rb.position = visual.position;
     
             _canMove = false;
             _rb.linearVelocity = Vector3.zero;
@@ -221,6 +227,9 @@ namespace _Demo.Scripts.Player
 
         public void HopOutCar()
         {
+            visual.SetParent(null);
+            SetVisualSyncMode(true);
+            
             Vector3 newPosition = transform.position;
             newPosition.y += 3;
             transform.position = newPosition;
@@ -272,7 +281,7 @@ namespace _Demo.Scripts.Player
         {
             return new PlayerState()
             {
-                Position = transform.position,
+                Position = !IsInCar ? transform.position : _seat.position,
                 YRotation = transform.localRotation.eulerAngles.y,
                 Velocity = _rb.linearVelocity,
                 AngularVelocity = _rb.angularVelocity,
@@ -292,6 +301,9 @@ namespace _Demo.Scripts.Player
             _currentCar = playerState.Car != ulong.MaxValue ? CarController.GetCar(playerState.Car) : null;
             _seat = _currentCar != null ? _currentCar.GetSeatByOwner(OwnerClientId) : null;
             _rb.useGravity = !IsInCar;
+            
+            visual.SetParent(IsInCar ? _seat : null);
+            SetVisualSyncMode(!IsInCar);
         }
 
         public void ApplyState(IState state)
@@ -305,6 +317,9 @@ namespace _Demo.Scripts.Player
             _currentCar = playerState.Car != ulong.MaxValue ? CarController.GetCar(playerState.Car) : null;
             _seat = _currentCar != null ? _currentCar.GetSeatByOwner(OwnerClientId) : null;
             _rb.useGravity = !IsInCar;
+
+            visual.SetParent(IsInCar ? _seat : null);
+            SetVisualSyncMode(!IsInCar);
         }
 
         public void ApplyPartialState(IState state, uint part)

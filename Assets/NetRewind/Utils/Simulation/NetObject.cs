@@ -37,6 +37,8 @@ namespace NetRewind.Utils.Simulation
         [HideInInspector] public NetObjectSyncGroup NetObjectSyncGroup;
         #endif
 
+        public bool SyncVisual { get; private set; } = true;
+
         [Header("Networking")] 
         [SerializeField] private bool shouldPredict = true; // Default value;
         #if UNITY_EDITOR
@@ -44,7 +46,7 @@ namespace NetRewind.Utils.Simulation
         #endif
         [SerializeField] private bool isPredicted;
         [SerializeField] private SendingMode initialSendingMode = SendingMode.Full; // The sending mode this object starts in.
-        [SerializeField] private Transform visual;
+        public Transform visual;
         [Space(10)]
         
         #if Client
@@ -79,8 +81,8 @@ namespace NetRewind.Utils.Simulation
             
             NetworkObjects.Add(NetworkObjectId, this);
             
-            visual.SetParent(null); // Unparent from here.
-            DontDestroyOnLoad(visual.gameObject);
+            visual.SetParent(null);
+            visual.name = "Visual of " + name + " (" + NetworkObjectId + ")";
 
             isPredicted = shouldPredict;
             privateStateSendingMode = initialSendingMode;
@@ -118,7 +120,6 @@ namespace NetRewind.Utils.Simulation
             if (TryGetComponent(out IInputDataSource tempPlayer) && tempPlayer == _inputDataSource)
                 _inputDataSource = null;
             
-            DontDestroyOnLoad(visual.gameObject);
             visual.SetParent(gameObject.transform);
             Destroy(visual.gameObject);
             
@@ -132,7 +133,7 @@ namespace NetRewind.Utils.Simulation
                 return;
             #endif
             
-            if (visual != null)
+            if (visual != null && SyncVisual)
             {
                 visual.position = Vector3.SmoothDamp(
                     visual.position,
@@ -255,6 +256,8 @@ namespace NetRewind.Utils.Simulation
             
             return new DefaultPlayerData();
         }
+        
+        public void SetVisualSyncMode(bool shouldSync) => SyncVisual = shouldSync;
 
         protected virtual void NetSpawn() { }
         protected virtual void NetDespawn() { }
