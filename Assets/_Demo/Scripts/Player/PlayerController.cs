@@ -290,7 +290,7 @@ namespace _Demo.Scripts.Player
         {
             return new PlayerState()
             {
-                Position = IsInCar ? _seat.position : transform.position,
+                Position = transform.position,
                 YRotation = transform.localRotation.eulerAngles.y,
                 Velocity = _rb.linearVelocity,
                 AngularVelocity = _rb.angularVelocity,

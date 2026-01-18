@@ -30,8 +30,10 @@ namespace _Demo.Scripts.Player
         {
             PlayerState local = (PlayerState) localState;
             PlayerState server = (PlayerState) serverState;
+
+            bool inCar = server.Car != ulong.MaxValue;
             
-            if (Vector3.Distance(local.Position, server.Position) > 0.25f)
+            if (Vector3.Distance(local.Position, server.Position) > 0.25f && !inCar)
             {
                 return 1;
             }
