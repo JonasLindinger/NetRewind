@@ -35,11 +35,6 @@ namespace _Demo.Scripts.Car
         public uint TickOfTheInput { get; set; }
 
         private Rigidbody _rb;
-        
-        #if Client
-        private Vector3 _persistantVelocity;
-        private Vector3 _persistantAngularVelocity;
-        #endif
 
         private void Awake()
         {
@@ -53,19 +48,6 @@ namespace _Demo.Scripts.Car
         
             ChangePredictionState(false);
         }
-        
-        protected override void NetUpdate()
-        {
-            #if Client
-            if (!(IsServer || IsOwner))
-            {
-                // Reapply the velocity, in case the car is still moving.
-                _rb.linearVelocity = new Vector3(_persistantVelocity.x, _rb.linearVelocity.y, _persistantVelocity.z);
-                _rb.angularVelocity = _persistantAngularVelocity;
-            }
-            #endif
-        }
-        
 
         protected override void OnOwnershipChanged(ulong previous, ulong current)
         {
@@ -209,10 +191,6 @@ namespace _Demo.Scripts.Car
             transform.eulerAngles = carState.Rotation;
             _rb.linearVelocity = carState.Velocity;
             _rb.angularVelocity = carState.AngularVelocity;
-            #if Client
-            _persistantVelocity = carState.Velocity;
-            _persistantAngularVelocity = carState.AngularVelocity;
-            #endif
             _playerOnSeat1 = carState.Seat1;
             _playerOnSeat2 = carState.Seat2;
         }
@@ -224,10 +202,6 @@ namespace _Demo.Scripts.Car
             transform.eulerAngles = carState.Rotation;
             _rb.linearVelocity = carState.Velocity;
             _rb.angularVelocity = carState.AngularVelocity;
-            #if Client
-            _persistantVelocity = carState.Velocity;
-            _persistantAngularVelocity = carState.AngularVelocity;
-            #endif
             _playerOnSeat1 = carState.Seat1;
             _playerOnSeat2 = carState.Seat2;
         }
