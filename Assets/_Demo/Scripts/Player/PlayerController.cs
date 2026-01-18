@@ -232,10 +232,16 @@ namespace _Demo.Scripts.Player
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
             _rb.useGravity = false;
+            
+            if (IsOwner)
+                car.ChangePredictionState(true);
         }
 
         public void HopOutCar()
         {
+            if (IsOwner)
+                _currentCar.ChangePredictionState(false);
+            
             visual.SetParent(null);
             SetVisualSyncMode(true);
             

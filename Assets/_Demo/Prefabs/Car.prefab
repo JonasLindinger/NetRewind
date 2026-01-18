@@ -520,7 +520,7 @@ MonoBehaviour:
   privateStateSendingMode: 0
   shouldPredict: 1
   isPredicted: 1
-  initialSendingMode: 2
+  initialSendingMode: 1
   visual: {fileID: 4168475530523613133}
   seat1: {fileID: 1951886888504385702}
   seat2: {fileID: 6736649503964327074}
