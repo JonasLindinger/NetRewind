@@ -27,6 +27,7 @@ namespace NetRewind.Utils.Simulation
         private static bool _isAdjusting;
         public static bool IsCorrectingGameState { get; private set; }
         private static Snapshot _reconciliationSnapshot = new Snapshot(0);
+        private static bool _reconciliationIsExpected = false;
         #endif
         
         public static void StartTickSystem(uint tickRate, uint startingTick)
@@ -174,15 +175,20 @@ namespace NetRewind.Utils.Simulation
             _isAdjusting = false;
         }
 
-        public static void InitReconciliation(Snapshot snapshot)
+        #if Client
+        public static void InitReconciliation(Snapshot snapshot, bool reconciliationIsExpected)
         {
             _reconciliationSnapshot = snapshot;
             IsCorrectingGameState = true;
+            _reconciliationIsExpected = reconciliationIsExpected;
         }
+        #endif
 
         private static void Reconcile(Snapshot snapshot)
         {
-            Debug.LogWarning("Reconciling...");
+            #if Client
+            if (!_reconciliationIsExpected)
+                Debug.LogWarning("Reconciling...");
             
             // --- Apply the snapshot. ---
             foreach (var kvp in snapshot.States)
@@ -211,6 +217,7 @@ namespace NetRewind.Utils.Simulation
                 OnTick(tick, true);
 
             IsCorrectingGameState = false;
+            #endif
         }
         #endif
     }

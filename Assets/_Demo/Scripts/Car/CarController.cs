@@ -46,7 +46,8 @@ namespace _Demo.Scripts.Car
             _cars.Add(NetworkObjectId, this);
             NetworkObject.DontDestroyWithOwner = true;
         
-            ChangePredictionState(false);
+            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsOwner;
+            ChangePredictionState(shouldPredict);
         }
 
         protected override void OnOwnershipChanged(ulong previous, ulong current)
@@ -193,6 +194,11 @@ namespace _Demo.Scripts.Car
             _rb.angularVelocity = carState.AngularVelocity;
             _playerOnSeat1 = carState.Seat1;
             _playerOnSeat2 = carState.Seat2;
+            
+            // If occupied and not the driver -> don't predict
+            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsOwner;
+            if (IsPredicted != shouldPredict)
+                ChangePredictionState(shouldPredict);
         }
 
         public void ApplyState(IState state)
@@ -204,6 +210,11 @@ namespace _Demo.Scripts.Car
             _rb.angularVelocity = carState.AngularVelocity;
             _playerOnSeat1 = carState.Seat1;
             _playerOnSeat2 = carState.Seat2;
+            
+            // If occupied and not the driver -> don't predict
+            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsOwner;
+            if (IsPredicted != shouldPredict)
+                ChangePredictionState(shouldPredict);
         }
 
         public void ApplyPartialState(IState state, uint part)

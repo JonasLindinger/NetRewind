@@ -153,10 +153,7 @@ namespace NetRewind.Utils.Simulation
             NetUpdate();
         }
 
-        public void ApplyPartialState(IState serverState, uint result)
-        {
-            _stateHolder.ApplyPartialState(serverState, result);
-        }
+        public void TryApplyPartialState(IState serverState, uint result) => _stateHolder.ApplyPartialState(serverState, result);
         
         public static void TryApplyState(ulong networkId, IState state)
         {
