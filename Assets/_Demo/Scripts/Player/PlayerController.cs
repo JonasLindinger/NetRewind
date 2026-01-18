@@ -290,7 +290,7 @@ namespace _Demo.Scripts.Player
         {
             return new PlayerState()
             {
-                Position = !IsInCar ? transform.position : _seat.position,
+                Position = IsInCar ? _seat.position : transform.position,
                 YRotation = transform.localRotation.eulerAngles.y,
                 Velocity = _rb.linearVelocity,
                 AngularVelocity = _rb.angularVelocity,
@@ -302,35 +302,79 @@ namespace _Demo.Scripts.Player
         public void UpdateState(IState state)
         {
             PlayerState playerState = (PlayerState) state;
-            transform.position = playerState.Position;
-            transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
+            
+            _canMove = playerState.CanMove;
+
             _rb.linearVelocity = playerState.Velocity;
             _rb.angularVelocity = playerState.AngularVelocity;
-            _canMove = playerState.CanMove;
-            _currentCar = playerState.Car != ulong.MaxValue ? CarController.GetCar(playerState.Car) : null;
-            _seat = _currentCar != null ? _currentCar.GetSeatByOwner(OwnerClientId) : null;
-            _rb.useGravity = !IsInCar;
             
-            visual.SetParent(IsInCar ? _seat : null);
-            if (IsInCar) visual.localPosition = Vector3.zero;
-            SetVisualSyncMode(!IsInCar);
+            if (playerState.Car != ulong.MaxValue)
+            {
+                // In car
+                _currentCar = CarController.GetCar(playerState.Car);
+                _seat = _currentCar.GetSeatByOwner(OwnerClientId);
+                
+                visual.SetParent(_seat);
+                visual.localPosition = Vector3.zero;
+                
+                SetVisualSyncMode(false);
+                
+                _rb.useGravity = false;
+            }
+            else
+            {
+                // Out of the car
+                _currentCar = null;
+                _seat = null;
+                
+                visual.SetParent(null);
+                transform.position = playerState.Position;
+                
+                SetVisualSyncMode(true);
+                
+                _rb.useGravity = true;
+            }
+            
+            transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
         }
 
         public void ApplyState(IState state)
         {
             PlayerState playerState = (PlayerState) state;
-            transform.position = playerState.Position;
-            transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
+            
+            _canMove = playerState.CanMove;
+
             _rb.linearVelocity = playerState.Velocity;
             _rb.angularVelocity = playerState.AngularVelocity;
-            _canMove = playerState.CanMove;
-            _currentCar = playerState.Car != ulong.MaxValue ? CarController.GetCar(playerState.Car) : null;
-            _seat = _currentCar != null ? _currentCar.GetSeatByOwner(OwnerClientId) : null;
-            _rb.useGravity = !IsInCar;
-
-            visual.SetParent(IsInCar ? _seat : null);
-            if (IsInCar) visual.localPosition = Vector3.zero;
-            SetVisualSyncMode(!IsInCar);
+            
+            if (playerState.Car != ulong.MaxValue)
+            {
+                // In car
+                _currentCar = CarController.GetCar(playerState.Car);
+                _seat = _currentCar.GetSeatByOwner(OwnerClientId);
+                
+                visual.SetParent(_seat);
+                visual.localPosition = Vector3.zero;
+                
+                SetVisualSyncMode(false);
+                
+                _rb.useGravity = false;
+            }
+            else
+            {
+                // Out of the car
+                _currentCar = null;
+                _seat = null;
+                
+                visual.SetParent(null);
+                transform.position = playerState.Position;
+                
+                SetVisualSyncMode(true);
+                
+                _rb.useGravity = true;
+            }
+            
+            transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
         }
 
         public void ApplyPartialState(IState state, uint part)
