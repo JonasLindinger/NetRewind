@@ -158,17 +158,31 @@ namespace NetRewind.Utils.Simulation
             _stateHolder.ApplyPartialState(serverState, result);
         }
         
-        public static void ApplyState(ulong clientId, IState state)
+        public static void TryApplyState(ulong networkId, IState state)
         {
             try
             {
-                NetworkObjects[clientId]._stateHolder.ApplyState(state);
+                NetworkObjects[networkId]._stateHolder.ApplyState(state);
             }
             catch (Exception e)
             {
                 throw new Exception("Failed to apply state: " + e);
             }
         }
+        public void TryApplyState(IState state) => TryApplyState(NetworkObjectId, state);
+        
+        public static void TryUpdateState(ulong networkId, IState state)
+        {
+            try
+            {
+                NetworkObjects[networkId]._stateHolder.UpdateState(state);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Failed to update state: " + e);
+            }
+        }
+        public void TryUpdateState(IState state) => TryUpdateState(NetworkObjectId, state);
 
         public static void RunTick(uint tick)
         {

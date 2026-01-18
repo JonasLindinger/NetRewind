@@ -157,6 +157,9 @@ namespace NetRewind.Utils.Simulation.State
         #if Client
         private void HandleServerSnapshot(Snapshot snapshot)
         {
+            Snapshot fullClientSnapshot = new Snapshot(0);
+            bool isAboutToReconcile = false;
+            
             foreach (var kvp in snapshot.States)
             {
                 ulong networkId = kvp.Key;
@@ -167,26 +170,43 @@ namespace NetRewind.Utils.Simulation.State
                     NetObject netObject = NetObject.NetworkObjects[networkId];
 
                     IState clientState = netObject.GetStateAtTick(snapshot.Tick);
-                    
-                    bool isReconciling = CompareStates(netObject, clientState, serverState);
 
-                    if (isReconciling)
+                    if (netObject.IsPredicted && !isAboutToReconcile)
                     {
-                        Snapshot fullClientSnapshot = GetCorrectSnapshot(
-                            snapshot, 
-                            SnapshotContainer.GetSnapshot(snapshot.Tick)
+                        // Check if we predicted correctly. If we didn't, reconcile
+                        bool isReconciling = CompareStates(netObject, clientState, serverState);
+
+                        // Check if we should reconcile
+                        if (isReconciling)
+                        {
+                            // Merge snapshots (info that we know, but is incomplete (server snapshot) + complete info, but not 100% correct (predicted snapshot)) 
+                            // -> good enough snapshot for reconciliation
+                            fullClientSnapshot = GetCorrectSnapshot(
+                                snapshot, 
+                                SnapshotContainer.GetSnapshot(snapshot.Tick)
                             );
-                        
-                        Simulation.InitReconciliation(fullClientSnapshot);
+                            
+                            // From now on, only Update non predicted objects and skip the predicted ones, since we are going to reconcile anyway.
+                            isAboutToReconcile = true;
+                        }
                     }
                     else
-                        break;
+                    {
+                        // If the object isn't predicted, we can just update the object
+                        
+                        // Update state
+                        netObject.TryUpdateState(serverState);
+                    }
                 }
                 catch (KeyNotFoundException e)
                 {
                     // It's probably fine to just Skip
                 }
             }
+            
+            // Do this here, since we want to apply the state of every non-predicted object first.
+            if (isAboutToReconcile && fullClientSnapshot.Tick != 0)
+                Simulation.InitReconciliation(fullClientSnapshot);
         }
 
         private Snapshot GetCorrectSnapshot(Snapshot incompleteSnapshot, Snapshot wrongCompleteSnapshot)
@@ -219,7 +239,7 @@ namespace NetRewind.Utils.Simulation.State
                     break;
                 case (uint) CompareResult.WorldCorrection:
                     // Apply the entire server state and recalculate some ticks to be ahead of the server again.
-                    return true;
+                    return true; // Reconcile
                     break;
                 default:
                     // Apply only a part of the server state.
