@@ -122,20 +122,23 @@ namespace _Demo.Scripts.Player
                 RegisterInteraction(tick, this, _currentCar);
                 #endif
             }
+
+            if (HasInputForThisTick(tick))
+            {
+                // GetPlayer data
+                PlayerData data = GetData<PlayerData>();
             
-            // GetPlayer data
-            PlayerData data = GetData<PlayerData>();
+                // Rotate player
+                Vector3 newRotation = transform.eulerAngles;
+                newRotation.y = data.YRotation;
+                transform.eulerAngles = newRotation;
+
+                // Move player
+                if (_canMove)
+                    Move();
             
-            // Rotate player
-            Vector3 newRotation = transform.eulerAngles;
-            newRotation.y = data.YRotation;
-            transform.eulerAngles = newRotation;
-            
-            // Move player
-            if (_canMove)
-                Move();
-            
-            CheckInteract();
+                CheckInteract();
+            }
         }
         
         private void Move()

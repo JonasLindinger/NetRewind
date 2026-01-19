@@ -67,6 +67,8 @@ namespace _Demo.Scripts.Car
         
         public void Tick(uint tick)
         {
+            if (!HasInputForThisTick(tick)) return;
+            
             Move();
         }
         

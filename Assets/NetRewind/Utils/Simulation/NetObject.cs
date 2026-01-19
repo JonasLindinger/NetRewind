@@ -58,7 +58,7 @@ namespace NetRewind.Utils.Simulation
         #if Server
         private uint _tickToLeaveGroup = uint.MaxValue;
         #endif
-        
+
         private ITick _tickInterface;
         private IInputListener _inputListener;
         private IStateHolder _stateHolder;
@@ -235,6 +235,14 @@ namespace NetRewind.Utils.Simulation
             }
             else
                 _tickInterface?.Tick(tick);
+        }
+
+        public bool HasInputForThisTick(uint tick)
+        {
+            if (_inputListener == null)
+                return false;
+            
+            return _inputListener.TickOfTheInput == tick;
         }
         
         public IState GetSnapshotState(uint tick)
