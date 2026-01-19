@@ -217,6 +217,10 @@ namespace NetRewind.Utils.Simulation
                 OnTick(tick, true);
 
             IsCorrectingGameState = false;
+            
+            // -- Apply the new position to the visual(s).
+            // Todo: Test if this is good or bad. / Maybe make it configurable?
+            NetObject.SetAllVisualState(); // Should make the reconciliation more noticeable, BUT it's probably a better experience!
             #endif
         }
         #endif

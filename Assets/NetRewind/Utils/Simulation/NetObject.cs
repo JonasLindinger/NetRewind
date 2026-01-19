@@ -430,6 +430,23 @@ namespace NetRewind.Utils.Simulation
         }
         #endif
         
+        #if Client
+        public static void SetAllVisualState()
+        {
+            foreach (var kvp in NetworkObjects)
+            {
+                // ulong networkId = kvp.Key;
+                NetObject netObject = kvp.Value;
+                
+                // only do this, if the object's visual should be synced.
+                if (!netObject.SyncVisual) continue;
+                
+                netObject.visual.position = netObject.transform.position;
+                netObject.visual.rotation = netObject.transform.rotation;
+            }
+        }
+        #endif
+        
         public void ChangePredictionState(bool shouldBePredicted)
         {
             bool previousState = isPredicted;
