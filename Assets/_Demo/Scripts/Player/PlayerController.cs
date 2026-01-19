@@ -158,13 +158,13 @@ namespace _Demo.Scripts.Player
                 _rb.linearDamping = 0;
 
             // Calculating movement
-            Vector2 moveInput = GetVector2(0).normalized;
+            Vector2 moveInput = GetVector2("Move").normalized;
 
             // _orientation.rotation = Quaternion.Euler(0, input.PlayerRotation, 0);
             Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
 
             // Applying movement
-            float moveSpeed = GetButton(4) ? sprintSpeed : GetButton(5) ? crouchSpeed : walkSpeed;
+            float moveSpeed = GetButton("Sprint") ? sprintSpeed : GetButton("Crouch") ? crouchSpeed : walkSpeed;
 
             // Grounded
             if (_grounded)
@@ -182,7 +182,7 @@ namespace _Demo.Scripts.Player
                 _rb.linearVelocity = new Vector3(limitedVel.x, _rb.linearVelocity.y, limitedVel.z);
             }
 
-            if (GetButton(6) && _grounded && _jumpCooldownTimer <= 0)
+            if (GetButton("Jump") && _grounded && _jumpCooldownTimer <= 0)
             {
                 // Resetting Y velocity
                 _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
@@ -197,7 +197,7 @@ namespace _Demo.Scripts.Player
 
         private void CheckInteract()
         {
-            bool interacting = GetButton(7);
+            bool interacting = GetButton("Use");
             
             if (interacting && !_isInteracting)
             {

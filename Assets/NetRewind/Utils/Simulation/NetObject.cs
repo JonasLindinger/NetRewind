@@ -82,7 +82,7 @@ namespace NetRewind.Utils.Simulation
             NetworkObjects.Add(NetworkObjectId, this);
             
             visual.SetParent(null);
-            visual.name = name + " (" + NetworkObjectId + ") Visual";
+            visual.name = name + "[" + NetworkObjectId + "] Visual";
 
             isPredicted = shouldPredict;
             privateStateSendingMode = initialSendingMode;
@@ -293,8 +293,8 @@ namespace NetRewind.Utils.Simulation
         protected virtual void NetDespawn() { }
         protected virtual void NetUpdate() { }
         
-        protected bool GetButton(int id) => InputSender.GetInstance().GetButton(id, _inputListener.InputData);
-        protected Vector2 GetVector2(int id) => InputSender.GetInstance().GetVector2(id, _inputListener.InputData);
+        protected bool GetButton(string inputName) => InputSender.GetInstance().GetButton(InputSender.ButtonInputReferences[inputName], _inputListener.InputData);
+        protected Vector2 GetVector2(string inputName) => InputSender.GetInstance().GetVector2(InputSender.Vector2InputReferences[inputName], _inputListener.InputData);
 
         protected T GetData<T>() where T : IData => (T) _inputListener.Data;
         protected Dictionary<string, InputAction> InputActions => InputSender.Actions;

@@ -25,7 +25,7 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Shift",
+                    "name": "Sprint",
                     "type": "Button",
                     "id": "e39b3aae-5861-490b-b232-2648360e99a5",
                     "expectedControlType": "",
@@ -234,7 +234,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
-                    "action": "Shift",
+                    "action": "Sprint",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

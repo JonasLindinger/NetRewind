@@ -7,6 +7,8 @@ namespace NetRewind.Utils.Input
     public class InputSender : MonoBehaviourSingleton<InputSender>
     {
         public static Dictionary<string, InputAction> Actions = new Dictionary<string, InputAction>();
+        public static Dictionary<string, int> ButtonInputReferences = new Dictionary<string, int>();
+        public static Dictionary<string, int> Vector2InputReferences = new Dictionary<string, int>();
         
         [Header("Inputs")]
         [SerializeField] private List<InputActionEntry> networked = new List<InputActionEntry>();
@@ -39,6 +41,9 @@ namespace NetRewind.Utils.Input
                 Actions.Remove(entry.Action.name);
                 entry.Action?.Enable();
             }
+            
+            ButtonInputReferences.Clear();
+            Vector2InputReferences.Clear();
         }
         
         private void Start()
@@ -50,12 +55,15 @@ namespace NetRewind.Utils.Input
                 if (entry.IsButton)
                 {
                     _byteArraySize++;
-                    entry.id = id++;
+                    entry.id = id;
+                    ButtonInputReferences.Add(entry.Action.name, id);
+                    id++;
                 }
                 else if (entry.IsVector2)
                 {
                     _byteArraySize += 4;
                     entry.id = id;
+                    Vector2InputReferences.Add(entry.Action.name, id);
                     id += 4;
                 }
                 

@@ -79,7 +79,7 @@ namespace _Demo.Scripts.Car
             _rb.linearDamping = groundDrag;
 
             // Calculating movement
-            Vector2 moveInput = GetVector2(0).normalized;
+            Vector2 moveInput = GetVector2("Move").normalized;
 
             // _orientation.rotation = Quaternion.Euler(0, input.PlayerRotation, 0);
             Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
