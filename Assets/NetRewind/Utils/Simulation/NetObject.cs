@@ -31,7 +31,7 @@ namespace NetRewind.Utils.Simulation
         #if Server
         public SendingMode StateSendingMode => NetObjectSyncGroup?.SendingMode ?? privateStateSendingMode;
         #endif
-        [FormerlySerializedAs("privateSendingMode")] [HideInInspector] public SendingMode privateStateSendingMode; // The sending mode this object should normally be in
+        [HideInInspector] public SendingMode privateStateSendingMode; // The sending mode this object should normally be in
         
         #if Server
         [HideInInspector] public NetObjectSyncGroup NetObjectSyncGroup;
