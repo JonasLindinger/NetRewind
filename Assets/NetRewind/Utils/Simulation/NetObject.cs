@@ -82,7 +82,7 @@ namespace NetRewind.Utils.Simulation
             NetworkObjects.Add(NetworkObjectId, this);
             
             visual.SetParent(null);
-            visual.name = "Visual of " + name + " (" + NetworkObjectId + ")";
+            visual.name = name + " (" + NetworkObjectId + ") Visual";
 
             isPredicted = shouldPredict;
             privateStateSendingMode = initialSendingMode;
