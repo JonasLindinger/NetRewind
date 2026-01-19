@@ -118,8 +118,10 @@ namespace _Demo.Scripts.Player
             if (IsInCar)
             {
                 transform.position = _seat.position;
+                
                 #if Server
-                RegisterInteraction(tick, this, _currentCar);
+                if (IsServer)
+                    RegisterInteraction(tick, this, _currentCar);
                 #endif
             }
 

@@ -192,36 +192,41 @@ namespace NetRewind.Utils.Simulation
 
         private void InternalTick(uint tick)
         {
-            if (!(IsServer || IsPredicted))
-                return;
-
             #if Server
+            // Check if this object should leave the sync group.
             if (IsServer && tick >= _tickToLeaveGroup) 
                 LeaveSyncGroup();
             #endif
             
+            // If this is an inputListener, try to get input
             if (_inputListener != null)
             {
+                // Reset input
+                _inputListener.InputData = null;
+                _inputListener.Data = null;
+                _inputListener.TickOfTheInput = 0;
+                
+                // Get input
+                InputState inputState = new InputState();
+                bool gotInput = false;
                 #if Client
+                // As the owner and a client, get the local input
                 if (IsOwner && IsClient)
                 {
                     // -> Local client, get local input
-                    InputState inputState = InputContainer.GetInput(tick);
-                    _inputListener.InputData = inputState.Input;
-                    _inputListener.Data = inputState.Data;
-                    _inputListener.TickOfTheInput = inputState.Tick;
+                    inputState = InputContainer.GetInput(tick);
+                    gotInput = true;
                 }
                 #endif
-                #if Server 
+                
+                #if Server
                 if (IsServer && !IsOwner && InputTransportLayer.SentInput(OwnerClientId))
                 {
                     // Not local client -> get input from InputTransportLayer
                     try
                     {
-                        InputState inputState = InputTransportLayer.GetInput(OwnerClientId, tick);
-                        _inputListener.InputData = inputState.Input;
-                        _inputListener.Data = inputState.Data;
-                        _inputListener.TickOfTheInput = inputState.Tick;
+                        inputState = InputTransportLayer.GetInput(OwnerClientId, tick);
+                        gotInput = true;
                     }
                     catch (Exception e)
                     {
@@ -229,12 +234,18 @@ namespace NetRewind.Utils.Simulation
                     }
                 }
                 #endif
-                
-                if (_inputListener.InputData != null && _inputListener.Data != null)
-                    _tickInterface?.Tick(tick);
+
+                // Set input if there is any
+                if (gotInput)
+                {
+                    _inputListener.InputData = inputState.Input;
+                    _inputListener.Data = inputState.Data;
+                    _inputListener.TickOfTheInput = inputState.Tick;
+                }
             }
-            else
-                _tickInterface?.Tick(tick);
+            
+            // Trigger the tick
+            _tickInterface?.Tick(tick);
         }
 
         public bool HasInputForThisTick(uint tick)
