@@ -220,6 +220,7 @@ namespace NetRewind.Utils.Simulation
             
             // -- Apply the new position to the visual(s).
             // Todo: Test if this is good or bad. / Maybe make it configurable?
+            // Todo: When the visual and the object are x meters apart, set it. if not, handle it with interpolation...? (which is already there)
             NetObject.SetAllVisualState(); // Should make the reconciliation more noticeable, BUT it's probably a better experience!
             #endif
         }
