@@ -7,6 +7,6 @@ namespace NetRewind.Utils.Simulation
         public byte[] InputData { get; set; }
         public IData Data { get; set; }
         public uint TickOfTheInput { get; set; }
-        public void NetOwnerUpdate();
+        public void NetInputOwnerUpdate();
     }
 }

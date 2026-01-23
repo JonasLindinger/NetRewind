@@ -29,7 +29,6 @@ namespace _Demo.Scripts.Car
         private ulong _playerOnSeat1 = ulong.MaxValue;
         private ulong _playerOnSeat2 = ulong.MaxValue;
         
-        
         public byte[] InputData { get; set; }
         public IData Data { get; set; }
         public uint TickOfTheInput { get; set; }
@@ -46,13 +45,13 @@ namespace _Demo.Scripts.Car
             _cars.Add(NetworkObjectId, this);
             NetworkObject.DontDestroyWithOwner = true;
         
-            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsOwner;
+            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsInputOwner;
             ChangePredictionState(shouldPredict);
         }
 
         protected override void OnOwnershipChanged(ulong previous, ulong current)
         {
-            NetOwnerUpdate();
+            NetInputOwnerUpdate();
         }
 
         protected override void NetDespawn()
@@ -60,7 +59,7 @@ namespace _Demo.Scripts.Car
             _cars.Remove(NetworkObjectId);
         }
 
-        public void NetOwnerUpdate()
+        public void NetInputOwnerUpdate()
         {
             
         }
@@ -108,10 +107,11 @@ namespace _Demo.Scripts.Car
                 {
                     // -> Seat available
                     
+                    // seatWithAuthority -> main seat -> seat1
                     bool seatWithAuthority = _playerOnSeat1 == ulong.MaxValue;
                     
                     // Get new position
-                    Transform seat = _playerOnSeat1 == ulong.MaxValue 
+                    Transform seatTransform = _playerOnSeat1 == ulong.MaxValue 
                         ? seat1.transform
                         : seat2.transform;
 
@@ -120,17 +120,12 @@ namespace _Demo.Scripts.Car
                         ? ref _playerOnSeat1 
                         : ref _playerOnSeat2;
                     
-                    seatOwner = player.OwnerClientId;
-                    player.HopInCar(this, seat);
+                    seatOwner = player.InputOwnerClientId;
+                    player.HopInCar(this, seatTransform);
                     
-                    #if Server
-                    if (IsServer && seatWithAuthority)
-                    {
-                        // Seat 1 -> authority over the car.
-                        // -> give ownership.
-                        NetworkObject.ChangeOwnership(player.OwnerClientId);
-                    }
-                    #endif
+                    // Now use the input of the seat owner if he is sitting on seat1
+                    if (seatWithAuthority)
+                        SetInputOwner(seatOwner);
                 }
                 else
                 {
@@ -140,31 +135,27 @@ namespace _Demo.Scripts.Car
             else
             {
                 // Verify
-                if (_playerOnSeat1 == player.OwnerClientId ||
-                    _playerOnSeat2 == player.OwnerClientId)
+                if (_playerOnSeat1 == player.InputOwnerClientId ||
+                    _playerOnSeat2 == player.InputOwnerClientId)
                 {
                     // -> Let the player leave the car
+
+                    // seatWithAuthority -> main seat -> seat1
+                    bool seatWithAuthority = _playerOnSeat1 == player.InputOwnerClientId;
                     
-                    bool seatWithAuthority = _playerOnSeat1 == player.OwnerClientId;
-                    
-                    //Get seat of the player
-                    ref ulong seat = ref _playerOnSeat1 == player.OwnerClientId 
+                    // Get seat of the player
+                    ref ulong seatOwner = ref _playerOnSeat1 == player.InputOwnerClientId 
                         ? ref _playerOnSeat1 
                         : ref _playerOnSeat2;
                     
                     // Mark seat as available
-                    seat = ulong.MaxValue;
+                    seatOwner = ulong.MaxValue;
                     
                     player.HopOutCar();
                     
-                    #if Server
-                    if (IsServer && seatWithAuthority)
-                    {
-                        // Seat 1 -> authority over the car.
-                        // -> remove ownership.
-                        NetworkObject.RemoveOwnership();
-                    }
-                    #endif
+                    // Set the input owner to no one, if the player hopped out of seat1 -> ulong.MaxValue
+                    if (seatWithAuthority)
+                        SetInputOwner(seatOwner);
                 }
                 else
                 {
@@ -198,7 +189,7 @@ namespace _Demo.Scripts.Car
             _playerOnSeat2 = carState.Seat2;
             
             // If occupied and not the driver -> don't predict
-            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsOwner;
+            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsInputOwner;
             if (IsPredicted != shouldPredict)
                 ChangePredictionState(shouldPredict);
         }
@@ -214,7 +205,7 @@ namespace _Demo.Scripts.Car
             _playerOnSeat2 = carState.Seat2;
             
             // If occupied and not the driver -> don't predict
-            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsOwner;
+            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsInputOwner;
             if (IsPredicted != shouldPredict)
                 ChangePredictionState(shouldPredict);
         }

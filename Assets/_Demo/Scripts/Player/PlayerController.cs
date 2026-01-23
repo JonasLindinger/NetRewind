@@ -57,11 +57,13 @@ namespace _Demo.Scripts.Player
         
         protected override void NetSpawn()
         {
-            playerCamera.enabled = IsOwner;
-            if (playerCamera != null && playerCamera.TryGetComponent(out AudioListener audioListener))
-                audioListener.enabled = IsOwner;
+            SetInputOwner(OwnerClientId);
             
-            if (IsOwner)
+            playerCamera.enabled = IsInputOwner;
+            if (playerCamera != null && playerCamera.TryGetComponent(out AudioListener audioListener))
+                audioListener.enabled = IsInputOwner;
+            
+            if (IsInputOwner)
             {
                 Cursor.visible = false;
                 Cursor.lockState = CursorLockMode.Locked;
@@ -70,12 +72,12 @@ namespace _Demo.Scripts.Player
             _rb = GetComponent<Rigidbody>();
             _rb.freezeRotation = true;
             
-            ChangePredictionState(IsOwner); // Predict if we are the owner. If not, wait for server updates.
+            ChangePredictionState(IsInputOwner); // Predict if we are the owner. If not, wait for server updates.
         }
 
         protected override void NetDespawn()
         {
-            if (!(IsOwner || IsServer))
+            if (!(IsInputOwner || IsServer))
                 return;
             
             if (IsInCar)
@@ -256,7 +258,7 @@ namespace _Demo.Scripts.Player
             _rb.useGravity = true;
         }
         
-        public void NetOwnerUpdate()
+        public void NetInputOwnerUpdate()
         {
             #if Client
             Look();
@@ -317,7 +319,7 @@ namespace _Demo.Scripts.Player
             {
                 // In car
                 _currentCar = CarController.GetCar(playerState.Car);
-                _seat = _currentCar.GetSeatByOwner(OwnerClientId);
+                _seat = _currentCar.GetSeatByOwner(InputOwnerClientId);
                 
                 visual.SetParent(_seat);
                 visual.localPosition = Vector3.zero;
@@ -356,7 +358,7 @@ namespace _Demo.Scripts.Player
             {
                 // In car
                 _currentCar = CarController.GetCar(playerState.Car);
-                _seat = _currentCar.GetSeatByOwner(OwnerClientId);
+                _seat = _currentCar.GetSeatByOwner(InputOwnerClientId);
                 
                 visual.SetParent(_seat);
                 visual.localPosition = Vector3.zero;

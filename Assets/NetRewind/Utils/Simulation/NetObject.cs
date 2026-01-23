@@ -15,7 +15,7 @@ namespace NetRewind.Utils.Simulation
 {
     public abstract class NetObject : NetworkBehaviour
     {
-        private static IInputDataSource _inputDataSource;
+        private static IInputDataSource _globalInputDataSource; // static because there can only be one!
         
         public static Dictionary<ulong, NetObject> NetworkObjects = new Dictionary<ulong, NetObject>();
         #if Server
@@ -59,6 +59,11 @@ namespace NetRewind.Utils.Simulation
         private uint _tickToLeaveGroup = uint.MaxValue;
         #endif
 
+        public bool IsInputOwner => _inputOwnerClientId == NetworkManager.Singleton.LocalClientId;
+        public ulong InputOwnerClientId => _inputOwnerClientId;
+        private ulong _inputOwnerClientId = ulong.MaxValue; // Todo: serialize and keep track. so that prediction still works even if the owner changes.
+        
+        private IInputDataSource _inputDataSource;
         private ITick _tickInterface;
         private IInputListener _inputListener;
         private IStateHolder _stateHolder;
@@ -76,8 +81,7 @@ namespace NetRewind.Utils.Simulation
             TryGetComponent(out _inputListener);
             TryGetComponent(out _stateHolder);
             
-            if (IsOwner && _inputDataSource == null)
-                TryGetComponent(out _inputDataSource);
+            TryGetComponent(out _inputDataSource);
             
             NetworkObjects.Add(NetworkObjectId, this);
             
@@ -87,8 +91,6 @@ namespace NetRewind.Utils.Simulation
             isPredicted = shouldPredict;
             privateStateSendingMode = initialSendingMode;
             
-            NetSpawn();
-
             #if Server
             if (IsServer)
             {
@@ -96,6 +98,8 @@ namespace NetRewind.Utils.Simulation
                 StateSendingList[StateSendingMode].Add(this);
             }
             #endif
+            
+            NetSpawn();
         }
 
         public override void OnNetworkDespawn()
@@ -117,8 +121,8 @@ namespace NetRewind.Utils.Simulation
             }            
             #endif
 
-            if (TryGetComponent(out IInputDataSource tempPlayer) && tempPlayer == _inputDataSource)
-                _inputDataSource = null;
+            if (_inputDataSource == _globalInputDataSource)
+                _globalInputDataSource = null;
             
             visual.SetParent(gameObject.transform);
             Destroy(visual.gameObject);
@@ -133,7 +137,7 @@ namespace NetRewind.Utils.Simulation
                 return;
             #endif
             
-            if (visual != null && SyncVisual)
+            if (visual && SyncVisual)
             {
                 visual.position = Vector3.SmoothDamp(
                     visual.position,
@@ -146,11 +150,47 @@ namespace NetRewind.Utils.Simulation
             }
             
             #if Client
-            if (IsOwner && _inputListener != null)
-                _inputListener.NetOwnerUpdate();
+            if (IsInputOwner && _inputListener != null)
+                _inputListener.NetInputOwnerUpdate();
             #endif
             
             NetUpdate();
+        }
+
+        public void SetInputOwner(ulong newInputOwnerClientId)
+        {
+            if (InputOwnerClientId == newInputOwnerClientId)
+                return; // Nothing changed!
+         
+            _inputOwnerClientId = newInputOwnerClientId; // Update variable
+            
+            bool wouldBeInputOwner = newInputOwnerClientId == NetworkManager.Singleton.LocalClientId;
+            bool needToUpdate = !IsInputOwner && !wouldBeInputOwner;
+            
+            if (needToUpdate)
+                HandleInputOwnerUpdate();
+        }
+        
+        public void RemoveInputOwner() => SetInputOwner(ulong.MaxValue);
+        
+        private void HandleInputOwnerUpdate()
+        {
+            if (IsInputOwner)
+            {
+                // -> Just became input owner
+                
+                // Set the global input data source, if the net object has one.
+                if (_inputDataSource != null)
+                    _globalInputDataSource = _inputDataSource;
+            }
+            else
+            {
+                // -> We aren't the input owner anymore.
+                
+                // Reset the global input data source, if it was the one.
+                if (_globalInputDataSource == _inputDataSource && _inputDataSource != null)
+                    _globalInputDataSource = null;
+            }
         }
 
         public void TryApplyPartialState(IState serverState, uint result) => _stateHolder.ApplyPartialState(serverState, result);
@@ -210,8 +250,8 @@ namespace NetRewind.Utils.Simulation
                 InputState inputState = new InputState();
                 bool gotInput = false;
                 #if Client
-                // As the owner and a client, get the local input
-                if (IsOwner && IsClient)
+                // As the input owner and a client, get the local input
+                if (IsInputOwner && IsClient)
                 {
                     // -> Local client, get local input
                     inputState = InputContainer.GetInput(tick);
@@ -220,12 +260,15 @@ namespace NetRewind.Utils.Simulation
                 #endif
                 
                 #if Server
-                if (IsServer && !IsOwner && InputTransportLayer.SentInput(OwnerClientId))
+                bool shouldRunAsServer = IsServer && !IsInputOwner; // Server has to run the input. But not here, if the server is the input owner -> Is Host and play's this object.
+                bool sentInput = InputTransportLayer.SentInput(InputOwnerClientId);
+                bool hasInputOwner = _inputOwnerClientId != ulong.MaxValue;
+                if (shouldRunAsServer && sentInput && hasInputOwner)
                 {
                     // Not local client -> get input from InputTransportLayer
                     try
                     {
-                        inputState = InputTransportLayer.GetInput(OwnerClientId, tick);
+                        inputState = InputTransportLayer.GetInput(InputOwnerClientId, tick);
                         gotInput = true;
                     }
                     catch (Exception e)
@@ -281,10 +324,9 @@ namespace NetRewind.Utils.Simulation
         
         public static IData GetPlayerInputData()
         {
-            if (_inputDataSource != null)
-                return _inputDataSource.OnInputData();
-            
-            return new DefaultPlayerData();
+            return _globalInputDataSource != null ? 
+                _globalInputDataSource.OnInputData() :
+                new DefaultPlayerData();
         }
         
         public void SetVisualSyncMode(bool shouldSync) => SyncVisual = shouldSync;
@@ -464,28 +506,28 @@ namespace NetRewind.Utils.Simulation
             if (isPredicted)
             {
                 // Is not predicted
-                if (IsOwner)
+                if (IsInputOwner)
                 {
-                    // Owner and predicted
+                    // Input owner and predicted
                     // -> just check the state with the server state.
                 }
                 else
                 {
-                    // Not the owner and predicted
+                    // Not the input owner and predicted
                     // -> apply states and reconcile (if needed)
                 }
             }
             else
             {
                 // Is no longer predicted
-                if (IsOwner)
+                if (IsInputOwner)
                 {
-                    // Owner but not predicted???
+                    // Input owner but not predicted???
                     Debug.LogWarning("If you are the owner, you should always predict!");
                 }
                 else
                 {
-                    // Not the owner and not predicted
+                    // Not the input owner and not predicted
                     // -> just apply the state.
                 }
             }

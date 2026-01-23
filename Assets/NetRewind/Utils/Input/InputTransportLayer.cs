@@ -153,7 +153,9 @@ namespace NetRewind.Utils.Input
             }
             catch (Exception e)
             {
-                Debug.LogWarning("Player not found!");
+                if (clientId != ulong.MaxValue) // Check if the clientId is valid.
+                    Debug.LogWarning("Player not found!");
+                
                 return false;
             }
         }
