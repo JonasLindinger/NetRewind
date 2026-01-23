@@ -121,7 +121,7 @@ namespace NetRewind.Utils.Simulation
             }            
             #endif
 
-            if (_inputDataSource == _globalInputDataSource)
+            if (_inputDataSource == _globalInputDataSource && _inputDataSource != null)
                 _globalInputDataSource = null;
             
             visual.SetParent(gameObject.transform);
@@ -162,10 +162,11 @@ namespace NetRewind.Utils.Simulation
             if (InputOwnerClientId == newInputOwnerClientId)
                 return; // Nothing changed!
          
-            _inputOwnerClientId = newInputOwnerClientId; // Update variable
-            
+            bool wasTheOwner = IsInputOwner;
             bool wouldBeInputOwner = newInputOwnerClientId == NetworkManager.Singleton.LocalClientId;
-            bool needToUpdate = !IsInputOwner && !wouldBeInputOwner;
+            bool needToUpdate = wasTheOwner != wouldBeInputOwner;
+            
+            _inputOwnerClientId = newInputOwnerClientId; // Update variable
             
             if (needToUpdate)
                 HandleInputOwnerUpdate();
@@ -302,7 +303,7 @@ namespace NetRewind.Utils.Simulation
         public IState GetSnapshotState(uint tick)
         {
             if (_stateHolder == null)
-                throw new Exception("");
+                throw new Exception("No state holder found!");
             
             IState state = _stateHolder.GetCurrentState();
             #if Client
@@ -338,7 +339,19 @@ namespace NetRewind.Utils.Simulation
         protected bool GetButton(string inputName) => InputSender.GetInstance().GetButton(InputSender.ButtonInputReferences[inputName], _inputListener.InputData);
         protected Vector2 GetVector2(string inputName) => InputSender.GetInstance().GetVector2(InputSender.Vector2InputReferences[inputName], _inputListener.InputData);
 
-        protected T GetData<T>() where T : IData => (T) _inputListener.Data;
+        protected T GetData<T>() where T : IData
+        {
+            if (_inputListener == null)
+                throw new Exception("This object doesn't have an input listener!");
+            
+            if (_inputListener.Data == null)
+                throw new Exception("No Data available!");
+
+            if (_inputListener.Data.GetType() != typeof(T))
+                throw new Exception("Cannot cast " + _inputListener.Data.GetType() + " into " + typeof(T) + "!");
+            
+            return (T) _inputListener.Data;
+        }
         protected Dictionary<string, InputAction> InputActions => InputSender.Actions;
         
         #if Server
