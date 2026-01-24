@@ -28,7 +28,7 @@ namespace NetRewind.Utils.Simulation
             _tick = tick;
             _data = eventData;
             #if Server
-            TickToDeleteTheEvent = NetworkManager.Singleton.IsServer ? NetRunner.EventPackageLossToAccountFor : 0;
+            TickToDeleteTheEvent = NetworkManager.Singleton.IsServer ? NetRunner.EventPackageLossToAccountFor : 0; // Todo: Maybe multiply it by the sending mode!?
             #endif
         }
         
