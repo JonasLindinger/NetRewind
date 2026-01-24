@@ -139,8 +139,18 @@ namespace _Demo.Scripts.Player
             
                 // Rotate player
                 Vector3 newRotation = transform.eulerAngles;
-                newRotation.y = data.YRotation;
-                transform.eulerAngles = newRotation;
+                newRotation.y = data.Rotation.y;
+                
+                if (IsInputOwner)
+                {
+                    orientation.rotation = Quaternion.Euler(0, newRotation.y, 0);
+                }
+                else
+                {
+                    orientation.rotation = Quaternion.Euler(0, newRotation.y, 0);
+                    transform.rotation = Quaternion.Euler(0, newRotation.y, 0);
+                    playerCamera.transform.rotation = Quaternion.Euler(_xRotation, _yRotation, 0);
+                }
 
                 // Move player
                 if (_canMove)
@@ -148,25 +158,25 @@ namespace _Demo.Scripts.Player
             
                 CheckInteract();
 
-                CheckForShooting(tick);
+                CheckForShooting(tick, data);
             }
         }
         #endregion
 
         #region Shooting
-        private void CheckForShooting(uint tick)
+        private void CheckForShooting(uint tick, PlayerData data)
         {
             bool isShooting = GetButton("Shoot");
             
             if (isShooting && !_isShooting)
             {
                 #if Server
-                if (IsServer)
-                {
-                    // Todo: Validate, if the client is allowed to shoot.
-                    // Todo: Check for a hit
-                    // Todo: Do the damage
-                }
+                if (IsServer && !IsInputOwner)
+                    RunCodeInRollback(data.TickToRollbackToWhenShooting, Shoot);
+                #endif
+                #if Client
+                if (IsInputOwner && !IsServer)
+                    Shoot();
                 #endif
                 
                 DisplayTheShot();
@@ -196,6 +206,14 @@ namespace _Demo.Scripts.Player
             }
             
             DisplayTheShot();
+        }
+
+        private void Shoot()
+        {
+            Debug.Log("Running shooting logic");
+            // Todo: Validate, if the client is allowed to shoot.
+            // Todo: Check for a hit
+            // Todo: Do the damage
         }
         #endregion
         
@@ -369,7 +387,8 @@ namespace _Demo.Scripts.Player
         {
             return new PlayerData()
             {
-                YRotation = transform.eulerAngles.y,
+                Rotation = new Vector2(playerCamera.transform.eulerAngles.x, playerCamera.transform.eulerAngles.y),
+                TickToRollbackToWhenShooting = SnapshotTransportLayer.LastReceivedSnapshotTick
             };
         }
 

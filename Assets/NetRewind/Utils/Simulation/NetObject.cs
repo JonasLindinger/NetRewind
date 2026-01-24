@@ -363,6 +363,36 @@ namespace NetRewind.Utils.Simulation
             return objectState;
         }
 
+        public void RunCodeInRollback(uint tickToRollbackTo, Action method)
+        {
+            // Save the current state
+            Snapshot currentSnapshot = SnapshotContainer.GetCurrentSnapshot(0); // 0 because it doesn't matter anyway.
+            
+            // Get the state to rollback to
+            Snapshot snapshotToRollbackTo = SnapshotContainer.GetSnapshot(tickToRollbackTo);
+            
+            // Rollback
+            foreach (var kvp in snapshotToRollbackTo.States)
+            {
+                ulong networkId = kvp.Key;
+                IState state = kvp.Value;
+                NetObjectState netObjectState = (NetObjectState) snapshotToRollbackTo.NetObjectStates[networkId];
+                TryApplyState(networkId, state, netObjectState);
+            }
+            
+            // Run the method / code
+            method();
+            
+            // Return to the current state
+            foreach (var kvp in currentSnapshot.States)
+            {
+                ulong networkId = kvp.Key;
+                IState state = kvp.Value;
+                NetObjectState netObjectState = (NetObjectState) currentSnapshot.NetObjectStates[networkId];
+                TryApplyState(networkId, state, netObjectState);
+            }
+        }
+
         private IState GetNetObjectState()
         {
             Event[] eventsToSend =  Array.Empty<Event>();

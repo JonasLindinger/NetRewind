@@ -29,7 +29,7 @@ namespace NetRewind.Utils.Simulation.State
             return snapshot;
         }
 
-        private static Snapshot GetCurrentSnapshot(uint tick)
+        public static Snapshot GetCurrentSnapshot(uint tick)
         {
             Snapshot snapshot = new Snapshot(tick);
 

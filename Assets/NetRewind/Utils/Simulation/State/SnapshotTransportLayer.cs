@@ -13,7 +13,7 @@ namespace NetRewind.Utils.Simulation.State
         
         #if Client
         private static SnapshotTransportLayer _localInstance;
-        private uint _lastReceivedSnapshotTick;
+        public static uint LastReceivedSnapshotTick { get; private set; }
         #endif
 
         public override void OnNetworkSpawn()
@@ -130,7 +130,7 @@ namespace NetRewind.Utils.Simulation.State
         {
             #if Client
             // Only accept new states!
-            if (snapshot.Tick <= _lastReceivedSnapshotTick)
+            if (snapshot.Tick <= LastReceivedSnapshotTick)
                 return;
             
             if (snapshot.Tick > Simulation.CurrentTick)
@@ -149,7 +149,7 @@ namespace NetRewind.Utils.Simulation.State
             if (Simulation.IsCorrectingGameState) return;
             
             // --- Accept the state ---
-            _lastReceivedSnapshotTick = snapshot.Tick;
+            LastReceivedSnapshotTick = snapshot.Tick;
 
             HandleServerSnapshot(snapshot);
             #endif
