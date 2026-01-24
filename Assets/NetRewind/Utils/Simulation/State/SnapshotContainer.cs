@@ -40,8 +40,9 @@ namespace NetRewind.Utils.Simulation.State
 
                 try
                 {
-                    IState state = networkedObject.GetSnapshotState(tick);
-                    snapshot.States.Add(networkId, state);
+                    ObjectState objectState = networkedObject.GetSnapshotState(tick);
+                    snapshot.States.Add(networkId, objectState.State);
+                    snapshot.NetObjectStates.Add(networkId, objectState.NetObjectState);
                 }
                 catch (NotImplementedException e)
                 {

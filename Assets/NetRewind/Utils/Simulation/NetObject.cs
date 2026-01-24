@@ -49,8 +49,8 @@ namespace NetRewind.Utils.Simulation
         public Transform visual;
         [Space(10)]
         
-        #if Client
         private CircularBuffer<ObjectState> _states = new CircularBuffer<ObjectState>(SnapshotContainer.SnapshotBufferSize);
+        #if Client
         private uint _lastReceivedStateTick;
         private uint _firstRecordedState;
         #endif
@@ -61,7 +61,7 @@ namespace NetRewind.Utils.Simulation
 
         public bool IsInputOwner => _inputOwnerClientId == NetworkManager.Singleton.LocalClientId;
         public ulong InputOwnerClientId => _inputOwnerClientId;
-        private ulong _inputOwnerClientId = ulong.MaxValue; // Todo: serialize and keep track. so that prediction still works even if the owner changes.
+        private ulong _inputOwnerClientId = ulong.MaxValue;
         
         private IInputDataSource _inputDataSource;
         private ITick _tickInterface;
@@ -196,10 +196,11 @@ namespace NetRewind.Utils.Simulation
 
         public void TryApplyPartialState(IState serverState, uint result) => _stateHolder.ApplyPartialState(serverState, result);
         
-        public static void TryApplyState(ulong networkId, IState state)
+        public static void TryApplyState(ulong networkId, IState state, IState netObjectState)
         {
             try
             {
+                NetworkObjects[networkId].SetNetObjectState(netObjectState);
                 NetworkObjects[networkId]._stateHolder.ApplyState(state);
             }
             catch (Exception e)
@@ -207,12 +208,13 @@ namespace NetRewind.Utils.Simulation
                 throw new Exception("Failed to apply state: " + e);
             }
         }
-        public void TryApplyState(IState state) => TryApplyState(NetworkObjectId, state);
+        public void TryApplyState(IState state, IState netObjectState) => TryApplyState(NetworkObjectId, state, netObjectState);
         
-        public static void TryUpdateState(ulong networkId, IState state)
+        public static void TryUpdateState(ulong networkId, IState state, IState netObjectState)
         {
             try
             {
+                NetworkObjects[networkId].SetNetObjectState(netObjectState);
                 NetworkObjects[networkId]._stateHolder.UpdateState(state);
             }
             catch (Exception e)
@@ -220,8 +222,15 @@ namespace NetRewind.Utils.Simulation
                 throw new Exception("Failed to update state: " + e);
             }
         }
-        public void TryUpdateState(IState state) => TryUpdateState(NetworkObjectId, state);
+        public void TryUpdateState(IState state, IState netObjectState) => TryUpdateState(NetworkObjectId, state, netObjectState);
 
+        private void SetNetObjectState(IState netObjectState)
+        {
+            NetObjectState state = (NetObjectState) netObjectState;
+            
+            SetInputOwner(state.InputOwnerClientId);
+        }
+        
         public static void RunTick(uint tick)
         {
             foreach (var kvp in NetworkObjects)
@@ -300,28 +309,39 @@ namespace NetRewind.Utils.Simulation
             return _inputListener.TickOfTheInput == tick;
         }
         
-        public IState GetSnapshotState(uint tick)
+        public ObjectState GetSnapshotState(uint tick)
         {
             if (_stateHolder == null)
                 throw new Exception("No state holder found!");
             
             IState state = _stateHolder.GetCurrentState();
+            IState netObjectState = GetNetObjectState();
+            
             #if Client
             if (_firstRecordedState == 0)
                 _firstRecordedState = tick;
+            #endif
+            
+            ObjectState objectState = new ObjectState(tick, state, netObjectState);
             
             if (!IsServer)
             {
                 // Todo: only save this in here, when the tick % sendingMode == 0 ...? Should help performance.
-                _states.Store(tick, new ObjectState(tick, state));
+                _states.Store(tick, objectState);
             }
-            #endif
-            return state;
+            
+            return objectState;
         }
 
-        #if Client
+        private IState GetNetObjectState()
+        {
+            return new NetObjectState()
+            {
+                InputOwnerClientId = _inputOwnerClientId,
+            };
+        }
+        
         public IState GetStateAtTick(uint tick) => _states.Get(tick).State;
-        #endif
         
         public static IData GetPlayerInputData()
         {

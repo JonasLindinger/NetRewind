@@ -111,8 +111,9 @@ namespace NetRewind.Utils.Simulation.State
 
                 try
                 {
-                    IState state = networkedObject.GetSnapshotState(tick);
-                    snapshot.States.Add(networkId, state);
+                    ObjectState objectState = networkedObject.GetSnapshotState(tick);
+                    snapshot.States.Add(networkId, objectState.State);
+                    snapshot.NetObjectStates.Add(networkId, objectState.NetObjectState);
                 }
                 catch (NotImplementedException e)
                 {
@@ -165,6 +166,7 @@ namespace NetRewind.Utils.Simulation.State
             {
                 ulong networkId = kvp.Key;
                 IState serverState = kvp.Value;
+                IState netObjectServerState = snapshot.NetObjectStates[networkId];
 
                 try
                 {
@@ -186,7 +188,7 @@ namespace NetRewind.Utils.Simulation.State
                             // Merge snapshots (info that we know, but is incomplete (server snapshot) + complete info, but not 100% correct (predicted snapshot)) 
                             // -> good enough snapshot for reconciliation
                             fullClientSnapshot = GetCorrectSnapshot(
-                                snapshot, 
+                                snapshot,
                                 SnapshotContainer.GetSnapshot(snapshot.Tick)
                             );
                             
@@ -199,7 +201,7 @@ namespace NetRewind.Utils.Simulation.State
                         // If the object isn't predicted, we can just update the object
                         
                         // Update state
-                        netObject.TryUpdateState(serverState);
+                        netObject.TryUpdateState(serverState, netObjectServerState);
                     }
                 }
                 catch (KeyNotFoundException e)
@@ -221,9 +223,12 @@ namespace NetRewind.Utils.Simulation.State
             {
                 ulong networkId = kvp.Key;
                 IState serverState = kvp.Value;
+                IState netObjectServerState = incompleteSnapshot.NetObjectStates[networkId];
                 
                 correctSnapshot.States.Remove(networkId);
                 correctSnapshot.States.Add(networkId, serverState);
+                correctSnapshot.NetObjectStates.Remove(networkId);
+                correctSnapshot.NetObjectStates.Add(networkId, netObjectServerState);
             }
             
             return correctSnapshot;

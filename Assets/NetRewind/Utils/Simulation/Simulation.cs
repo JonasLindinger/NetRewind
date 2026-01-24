@@ -192,7 +192,12 @@ namespace NetRewind.Utils.Simulation
             
             // --- Apply the snapshot. ---
             foreach (var kvp in snapshot.States)
-                NetObject.TryApplyState(kvp.Key, kvp.Value);
+            {
+                ulong networkId = kvp.Key;
+                IState state = kvp.Value;
+                IState netObjectState = snapshot.NetObjectStates[networkId];
+                NetObject.TryApplyState(networkId, state, netObjectState);
+            }
             
             // --- Save the snapshot. ---
             SnapshotContainer.StoreSnapshot(snapshot);
