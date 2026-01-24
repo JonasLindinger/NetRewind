@@ -5,6 +5,7 @@ using NetRewind.Utils.Input.Data;
 using NetRewind.Utils.Simulation;
 using NetRewind.Utils.Simulation.State;
 using UnityEngine;
+using Event = UnityEngine.Event;
 
 namespace _Demo.Scripts.Player
 {
@@ -54,7 +55,9 @@ namespace _Demo.Scripts.Player
         private Transform _seat;
         
         private bool _isInteracting;
-        
+        private bool _isShooting;
+
+        #region Spawn / Despawn
         protected override void NetSpawn()
         {
             SetInputOwner(OwnerClientId);
@@ -83,6 +86,7 @@ namespace _Demo.Scripts.Player
             if (IsInCar)
                 _currentCar.Interact(this);
         }
+        #endregion
 
         #region Ownership
         public override void OnLostOwnership()
@@ -115,6 +119,7 @@ namespace _Demo.Scripts.Player
         }
         #endregion
         
+        #region Tick
         public void Tick(uint tick)
         {
             if (IsInCar)
@@ -142,9 +147,59 @@ namespace _Demo.Scripts.Player
                     Move();
             
                 CheckInteract();
+
+                CheckForShooting(tick);
             }
         }
+        #endregion
+
+        #region Shooting
+        private void CheckForShooting(uint tick)
+        {
+            bool isShooting = GetButton("Shoot");
+            
+            if (isShooting && !_isShooting)
+            {
+                #if Server
+                if (IsServer)
+                {
+                    // Todo: Validate, if the client is allowed to shoot.
+                    // Todo: Check for a hit
+                    // Todo: Do the damage
+                }
+                #endif
+                
+                DisplayTheShot();
+                
+                #if Server
+                // Tell the other clients about the shooting
+                if (IsServer)
+                    RegisterEvent(tick, new ShootEvent());
+                #endif
+            }
+
+            _isShooting = isShooting;
+        }
+
+        private void DisplayTheShot()
+        {
+            // Todo: Display the shot
+            Debug.Log("Shot!");
+        }
+
+        private void HandleShootEvent(ShootEvent shootEvent)
+        {
+            if (shootEvent.ShooterId == InputOwnerClientId)
+            {
+                // We are the shooter, so we should not display the shot. Since we already did that ourselves.
+                return;
+            }
+            
+            DisplayTheShot();
+        }
+        #endregion
         
+        #region Movement
         private void Move()
         {
             if (_jumpCooldownTimer > 0)
@@ -196,7 +251,9 @@ namespace _Demo.Scripts.Player
                 _jumpCooldownTimer = jumpCooldown;
             }
         }
+        #endregion
 
+        #region Interactions
         private void CheckInteract()
         {
             bool interacting = GetButton("Use");
@@ -222,7 +279,9 @@ namespace _Demo.Scripts.Player
             
             _isInteracting = interacting;
         }
+        #endregion
 
+        #region Car
         public void HopInCar(CarController car, Transform seat)
         {
             _currentCar = car;
@@ -257,14 +316,18 @@ namespace _Demo.Scripts.Player
             _canMove = true;
             _rb.useGravity = true;
         }
+        #endregion
         
+        #region NetOwnerUpdate
         public void NetInputOwnerUpdate()
         {
             #if Client
             Look();
             #endif
         }
+        #endregion
         
+        #region Looking Around
         #if Client
         private void Look()
         {
@@ -282,7 +345,24 @@ namespace _Demo.Scripts.Player
             transform.rotation = Quaternion.Euler(0, _yRotation, 0);
         }
         #endif
+        #endregion
 
+        #region Events
+
+        protected override void OnEvent(IData eventData)
+        {
+            switch (eventData)
+            {
+                case ShootEvent shootEvent:
+                    HandleShootEvent(shootEvent);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("Event type is not supported");
+            }
+        }
+
+        #endregion
+        
         #region State
         
         public IData OnInputData()

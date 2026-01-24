@@ -195,7 +195,7 @@ namespace NetRewind.Utils.Simulation
             {
                 ulong networkId = kvp.Key;
                 IState state = kvp.Value;
-                IState netObjectState = snapshot.NetObjectStates[networkId];
+                NetObjectState netObjectState = (NetObjectState) snapshot.NetObjectStates[networkId];
                 NetObject.TryApplyState(networkId, state, netObjectState);
             }
             

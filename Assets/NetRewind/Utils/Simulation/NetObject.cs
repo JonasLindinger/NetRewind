@@ -50,6 +50,11 @@ namespace NetRewind.Utils.Simulation
         [Space(10)]
         
         private CircularBuffer<ObjectState> _states = new CircularBuffer<ObjectState>(SnapshotContainer.SnapshotBufferSize);
+        
+        #if Server
+        private List<Event> _events = new List<Event>();
+        #endif
+        
         #if Client
         private uint _lastReceivedStateTick;
         private uint _firstRecordedState;
@@ -196,35 +201,57 @@ namespace NetRewind.Utils.Simulation
 
         public void TryApplyPartialState(IState serverState, uint result) => _stateHolder.ApplyPartialState(serverState, result);
         
-        public static void TryApplyState(ulong networkId, IState state, IState netObjectState)
+        public static void TryApplyState(ulong networkId, IState state, NetObjectState netObjectState)
         {
             try
             {
-                NetworkObjects[networkId].SetNetObjectState(netObjectState);
-                NetworkObjects[networkId]._stateHolder.ApplyState(state);
+                NetObject obj = NetworkObjects[networkId];
+                obj.SetNetObjectState(netObjectState);
+                obj._stateHolder.ApplyState(state);
+                #if Client
+                if (!obj.IsServer) // Don't do this as the server / host.
+                    obj.PlayEvents(netObjectState);
+                #endif
             }
             catch (Exception e)
             {
                 throw new Exception("Failed to apply state: " + e);
             }
         }
-        public void TryApplyState(IState state, IState netObjectState) => TryApplyState(NetworkObjectId, state, netObjectState);
+        public void TryApplyState(IState state, NetObjectState netObjectState) => TryApplyState(NetworkObjectId, state, netObjectState);
         
-        public static void TryUpdateState(ulong networkId, IState state, IState netObjectState)
+        #if Client
+        private static void TryUpdateState(ulong networkId, IState state, NetObjectState netObjectState)
         {
             try
             {
-                NetworkObjects[networkId].SetNetObjectState(netObjectState);
-                NetworkObjects[networkId]._stateHolder.UpdateState(state);
+                NetObject obj = NetworkObjects[networkId];
+                obj.SetNetObjectState(netObjectState);
+                obj._stateHolder.UpdateState(state);
+                if (!obj.IsServer) // Don't do this as the server / host.
+                    obj.PlayEvents(netObjectState);
             }
             catch (Exception e)
             {
                 throw new Exception("Failed to update state: " + e);
             }
         }
-        public void TryUpdateState(IState state, IState netObjectState) => TryUpdateState(NetworkObjectId, state, netObjectState);
-
-        private void SetNetObjectState(IState netObjectState)
+        #endif
+        #if Client
+        public void TryUpdateState(IState state, NetObjectState netObjectState) => TryUpdateState(NetworkObjectId, state, netObjectState);
+        #endif
+        
+        #if Client
+        private void PlayEvents(NetObjectState netObjectState)
+        {
+            if (IsServer) return;
+            
+            foreach (Event e in netObjectState.Events)
+                OnEvent(e.Data);
+        }
+        #endif
+        
+        private void SetNetObjectState(NetObjectState netObjectState)
         {
             NetObjectState state = (NetObjectState) netObjectState;
             
@@ -246,6 +273,9 @@ namespace NetRewind.Utils.Simulation
             // Check if this object should leave the sync group.
             if (IsServer && tick >= _tickToLeaveGroup) 
                 LeaveSyncGroup();
+            
+            // Remove events that happened before this tick.
+            _events.RemoveAll(e => e.TickToDeleteTheEvent == tick);
             #endif
             
             // If this is an inputListener, try to get input
@@ -335,10 +365,17 @@ namespace NetRewind.Utils.Simulation
 
         private IState GetNetObjectState()
         {
-            return new NetObjectState()
-            {
-                InputOwnerClientId = _inputOwnerClientId,
-            };
+            Event[] eventsToSend =  Array.Empty<Event>();
+            #if Server
+            if (IsServer)
+                eventsToSend = GetEventsToSend();
+            #endif
+            NetObjectState netObjectState = new NetObjectState(
+                _inputOwnerClientId,
+                eventsToSend
+            );
+            
+            return netObjectState;
         }
         
         public IState GetStateAtTick(uint tick) => _states.Get(tick).State;
@@ -355,6 +392,11 @@ namespace NetRewind.Utils.Simulation
         protected virtual void NetSpawn() { }
         protected virtual void NetDespawn() { }
         protected virtual void NetUpdate() { }
+
+        protected virtual void OnEvent(IData eventData)
+        {
+            throw new NotImplementedException("Override the OnEvent method to handle events!");
+        }
         
         protected bool GetButton(string inputName) => InputSender.GetInstance().GetButton(InputSender.ButtonInputReferences[inputName], _inputListener.InputData);
         protected Vector2 GetVector2(string inputName) => InputSender.GetInstance().GetVector2(InputSender.Vector2InputReferences[inputName], _inputListener.InputData);
@@ -520,6 +562,22 @@ namespace NetRewind.Utils.Simulation
                 netObject.visual.rotation = netObject.transform.rotation;
             }
         }
+        #endif
+        
+        #if Server
+        public void RegisterEvent(uint tick, IData data)
+        {
+            if (!IsServer)
+                throw new Exception("You can't call this, since you aren't a server!");
+
+            Event e = new Event(tick, data);
+            
+            _events.Add(e);
+        }
+        #endif
+        
+        #if Server
+        public Event[] GetEventsToSend() => _events.ToArray();
         #endif
         
         public void ChangePredictionState(bool shouldBePredicted)

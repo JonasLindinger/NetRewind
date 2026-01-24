@@ -849,6 +849,8 @@ MonoBehaviour:
     id: 0
   - actionReference: {fileID: -7109779948678705296, guid: 741ac862a871070bda537f69601651f9, type: 3}
     id: 0
+  - actionReference: {fileID: 3128999054150978459, guid: 741ac862a871070bda537f69601651f9, type: 3}
+    id: 0
   local:
   - actionReference: {fileID: -7348558677180722466, guid: 741ac862a871070bda537f69601651f9, type: 3}
     id: 0
@@ -1015,6 +1017,7 @@ MonoBehaviour:
   controlPhysics: 1
   inputSendingMode: 1
   inputPackageLoss: 4
+  eventPackageLossToAccountFor: 5
   transportLayerPrefab: {fileID: 2438693781863390696, guid: d3de0dcb464daabed9695fb5253c7cbc, type: 3}
   networkManager: {fileID: 1020746082}
   transport: {fileID: 1020746081}

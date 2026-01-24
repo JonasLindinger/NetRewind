@@ -10,6 +10,7 @@ namespace NetRewind
 {
     public class NetRunner : MonoBehaviourSingleton<NetRunner>
     {
+        public static uint EventPackageLossToAccountFor;
         
         [Header("Simulation")]
         [SerializeField] private uint simulationTickRate = 60;
@@ -19,6 +20,9 @@ namespace NetRewind
         [Header("Input sending")]
         [SerializeField] private SendingMode inputSendingMode = SendingMode.Full;
         [SerializeField] private uint inputPackageLoss = 4;
+        [Space(5)] 
+        [Header("State sending")]
+        [SerializeField] private uint eventPackageLossToAccountFor = 5;
         [Space(5)]
         [Header("Transport Layer")]
         [SerializeField] private GameObject transportLayerPrefab;
@@ -43,7 +47,12 @@ namespace NetRewind
         }
         
         #endregion
-        
+
+        private void Start()
+        {
+            EventPackageLossToAccountFor = eventPackageLossToAccountFor;
+        }
+
         private void Update()
         {
             Simulation.Update(Time.deltaTime);   

@@ -166,7 +166,7 @@ namespace NetRewind.Utils.Simulation.State
             {
                 ulong networkId = kvp.Key;
                 IState serverState = kvp.Value;
-                IState netObjectServerState = snapshot.NetObjectStates[networkId];
+                NetObjectState netObjectServerState = (NetObjectState) snapshot.NetObjectStates[networkId];
 
                 try
                 {
