@@ -1017,7 +1017,7 @@ MonoBehaviour:
   controlPhysics: 1
   inputSendingMode: 1
   inputPackageLoss: 4
-  eventPackageLossToAccountFor: 5
+  eventPackageLossToAccountFor: 4
   transportLayerPrefab: {fileID: 2438693781863390696, guid: d3de0dcb464daabed9695fb5253c7cbc, type: 3}
   networkManager: {fileID: 1020746082}
   transport: {fileID: 1020746081}

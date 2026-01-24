@@ -189,7 +189,7 @@ namespace _Demo.Scripts.Player
 
         private void HandleShootEvent(ShootEvent shootEvent)
         {
-            if (shootEvent.ShooterId == InputOwnerClientId)
+            if (shootEvent.ShooterClientId == InputOwnerClientId)
             {
                 // We are the shooter, so we should not display the shot. Since we already did that ourselves.
                 return;

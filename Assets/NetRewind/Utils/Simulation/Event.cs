@@ -1,19 +1,24 @@
 using System.Collections.Generic;
 using NetRewind.Utils.Input.Data;
+using NetRewind.Utils.Simulation.State;
 using Unity.Netcode;
 
 namespace NetRewind.Utils.Simulation
 {
     public struct Event : INetworkSerializable
     {
+        private const ushort MaxEventsCoExisting = 2048;
         private static uint _eventCounter = 0;
 
         // Getter
-        public uint EventId => _eventId;
+        /// <summary>
+        /// Event id's is recycled! So don't rely on this to be unique. They are unique, but not forever! After the amount of the variable "MaxEventsCoExisting" every id get's recycled.
+        /// </summary>
+        public ushort EventId => _eventId;
         public uint Tick => _tick;
         public IData Data => _data;
         
-        private uint _eventId;
+        private ushort _eventId;
         private uint _tick;
         private IData _data;
 
@@ -24,7 +29,7 @@ namespace NetRewind.Utils.Simulation
         
         public Event(uint tick, IData eventData)
         {
-            _eventId = _eventCounter++;
+            _eventId = (ushort) (MaxEventsCoExisting % _eventCounter++);
             _tick = tick;
             _data = eventData;
             #if Server
