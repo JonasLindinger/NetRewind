@@ -383,6 +383,7 @@ namespace _Demo.Scripts.Player
         
         #region State
         
+        #if Client
         public IData OnInputData()
         {
             return new PlayerData()
@@ -391,6 +392,7 @@ namespace _Demo.Scripts.Player
                 TickToRollbackToWhenShooting = SnapshotTransportLayer.LastReceivedSnapshotTick
             };
         }
+        #endif
 
         public IState GetCurrentState()
         {

@@ -365,6 +365,13 @@ namespace NetRewind.Utils.Simulation
 
         public void RunCodeInRollback(uint tickToRollbackTo, Action method)
         {
+            if (tickToRollbackTo == 0)
+            {
+                // No rollback possible
+                Debug.LogWarning("Cannot rollback to tick 0! This is probably because the client hasn't received any state yet.");
+                return;
+            }
+            
             // Save the current state
             Snapshot currentSnapshot = SnapshotContainer.GetCurrentSnapshot(0); // 0 because it doesn't matter anyway.
             
@@ -410,12 +417,14 @@ namespace NetRewind.Utils.Simulation
         
         public IState GetStateAtTick(uint tick) => _states.Get(tick).State;
         
+        #if Client
         public static IData GetPlayerInputData()
         {
             return _globalInputDataSource != null ? 
                 _globalInputDataSource.OnInputData() :
                 new DefaultPlayerData();
         }
+        #endif
         
         public void SetVisualSyncMode(bool shouldSync) => SyncVisual = shouldSync;
 
@@ -599,7 +608,7 @@ namespace NetRewind.Utils.Simulation
         {
             if (!IsServer)
                 throw new Exception("You can't call this, since you aren't a server!");
-
+            
             Event e = new Event(tick, data);
             
             _events.Add(e);

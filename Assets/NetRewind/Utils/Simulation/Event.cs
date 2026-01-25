@@ -8,7 +8,7 @@ namespace NetRewind.Utils.Simulation
     public struct Event : INetworkSerializable
     {
         private const ushort MaxEventsCoExisting = 2048;
-        private static uint _eventCounter = 0;
+        private static uint _eventCounter = 1;
 
         // Getter
         /// <summary>
