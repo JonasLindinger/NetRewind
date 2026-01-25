@@ -93,9 +93,12 @@ namespace NetRewind.Utils.Simulation.State
                 throw new Exception("Failed to send states. No local instance of SnapshotTransportLayer found.");
 
             Snapshot snapshot = GetSnapshotByObjects(tick, netObjects);
-            
+
             foreach (var layer in _layers)
+            {
+                // Debug.Log("Sending snapshot to client");
                 layer.SendRegularSnapshotToClientRPC(snapshot);
+            }
         }
         #endif
         
@@ -129,24 +132,36 @@ namespace NetRewind.Utils.Simulation.State
         private void SendRegularSnapshotToClientRPC(Snapshot snapshot)
         {
             #if Client
+            // Debug.Log("Received snapshot from Server");
             // Only accept new states!
             if (snapshot.Tick <= LastReceivedSnapshotTick)
+            {
+                // Debug.LogWarning("Received old snapshot! Ignoring...");
                 return;
+            }
             
             if (snapshot.Tick > Simulation.CurrentTick)
             {
                 // We received a snapshot for a tick that didn't happen yet. We are probably too far behind and should speed up. But this shouldn't be done here! 
-                
-                // Debug.LogWarning("Received state for tick " + serverObjectState.TickOfTheInput + " but we are at tick " + Simulation.CurrentTick + "! IGNORING / Waiting for tick adjustments!");
+
+                // Debug.LogWarning("We are too far behind! Dropping snapshot");
                 return;
             }
             
             // Check if our buffer is even capable of containing the snapshot at that tick.
-            if (snapshot.Tick <= Simulation.CurrentTick - SnapshotContainer.SnapshotBufferSize) 
+            uint lastSnapshotTickWeHave = Simulation.CurrentTick - SnapshotContainer.SnapshotBufferSize;
+            if (snapshot.Tick <= lastSnapshotTickWeHave && Simulation.CurrentTick > SnapshotContainer.SnapshotBufferSize)
+            {
+                // Debug.LogWarning("Not capable of handling the snapshot! We are too far ahead or the snapshot buffer is too small!");
                 return;
+            }
             
             // Only accept if we don't already do correction.
-            if (Simulation.IsCorrectingGameState) return;
+            if (Simulation.IsCorrectingGameState)
+            {
+                // Debug.LogWarning("Already correcting the game!");
+                return;
+            }
             
             // --- Accept the state ---
             LastReceivedSnapshotTick = snapshot.Tick;
