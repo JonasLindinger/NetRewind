@@ -11,11 +11,11 @@ namespace NetRewind.Utils.Simulation.State
         #if Client
         private static List<uint> _receivedEvents = new List<uint>();
         #endif
-        
-        public ulong InputOwnerClientId;
+
+        public ushort InputOwnerClientId;
         public Event[] Events;
 
-        public NetObjectState(ulong inputOwnerClientId, Event[] events)
+        public NetObjectState(ushort inputOwnerClientId, Event[] events)
         {
             InputOwnerClientId = inputOwnerClientId;
             Events = events;
@@ -28,33 +28,25 @@ namespace NetRewind.Utils.Simulation.State
             
             #if Client
             // Filter out events that have already been received
-            List<Event> eventsForThisState = new List<Event>();
             if (!NetworkManager.Singleton.IsServer && serializer.IsReader)
             {
-                // -> Running as a client and is receiving this state and not sending it (IsReader)
-                
-                // Check if the event is already received
+                List<Event> eventsForThisState = new List<Event>();
+
                 foreach (var @event in Events)
                 {
                     if (_receivedEvents.Contains(@event.EventId))
                     {
-                        // -> Already received this event
-                        
                         // Skip / ignore
                     }
                     else
                     {
-                        // -> Found a new event
-                        
-                        // Mark as received
                         _receivedEvents.Add(@event.EventId);
-                        
-                        // Add the event to the list
                         eventsForThisState.Add(@event);
                     }
                 }
+
+                Events = eventsForThisState.ToArray();
             }
-            Events = eventsForThisState.ToArray();
             #endif
         }
 

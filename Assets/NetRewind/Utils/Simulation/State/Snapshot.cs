@@ -25,7 +25,7 @@ namespace NetRewind.Utils.Simulation.State
             #region Serlialize Dictionary
             if (serializer.IsWriter) // Sending side
             {
-                int count = States.Count;
+                ushort count = (ushort) States.Count;
                 serializer.SerializeValue(ref count); // Serialize the count
 
                 foreach (var kvp in States)
@@ -37,7 +37,7 @@ namespace NetRewind.Utils.Simulation.State
                     serializer.SerializeValue(ref networkId);
         
                     // Serialize the state type
-                    int stateType = StateTypeRegistry.GetId(state.GetType());
+                    ushort stateType = StateTypeRegistry.GetId(state.GetType());
                     serializer.SerializeValue(ref stateType);
 
                     // Let the state serialize itself
@@ -49,15 +49,15 @@ namespace NetRewind.Utils.Simulation.State
                 if (States == null)
                     States = new Dictionary<ulong, IState>();
                 
-                int count = 0;
+                ushort count = 0;
                 serializer.SerializeValue(ref count); // Read the count
 
-                for (int i = 0; i < count; i++)
+                for (ushort i = 0; i < count; i++)
                 {
                     ulong networkId = 0;
                     serializer.SerializeValue(ref networkId); // Read the networkId
 
-                    int stateType = 0;
+                    ushort stateType = 0;
                     serializer.SerializeValue(ref stateType); // Read the state type
 
                     // Create an instance using a factory/registry
@@ -72,7 +72,7 @@ namespace NetRewind.Utils.Simulation.State
             #region Serlialize Dictionary
             if (serializer.IsWriter) // Sending side
             {
-                int count = NetObjectStates.Count;
+                ushort count = (ushort) NetObjectStates.Count;
                 serializer.SerializeValue(ref count); // Serialize the count
 
                 foreach (var kvp in NetObjectStates)
@@ -84,7 +84,7 @@ namespace NetRewind.Utils.Simulation.State
                     serializer.SerializeValue(ref networkId);
         
                     // Serialize the state type
-                    int stateType = StateTypeRegistry.GetId(state.GetType());
+                    ushort stateType = StateTypeRegistry.GetId(state.GetType());
                     serializer.SerializeValue(ref stateType);
 
                     // Let the state serialize itself
@@ -96,15 +96,15 @@ namespace NetRewind.Utils.Simulation.State
                 if (NetObjectStates == null)
                     NetObjectStates = new Dictionary<ulong, IState>();
                 
-                int count = 0;
+                ushort count = 0;
                 serializer.SerializeValue(ref count); // Read the count
 
-                for (int i = 0; i < count; i++)
+                for (ushort i = 0; i < count; i++)
                 {
                     ulong networkId = 0;
                     serializer.SerializeValue(ref networkId); // Read the networkId
 
-                    int stateType = 0;
+                    ushort stateType = 0;
                     serializer.SerializeValue(ref stateType); // Read the state type
 
                     // Create an instance using a factory/registry

@@ -15,8 +15,9 @@ namespace NetRewind.Utils.Simulation
 {
     public abstract class NetObject : NetworkBehaviour
     {
+        #region Variables
         private static IInputDataSource _globalInputDataSource; // static because there can only be one!
-        
+
         public static Dictionary<ulong, NetObject> NetworkObjects = new Dictionary<ulong, NetObject>();
         #if Server
         public static Dictionary<SendingMode, List<NetObject>> StateSendingList = new Dictionary<SendingMode, List<NetObject>>();
@@ -25,36 +26,36 @@ namespace NetRewind.Utils.Simulation
         /// </summary>
         public Dictionary<NetObject, uint> InteractedNetObjects = new Dictionary<NetObject, uint>();
         #endif
-        
+
         // Getter
         public bool IsPredicted => isPredicted;
         #if Server
         public SendingMode StateSendingMode => NetObjectSyncGroup?.SendingMode ?? privateStateSendingMode;
         #endif
         [HideInInspector] public SendingMode privateStateSendingMode; // The sending mode this object should normally be in
-        
+
         #if Server
         [HideInInspector] public NetObjectSyncGroup NetObjectSyncGroup;
         #endif
 
         public bool SyncVisual { get; private set; } = true;
 
-        [Header("Networking")] 
+        [Header("Networking")]
         [SerializeField] private bool shouldPredict = true; // Default value;
         #if UNITY_EDITOR
-        [ShowOnly] 
+        [ShowOnly]
         #endif
         [SerializeField] private bool isPredicted;
         [SerializeField] private SendingMode initialSendingMode = SendingMode.Full; // The sending mode this object starts in.
         public Transform visual;
         [Space(10)]
-        
+
         private CircularBuffer<ObjectState> _states = new CircularBuffer<ObjectState>(SnapshotContainer.SnapshotBufferSize);
-        
+
         #if Server
         private List<Event> _events = new List<Event>();
         #endif
-        
+
         #if Client
         private uint _lastReceivedStateTick;
         private uint _firstRecordedState;
@@ -65,21 +66,27 @@ namespace NetRewind.Utils.Simulation
         #endif
 
         public bool IsInputOwner => _inputOwnerClientId == NetworkManager.Singleton.LocalClientId;
-        public ulong InputOwnerClientId => _inputOwnerClientId;
-        private ulong _inputOwnerClientId = ulong.MaxValue;
-        
+        public ushort InputOwnerClientId => _inputOwnerClientId;
+        private ushort _inputOwnerClientId = ushort.MaxValue;
+
+        public bool HasInputOwner => _inputOwnerClientId != ushort.MaxValue;
+
         private IInputDataSource _inputDataSource;
         private ITick _tickInterface;
         private IInputListener _inputListener;
         private IStateHolder _stateHolder;
-        
-        private Vector3 _visualVelocity;
 
+        private Vector3 _visualVelocity;
+        #endregion
+
+        #region Inspector
         private void OnValidate()
         {
             isPredicted = shouldPredict;
         }
+        #endregion
 
+        #region OnNetworkSpawn
         public override void OnNetworkSpawn()
         {
             TryGetComponent(out _tickInterface);
@@ -89,9 +96,17 @@ namespace NetRewind.Utils.Simulation
             TryGetComponent(out _inputDataSource);
             
             NetworkObjects.Add(NetworkObjectId, this);
-            
-            visual.SetParent(null);
-            visual.name = name + "[" + NetworkObjectId + "] Visual";
+
+            if (visual)
+            {
+                visual.SetParent(null);
+                visual.name = name + "[" + NetworkObjectId + "] Visual";
+            }
+            else
+            {
+                // There is no visual to sync!
+                SetVisualSyncMode(false);
+            }
 
             isPredicted = shouldPredict;
             privateStateSendingMode = initialSendingMode;
@@ -106,7 +121,9 @@ namespace NetRewind.Utils.Simulation
             
             NetSpawn();
         }
+        #endregion
 
+        #region OnNetworkDespawn
         public override void OnNetworkDespawn()
         {
             NetworkObjects.Remove(NetworkObjectId);
@@ -128,13 +145,18 @@ namespace NetRewind.Utils.Simulation
 
             if (_inputDataSource == _globalInputDataSource && _inputDataSource != null)
                 _globalInputDataSource = null;
-            
-            visual.SetParent(gameObject.transform);
-            Destroy(visual.gameObject);
+
+            if (visual)
+            {
+                visual.SetParent(gameObject.transform);
+                Destroy(visual.gameObject);
+            }
             
             NetDespawn();
         }
-
+        #endregion
+        
+        #region Update
         private void Update()
         {
             #if Client
@@ -161,8 +183,18 @@ namespace NetRewind.Utils.Simulation
             
             NetUpdate();
         }
+        #endregion
+
+        #region Input Owner
 
         public void SetInputOwner(ulong newInputOwnerClientId)
+        {
+            if (newInputOwnerClientId > ushort.MaxValue)
+                throw new Exception("Input owner client id is too big! ushort is supported, but your ulong is too big to cast to ushort.");
+
+            SetInputOwner((ushort) newInputOwnerClientId);
+        }
+        public void SetInputOwner(ushort newInputOwnerClientId)
         {
             if (InputOwnerClientId == newInputOwnerClientId)
                 return; // Nothing changed!
@@ -177,7 +209,7 @@ namespace NetRewind.Utils.Simulation
                 HandleInputOwnerUpdate();
         }
         
-        public void RemoveInputOwner() => SetInputOwner(ulong.MaxValue);
+        public void RemoveInputOwner() => SetInputOwner(ushort.MaxValue);
         
         private void HandleInputOwnerUpdate()
         {
@@ -198,7 +230,9 @@ namespace NetRewind.Utils.Simulation
                     _globalInputDataSource = null;
             }
         }
+        #endregion
 
+        #region Apply (Partial) State
         public void TryApplyPartialState(IState serverState, uint result) => _stateHolder.ApplyPartialState(serverState, result);
         
         public static void TryApplyState(ulong networkId, IState state, NetObjectState netObjectState)
@@ -219,7 +253,9 @@ namespace NetRewind.Utils.Simulation
             }
         }
         public void TryApplyState(IState state, NetObjectState netObjectState) => TryApplyState(NetworkObjectId, state, netObjectState);
+        #endregion
         
+        #region Update State
         #if Client
         private static void TryUpdateState(ulong networkId, IState state, NetObjectState netObjectState)
         {
@@ -240,7 +276,9 @@ namespace NetRewind.Utils.Simulation
         #if Client
         public void TryUpdateState(IState state, NetObjectState netObjectState) => TryUpdateState(NetworkObjectId, state, netObjectState);
         #endif
+        #endregion
         
+        #region Event
         #if Client
         private void PlayEvents(NetObjectState netObjectState)
         {
@@ -250,14 +288,36 @@ namespace NetRewind.Utils.Simulation
                 OnEvent(e.Data);
         }
         #endif
+        #endregion
         
-        private void SetNetObjectState(NetObjectState netObjectState)
+        #region NetworkObject State
+        private void SetNetObjectState(NetObjectState state)
         {
-            NetObjectState state = (NetObjectState) netObjectState;
-            
             SetInputOwner(state.InputOwnerClientId);
         }
         
+        public void ApplyNetObjectState(NetObjectState netObjectState)
+        {
+            SetNetObjectState(netObjectState);
+        }
+        
+        private IState GetNetObjectState()
+        {
+            Event[] eventsToSend =  Array.Empty<Event>();
+            #if Server
+            if (IsServer)
+                eventsToSend = GetEventsToSend();
+            #endif
+            NetObjectState netObjectState = new NetObjectState(
+                _inputOwnerClientId,
+                eventsToSend
+            );
+            
+            return netObjectState;
+        }
+        #endregion
+        
+        #region Tick
         public static void RunTick(uint tick)
         {
             foreach (var kvp in NetworkObjects)
@@ -275,7 +335,7 @@ namespace NetRewind.Utils.Simulation
                 LeaveSyncGroup();
             
             // Remove events that happened before this tick.
-            _events.RemoveAll(e => e.TickToDeleteTheEvent == tick);
+            _events.RemoveAll(e => e.TickToDeleteTheEvent <= tick);
             #endif
             
             // If this is an inputListener, try to get input
@@ -302,8 +362,7 @@ namespace NetRewind.Utils.Simulation
                 #if Server
                 bool shouldRunAsServer = IsServer && !IsInputOwner; // Server has to run the input. But not here, if the server is the input owner -> Is Host and play's this object.
                 bool sentInput = InputTransportLayer.SentInput(InputOwnerClientId);
-                bool hasInputOwner = _inputOwnerClientId != ulong.MaxValue;
-                if (shouldRunAsServer && sentInput && hasInputOwner)
+                if (shouldRunAsServer && sentInput && HasInputOwner)
                 {
                     // Not local client -> get input from InputTransportLayer
                     try
@@ -330,7 +389,9 @@ namespace NetRewind.Utils.Simulation
             // Trigger the tick
             _tickInterface?.Tick(tick);
         }
-
+        #endregion
+        
+        #region HasInputForThisTick
         public bool HasInputForThisTick(uint tick)
         {
             if (_inputListener == null)
@@ -338,14 +399,16 @@ namespace NetRewind.Utils.Simulation
             
             return _inputListener.TickOfTheInput == tick;
         }
+        #endregion
         
+        #region GetSnapshotState
         public ObjectState GetSnapshotState(uint tick)
         {
             if (_stateHolder == null)
-                throw new Exception("No state holder found!");
+                throw new NotImplementedException("No state holder found!");
             
-            IState state = _stateHolder.GetCurrentState();
             IState netObjectState = GetNetObjectState();
+            IState state = _stateHolder.GetCurrentState();
             
             #if Client
             if (_firstRecordedState == 0)
@@ -362,7 +425,12 @@ namespace NetRewind.Utils.Simulation
             
             return objectState;
         }
+        
+        public IState GetStateAtTick(uint tick) => _states.Get(tick).State;
+        #endregion
 
+        #region Collider Rollback
+        #if Server
         public void RunCodeInRollback(uint tickToRollbackTo, Action method)
         {
             if (tickToRollbackTo == 0)
@@ -387,6 +455,8 @@ namespace NetRewind.Utils.Simulation
                 TryApplyState(networkId, state, netObjectState);
             }
             
+            SwitchToServerView();
+            
             // Run the method / code
             method();
             
@@ -398,36 +468,78 @@ namespace NetRewind.Utils.Simulation
                 NetObjectState netObjectState = (NetObjectState) currentSnapshot.NetObjectStates[networkId];
                 TryApplyState(networkId, state, netObjectState);
             }
+            
+            SwitchToClientView();
+        }
+        #endif
+        #endregion
+        
+        #region Server switch
+        #if Server
+        public static void SwitchToServerView()
+        {
+            foreach (var kvp in NetworkObjects)
+                kvp.Value.OnServerView();
         }
 
-        private IState GetNetObjectState()
+        public static void SwitchToClientView()
         {
-            Event[] eventsToSend =  Array.Empty<Event>();
-            #if Server
-            if (IsServer)
-                eventsToSend = GetEventsToSend();
-            #endif
-            NetObjectState netObjectState = new NetObjectState(
-                _inputOwnerClientId,
-                eventsToSend
-            );
-            
-            return netObjectState;
+            foreach (var kvp in NetworkObjects)
+                kvp.Value.OnClientView();
         }
+        #endif
+        #endregion
         
-        public IState GetStateAtTick(uint tick) => _states.Get(tick).State;
-        
+        #region PlayerInput Data
         #if Client
         public static IData GetPlayerInputData()
         {
-            return _globalInputDataSource != null ? 
+            return _globalInputDataSource != null ?
                 _globalInputDataSource.OnInputData() :
                 new DefaultPlayerData();
         }
         #endif
-        
-        public void SetVisualSyncMode(bool shouldSync) => SyncVisual = shouldSync;
+        #endregion
 
+        #region Visual Sync Mode
+        public void SetVisualSyncMode(bool shouldSync)
+        {
+            if (SyncVisual == shouldSync)
+                return;
+
+            SyncVisual = shouldSync;
+
+            if (visual == null)
+                return;
+
+            if (SyncVisual)
+            {
+                // When re-enabling sync, snap immediately so we don't "smooth" from a stale state/velocity
+                _visualVelocity = Vector3.zero;
+                visual.position = transform.position;
+                visual.rotation = transform.rotation;
+            }
+        }
+        
+        #if Client
+        public static void SetAllVisualState()
+        {
+            foreach (var kvp in NetworkObjects)
+            {
+                // ulong networkId = kvp.Key;
+                NetObject netObject = kvp.Value;
+                
+                // only do this, if the object's visual should be synced.
+                if (!netObject.SyncVisual) continue;
+                
+                netObject.visual.position = netObject.transform.position;
+                netObject.visual.rotation = netObject.transform.rotation;
+            }
+        }
+        #endif
+        #endregion
+        
+        #region Virtuals
         protected virtual void NetSpawn() { }
         protected virtual void NetDespawn() { }
         protected virtual void NetUpdate() { }
@@ -436,10 +548,19 @@ namespace NetRewind.Utils.Simulation
         {
             throw new NotImplementedException("Override the OnEvent method to handle events!");
         }
+
+        #if Server
+        protected virtual void OnServerView() { }
+        protected virtual void OnClientView() { }
+        #endif
+        #endregion
         
+        #region Input Decoders
         protected bool GetButton(string inputName) => InputSender.GetInstance().GetButton(InputSender.ButtonInputReferences[inputName], _inputListener.InputData);
         protected Vector2 GetVector2(string inputName) => InputSender.GetInstance().GetVector2(InputSender.Vector2InputReferences[inputName], _inputListener.InputData);
-
+        #endregion
+        
+        #region Input Data
         protected T GetData<T>() where T : IData
         {
             if (_inputListener == null)
@@ -453,8 +574,13 @@ namespace NetRewind.Utils.Simulation
             
             return (T) _inputListener.Data;
         }
-        protected Dictionary<string, InputAction> InputActions => InputSender.Actions;
+        #endregion
         
+        #region Local Input
+        protected Dictionary<string, InputAction> InputActions => InputSender.Actions;
+        #endregion
+        
+        #region Network Interactions
         #if Server
         public static void RegisterInteraction(uint tick, NetObject obj1, NetObject obj2)
         {
@@ -482,7 +608,9 @@ namespace NetRewind.Utils.Simulation
             }
         }
         #endif
+        #endregion
 
+        #region Network Object Sync Group 
         #if Server
         public void EnterSyncGroup(uint tick, NetObjectSyncGroup group)
         {
@@ -549,7 +677,9 @@ namespace NetRewind.Utils.Simulation
             _tickToLeaveGroup = uint.MaxValue;
         }
         #endif
+        #endregion
         
+        #region State Sending Mode
         #if Server
         public void ChangeStateSendingMode(SendingMode newMode)
         {
@@ -585,24 +715,9 @@ namespace NetRewind.Utils.Simulation
             }
         }
         #endif
+        #endregion
         
-        #if Client
-        public static void SetAllVisualState()
-        {
-            foreach (var kvp in NetworkObjects)
-            {
-                // ulong networkId = kvp.Key;
-                NetObject netObject = kvp.Value;
-                
-                // only do this, if the object's visual should be synced.
-                if (!netObject.SyncVisual) continue;
-                
-                netObject.visual.position = netObject.transform.position;
-                netObject.visual.rotation = netObject.transform.rotation;
-            }
-        }
-        #endif
-        
+        #region Events
         #if Server
         public void RegisterEvent(uint tick, IData data)
         {
@@ -618,7 +733,9 @@ namespace NetRewind.Utils.Simulation
         #if Server
         public Event[] GetEventsToSend() => _events.ToArray();
         #endif
+        #endregion
         
+        #region Prediction State
         public void ChangePredictionState(bool shouldBePredicted)
         {
             bool previousState = isPredicted;
@@ -631,6 +748,7 @@ namespace NetRewind.Utils.Simulation
 
             UpdateObjectHandling();
         }
+        
         private void UpdateObjectHandling()
         {
             if (isPredicted)
@@ -662,5 +780,6 @@ namespace NetRewind.Utils.Simulation
                 }
             }
         }
+        #endregion
     }
 }

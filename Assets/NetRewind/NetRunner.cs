@@ -14,7 +14,7 @@ namespace NetRewind
         
         [Header("Simulation")]
         [SerializeField] private uint simulationTickRate = 60;
-        [SerializeField] private bool controlPhysics = true;
+        [SerializeField] private PhysicsMode physicsMode = PhysicsMode.Sync;
         [FormerlySerializedAs("sendingMode")]
         [Space(5)]
         [Header("Input sending")]
@@ -33,7 +33,7 @@ namespace NetRewind
 
         #region Getters
 
-        public bool ControlPhysics => controlPhysics;
+        public PhysicsMode PhysicsMode => physicsMode;
         public SendingMode InputSendingMode => inputSendingMode;
         public uint InputPackageLoss => inputPackageLoss;
         public ulong GetRTT(ulong clientId) => transport.GetCurrentRtt(clientId);
@@ -51,13 +51,21 @@ namespace NetRewind
         private void Start()
         {
             EventPackageLossToAccountFor = eventPackageLossToAccountFor;
+            networkManager.NetworkConfig.EnableSceneManagement = false;
         }
 
         private void Update()
         {
             Simulation.Update(Time.deltaTime);   
         }
-        
+
+        #if Client
+        private void LateUpdate()
+        {
+            Simulation.HandleReconciliation();
+        }
+        #endif
+
         private void OnDestroy()
         {
             #if Server

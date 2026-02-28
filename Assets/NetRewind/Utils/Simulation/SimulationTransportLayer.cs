@@ -30,6 +30,7 @@ namespace NetRewind.Utils.Simulation
         protected override void OnTick()
         {
             #if Server
+            if (!Application.isPlaying) return;
             SendTickToClientRPC(Simulation.CurrentTick);
             #endif
         }

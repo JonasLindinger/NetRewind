@@ -24,7 +24,7 @@ namespace NetRewind.Utils.Simulation.State
             if (serializer.IsReader)
             {
                 // Reader
-                int stateType = 0;
+                ushort stateType = 0;
                 serializer.SerializeValue(ref stateType); // Read the state type
                 
                 State = StateTypeRegistry.Create(stateType);
@@ -34,7 +34,7 @@ namespace NetRewind.Utils.Simulation.State
             else
             {
                 // Writer
-                int stateType = StateTypeRegistry.GetId(State.GetType());
+                ushort stateType = StateTypeRegistry.GetId(State.GetType());
                 serializer.SerializeValue(ref stateType);
                 
                 State.NetworkSerialize(serializer);
@@ -45,7 +45,7 @@ namespace NetRewind.Utils.Simulation.State
             if (serializer.IsReader)
             {
                 // Reader
-                int stateType = 0;
+                ushort stateType = 0;
                 serializer.SerializeValue(ref stateType); // Read the state type
                 
                 NetObjectState = StateTypeRegistry.Create(stateType);
@@ -55,7 +55,7 @@ namespace NetRewind.Utils.Simulation.State
             else
             {
                 // Writer
-                int stateType = StateTypeRegistry.GetId(NetObjectState.GetType());
+                ushort stateType = StateTypeRegistry.GetId(NetObjectState.GetType());
                 serializer.SerializeValue(ref stateType);
                 
                 NetObjectState.NetworkSerialize(serializer);

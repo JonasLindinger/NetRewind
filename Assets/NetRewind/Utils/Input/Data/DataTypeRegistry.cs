@@ -9,7 +9,7 @@ namespace NetRewind.Utils.Input.Data
     public static class DataTypeRegistry
     {
         private static bool _initialized;
-        private static readonly Dictionary<Type, int> TypeToId = new();
+        private static readonly Dictionary<Type, ushort> TypeToId = new();
         private static readonly List<Func<IData>> FactoriesById = new();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -93,17 +93,17 @@ namespace NetRewind.Utils.Input.Data
             // Deterministic ID assignment
             allMarkedTypes.Sort((a, b) => string.CompareOrdinal(a.FullName, b.FullName));
 
-            for (int i = 0; i < allMarkedTypes.Count; i++)
+            for (ushort i = 0; i < allMarkedTypes.Count; i++)
             {
                 var type = allMarkedTypes[i];
-                int id = i;
+                ushort id = i;
 
                 TypeToId[type] = id;
                 FactoriesById.Add(() => (IData)Activator.CreateInstance(type));
             }
         }
 
-        public static int GetId<T>() where T : IData
+        public static ushort GetId<T>() where T : IData
         {
             InitializeIfNeeded();
 
@@ -114,7 +114,7 @@ namespace NetRewind.Utils.Input.Data
             return id;
         }
 
-        public static IData Create(int id)
+        public static IData Create(ushort id)
         {
             InitializeIfNeeded();
 
@@ -124,7 +124,7 @@ namespace NetRewind.Utils.Input.Data
             return FactoriesById[id]();
         }
         
-        public static int GetId(Type type)
+        public static ushort GetId(Type type)
         {
             InitializeIfNeeded();
       

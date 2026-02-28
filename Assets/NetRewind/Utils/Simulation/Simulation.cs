@@ -10,6 +10,8 @@ namespace NetRewind.Utils.Simulation
 {
     public static class Simulation
     {
+        public static Action<float> OnRunPhysics = delegate { };
+        
         private const uint MaxTicksToCalculateInOneSecond = 140;
         private const uint MaxTicksToReconcile = 300;
         
@@ -36,7 +38,7 @@ namespace NetRewind.Utils.Simulation
             InputContainer.Init();
             #endif
             
-            if (NetRunner.GetInstance().ControlPhysics)
+            if (NetRunner.GetInstance().PhysicsMode != PhysicsMode.Ignore)
                 Physics.simulationMode = SimulationMode.Script;
             
             CurrentTick = startingTick;
@@ -61,25 +63,28 @@ namespace NetRewind.Utils.Simulation
             while (_timer >= _timeBetweenTicks)
             {
                 _timer -= _timeBetweenTicks;
-
-                #if Client
-                if (_reconciliationSnapshot.Tick != 0)
-                {
-                    Reconcile(_reconciliationSnapshot);
-                    
-                    // Reset
-                    _reconciliationSnapshot = new Snapshot(0);
-                }
-                #endif
                 
                 CurrentTick++;
                 OnTick(CurrentTick);
             }
         }
 
+        #if Client
+        public static void HandleReconciliation()
+        {
+            if (_reconciliationSnapshot.Tick != 0)
+            {
+                Reconcile(_reconciliationSnapshot);
+                
+                // Reset
+                _reconciliationSnapshot = new Snapshot(0);
+            }
+        }
+        #endif
+
         public static void StopTickSystem()
         {
-            if (NetRunner.GetInstance() != null && NetRunner.GetInstance().ControlPhysics)
+            if (NetRunner.GetInstance() != null && NetRunner.GetInstance().PhysicsMode != PhysicsMode.Ignore)
                 Physics.simulationMode = SimulationMode.FixedUpdate;
             
             _isRunning = false;
@@ -96,8 +101,11 @@ namespace NetRewind.Utils.Simulation
                 throw new Exception("Reconciling as a Server isn't supported!");
             
             // 1. Simulation physics
-            if (NetRunner.GetInstance().ControlPhysics)
+            if (NetRunner.GetInstance().PhysicsMode == PhysicsMode.Sync)
                 Physics.Simulate(TimeBetweenTicks);
+            
+            // For manual physics control.
+            OnRunPhysics?.Invoke(TimeBetweenTicks);
             
             // 2. Save Game State
             SnapshotContainer.TakeSnapshot(tick);
