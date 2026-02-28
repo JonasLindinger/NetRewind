@@ -11,8 +11,8 @@ namespace _Demo.Scripts.Car
         public Vector3 Rotation;
         public Vector3 Velocity;
         public Vector3 AngularVelocity;
-        public ulong Seat1;
-        public ulong Seat2;
+        public ushort Seat1;
+        public ushort Seat2;
         
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {

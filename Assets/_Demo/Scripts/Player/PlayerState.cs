@@ -13,7 +13,7 @@ namespace _Demo.Scripts.Player
         public float YRotation;
         public Vector3 Velocity;
         public Vector3 AngularVelocity;
-        public ulong Car;
+        public ushort Car;
         public bool CanMove;
         
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
@@ -31,7 +31,7 @@ namespace _Demo.Scripts.Player
             PlayerState local = (PlayerState) localState;
             PlayerState server = (PlayerState) serverState;
 
-            bool inCar = server.Car != ulong.MaxValue;
+            bool inCar = server.Car != ushort.MaxValue;
             
             if (Vector3.Distance(local.Position, server.Position) > 0.25f && !inCar)
             {

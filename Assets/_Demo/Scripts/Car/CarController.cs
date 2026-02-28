@@ -26,8 +26,8 @@ namespace _Demo.Scripts.Car
         [Header("References")]
         [SerializeField] private Transform orientation;
         
-        private ulong _playerOnSeat1 = ulong.MaxValue;
-        private ulong _playerOnSeat2 = ulong.MaxValue;
+        private ushort _playerOnSeat1 = ushort.MaxValue;
+        private ushort _playerOnSeat2 = ushort.MaxValue;
         
         public byte[] InputData { get; set; }
         public IData Data { get; set; }
@@ -45,7 +45,7 @@ namespace _Demo.Scripts.Car
             _cars.Add(NetworkObjectId, this);
             NetworkObject.DontDestroyWithOwner = true;
         
-            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsInputOwner;
+            bool shouldPredict = _playerOnSeat1 == ushort.MaxValue || IsInputOwner;
             ChangePredictionState(shouldPredict);
         }
 
@@ -102,21 +102,21 @@ namespace _Demo.Scripts.Car
             if (!player.IsInCar)
             {
                 // Check if a seat is available
-                if (_playerOnSeat1 == ulong.MaxValue ||
-                    _playerOnSeat2 == ulong.MaxValue)
+                if (_playerOnSeat1 == ushort.MaxValue ||
+                    _playerOnSeat2 == ushort.MaxValue)
                 {
                     // -> Seat available
                     
                     // seatWithAuthority -> main seat -> seat1
-                    bool seatWithAuthority = _playerOnSeat1 == ulong.MaxValue;
+                    bool seatWithAuthority = _playerOnSeat1 == ushort.MaxValue;
                     
                     // Get new position
-                    Transform seatTransform = _playerOnSeat1 == ulong.MaxValue 
+                    Transform seatTransform = _playerOnSeat1 == ushort.MaxValue 
                         ? seat1.transform
                         : seat2.transform;
 
                     // Get a reference of the seat
-                    ref ulong seatOwner = ref _playerOnSeat1 == ulong.MaxValue 
+                    ref ushort seatOwner = ref _playerOnSeat1 == ushort.MaxValue 
                         ? ref _playerOnSeat1 
                         : ref _playerOnSeat2;
                     
@@ -144,16 +144,16 @@ namespace _Demo.Scripts.Car
                     bool seatWithAuthority = _playerOnSeat1 == player.InputOwnerClientId;
                     
                     // Get seat of the player
-                    ref ulong seatOwner = ref _playerOnSeat1 == player.InputOwnerClientId 
+                    ref ushort seatOwner = ref _playerOnSeat1 == player.InputOwnerClientId 
                         ? ref _playerOnSeat1 
                         : ref _playerOnSeat2;
                     
                     // Mark seat as available
-                    seatOwner = ulong.MaxValue;
+                    seatOwner = ushort.MaxValue;
                     
                     player.HopOutCar();
                     
-                    // Set the input owner to no one, if the player hopped out of seat1 -> ulong.MaxValue
+                    // Set the input owner to no one, if the player hopped out of seat1 -> ushort.MaxValue
                     if (seatWithAuthority)
                         SetInputOwner(seatOwner);
                 }
@@ -189,7 +189,7 @@ namespace _Demo.Scripts.Car
             _playerOnSeat2 = carState.Seat2;
             
             // If occupied and not the driver -> don't predict
-            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsInputOwner;
+            bool shouldPredict = _playerOnSeat1 == ushort.MaxValue || IsInputOwner;
             if (IsPredicted != shouldPredict)
                 ChangePredictionState(shouldPredict);
         }
@@ -205,7 +205,7 @@ namespace _Demo.Scripts.Car
             _playerOnSeat2 = carState.Seat2;
             
             // If occupied and not the driver -> don't predict
-            bool shouldPredict = _playerOnSeat1 == ulong.MaxValue || IsInputOwner;
+            bool shouldPredict = _playerOnSeat1 == ushort.MaxValue || IsInputOwner;
             if (IsPredicted != shouldPredict)
                 ChangePredictionState(shouldPredict);
         }
@@ -216,8 +216,8 @@ namespace _Demo.Scripts.Car
         }
         #endregion
         
-        public static CarController GetCar(ulong clientId) => _cars[clientId];
-        public Transform GetSeatByOwner(ulong ownerClientId)
+        public static CarController GetCar(ushort clientId) => _cars[clientId];
+        public Transform GetSeatByOwner(ushort ownerClientId)
         {
             if (_playerOnSeat1 == ownerClientId)
                 return seat1.transform;

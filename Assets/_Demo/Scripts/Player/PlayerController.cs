@@ -403,7 +403,7 @@ namespace _Demo.Scripts.Player
                 Velocity = _rb.linearVelocity,
                 AngularVelocity = _rb.angularVelocity,
                 CanMove = _canMove,
-                Car = IsInCar ? _currentCar.NetworkObjectId : ulong.MaxValue,
+                Car = IsInCar ? (ushort) _currentCar.NetworkObjectId : ushort.MaxValue,
             };
         }
 
@@ -416,7 +416,7 @@ namespace _Demo.Scripts.Player
             _rb.linearVelocity = playerState.Velocity;
             _rb.angularVelocity = playerState.AngularVelocity;
             
-            if (playerState.Car != ulong.MaxValue)
+            if (playerState.Car != ushort.MaxValue)
             {
                 // In car
                 _currentCar = CarController.GetCar(playerState.Car);
@@ -455,7 +455,7 @@ namespace _Demo.Scripts.Player
             _rb.linearVelocity = playerState.Velocity;
             _rb.angularVelocity = playerState.AngularVelocity;
             
-            if (playerState.Car != ulong.MaxValue)
+            if (playerState.Car != ushort.MaxValue)
             {
                 // In car
                 _currentCar = CarController.GetCar(playerState.Car);
