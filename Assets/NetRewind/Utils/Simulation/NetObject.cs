@@ -16,6 +16,10 @@ namespace NetRewind.Utils.Simulation
     public abstract class NetObject : NetworkBehaviour
     {
         #region Variables
+        #if Server
+        private static List<RollbackInfo> RollbackInfos = new List<RollbackInfo>();
+        #endif
+        
         private static IInputDataSource _globalInputDataSource; // static because there can only be one!
 
         public static Dictionary<ulong, NetObject> NetworkObjects = new Dictionary<ulong, NetObject>();
@@ -431,15 +435,18 @@ namespace NetRewind.Utils.Simulation
 
         #region Collider Rollback
         #if Server
-        public void RunCodeInRollback(uint tickToRollbackTo, Action method)
+        public static void RunAllRollbacks()
         {
-            if (tickToRollbackTo == 0)
-            {
-                // No rollback possible
-                Debug.LogWarning("Cannot rollback to tick 0! This is probably because the client hasn't received any state yet.");
-                return;
-            }
+            // Handle every rollback
+            foreach (RollbackInfo rollbackInfo in RollbackInfos)
+                rollbackInfo.NetObject.HandleColliderRollbackCalls(rollbackInfo.Tick, rollbackInfo.method);
             
+            // Mark every rollback as done.
+            RollbackInfos.Clear();
+        }
+        
+        private void HandleColliderRollbackCalls(uint tickToRollbackTo, Action method)
+        {
             // Save the current state
             Snapshot currentSnapshot = SnapshotContainer.GetCurrentSnapshot(0); // 0 because it doesn't matter anyway.
             
@@ -455,8 +462,6 @@ namespace NetRewind.Utils.Simulation
                 TryApplyState(networkId, state, netObjectState);
             }
             
-            SwitchToServerView();
-            
             // Run the method / code
             method();
             
@@ -468,24 +473,23 @@ namespace NetRewind.Utils.Simulation
                 NetObjectState netObjectState = (NetObjectState) currentSnapshot.NetObjectStates[networkId];
                 TryApplyState(networkId, state, netObjectState);
             }
-            
-            SwitchToClientView();
         }
-        #endif
-        #endregion
         
-        #region Server switch
-        #if Server
-        public static void SwitchToServerView()
+        public void RunCodeInRollback(uint tickToRollbackTo, Action method)
         {
-            foreach (var kvp in NetworkObjects)
-                kvp.Value.OnServerView();
-        }
-
-        public static void SwitchToClientView()
-        {
-            foreach (var kvp in NetworkObjects)
-                kvp.Value.OnClientView();
+            if (tickToRollbackTo == 0)
+            {
+                // No rollback possible
+                Debug.LogWarning("Cannot rollback to tick 0! This is probably because the client hasn't received any state yet.");
+                return;
+            }
+            
+            RollbackInfos.Add(new RollbackInfo()
+            {
+                NetObject = this,
+                Tick = tickToRollbackTo,
+                method = method
+            });
         }
         #endif
         #endregion
@@ -544,14 +548,11 @@ namespace NetRewind.Utils.Simulation
         protected virtual void NetDespawn() { }
         protected virtual void NetUpdate() { }
 
+        #if Client
         protected virtual void OnEvent(IData eventData)
         {
             throw new NotImplementedException("Override the OnEvent method to handle events!");
         }
-
-        #if Server
-        protected virtual void OnServerView() { }
-        protected virtual void OnClientView() { }
         #endif
         #endregion
         
@@ -577,7 +578,9 @@ namespace NetRewind.Utils.Simulation
         #endregion
         
         #region Local Input
+        #if Client
         protected Dictionary<string, InputAction> InputActions => InputSender.Actions;
+        #endif
         #endregion
         
         #region Network Interactions
@@ -731,7 +734,7 @@ namespace NetRewind.Utils.Simulation
         #endif
         
         #if Server
-        public Event[] GetEventsToSend() => _events.ToArray();
+        private Event[] GetEventsToSend() => _events.ToArray();
         #endif
         #endregion
         

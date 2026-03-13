@@ -15,7 +15,6 @@ namespace NetRewind
         [Header("Simulation")]
         [SerializeField] private uint simulationTickRate = 60;
         [SerializeField] private PhysicsMode physicsMode = PhysicsMode.Sync;
-        [FormerlySerializedAs("sendingMode")]
         [Space(5)]
         [Header("Input sending")]
         [SerializeField] private SendingMode inputSendingMode = SendingMode.Full;
@@ -47,11 +46,11 @@ namespace NetRewind
         }
         
         #endregion
-
+        
         private void Start()
         {
             EventPackageLossToAccountFor = eventPackageLossToAccountFor;
-            networkManager.NetworkConfig.EnableSceneManagement = false;
+            networkManager.NetworkConfig.NetworkTransport = transport;
         }
 
         private void Update()
@@ -59,12 +58,16 @@ namespace NetRewind
             Simulation.Update(Time.deltaTime);   
         }
 
-        #if Client
         private void LateUpdate()
         {
+            #if Client
             Simulation.HandleReconciliation();
+            #endif
+            
+            #if Server
+            NetObject.RunAllRollbacks();
+            #endif
         }
-        #endif
 
         private void OnDestroy()
         {
