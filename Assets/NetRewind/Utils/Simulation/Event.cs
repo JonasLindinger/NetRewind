@@ -2,13 +2,14 @@ using System.Collections.Generic;
 using NetRewind.Utils.Input.Data;
 using NetRewind.Utils.Simulation.State;
 using Unity.Netcode;
+using UnityEngine;
 
 namespace NetRewind.Utils.Simulation
 {
     public struct Event : INetworkSerializable
     {
-        private const ushort MaxEventsCoExisting = 2048;
-        private static uint _eventCounter = 1;
+        private const ushort MaxEventsCoExisting = ushort.MaxValue;
+        private static uint _eventCounter;
 
         // Getter
         /// <summary>
@@ -21,20 +22,18 @@ namespace NetRewind.Utils.Simulation
         private ushort _eventId;
         private uint _tick;
         private IData _data;
-
-        #if Server
-        // For the server, no need to serialize
-        public uint TickToDeleteTheEvent { get; private set; }
-        #endif
+        private uint _sentAmount; // The amount of time this event has been sent.
         
         public Event(uint tick, IData eventData)
         {
-            _eventId = (ushort) (MaxEventsCoExisting % _eventCounter++);
+            _eventCounter++;
+            _eventCounter = _eventCounter % MaxEventsCoExisting;
+
+            _eventId = (ushort)_eventCounter;
             _tick = tick;
             _data = eventData;
-            #if Server
-            TickToDeleteTheEvent = NetworkManager.Singleton.IsServer ? NetRunner.EventPackageLossToAccountFor : 0; // Todo: Maybe multiply it by the sending mode!?
-            #endif
+
+            _sentAmount = 0;
         }
         
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter

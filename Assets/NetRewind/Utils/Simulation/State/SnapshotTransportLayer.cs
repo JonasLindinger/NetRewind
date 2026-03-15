@@ -83,7 +83,6 @@ namespace NetRewind.Utils.Simulation.State
         }
         
         #endregion
-
         
         #region Sending states
         #if Server
@@ -94,11 +93,14 @@ namespace NetRewind.Utils.Simulation.State
 
             Snapshot snapshot = GetSnapshotByObjects(tick, netObjects);
 
-            foreach (var layer in _layers)
+            foreach (var obj in snapshot.NetObjectStates.Values)
             {
-                // Debug.Log("Sending snapshot to client");
-                layer.SendRegularSnapshotToClientRPC(snapshot);
+                NetObjectState state = (NetObjectState) obj;
             }
+            
+            // Debug.Log("Sending snapshot to clients");
+            foreach (var layer in _layers)
+                layer.SendRegularSnapshotToClientRPC(snapshot);
         }
         #endif
         
@@ -114,7 +116,7 @@ namespace NetRewind.Utils.Simulation.State
 
                 try
                 {
-                    ObjectState objectState = networkedObject.GetSnapshotState(tick);
+                    ObjectState objectState = networkedObject.GetSnapshotState(tick, true);
                     snapshot.States.Add(networkId, objectState.State);
                     snapshot.NetObjectStates.Add(networkId, objectState.NetObjectState);
                 }
@@ -174,14 +176,14 @@ namespace NetRewind.Utils.Simulation.State
         private void HandleServerSnapshot(Snapshot snapshot)
         {
             Snapshot fullClientSnapshot = new Snapshot(0);
-            bool isAboutToReconcile = false;
+            bool shouldReconcile = false;
             bool reconciliationIsExpected = true;
 
             foreach (var kvp in snapshot.States)
             {
                 ulong networkId = kvp.Key;
                 IState serverState = kvp.Value;
-                NetObjectState netObjectServerState = (NetObjectState)snapshot.NetObjectStates[networkId];
+                NetObjectState netObjectServerState = (NetObjectState) snapshot.NetObjectStates[networkId];
 
                 try
                 {
@@ -190,9 +192,12 @@ namespace NetRewind.Utils.Simulation.State
                     // Always apply net/meta state (InputOwner, events meta, etc.) even if we don't reconcile.
                     netObject.ApplyNetObjectState(netObjectServerState);
 
+                    // Always play the events
+                    netObject.PlayEvents(netObjectServerState);
+                    
                     IState clientState = netObject.GetStateAtTick(snapshot.Tick);
 
-                    if (netObject.IsPredicted && !isAboutToReconcile)
+                    if (netObject.IsPredicted && !shouldReconcile)
                     {
                         bool isReconciling = CompareStates(netObject, clientState, serverState);
 
@@ -206,12 +211,12 @@ namespace NetRewind.Utils.Simulation.State
                                 SnapshotContainer.GetSnapshot(snapshot.Tick)
                             );
 
-                            isAboutToReconcile = true;
+                            shouldReconcile = true;
                         }
                     }
                     else if (!netObject.IsPredicted)
                     {
-                        netObject.TryUpdateState(serverState, netObjectServerState);
+                        netObject.TryUpdateState(serverState, netObjectServerState, false);
                     }
                 }
                 catch (KeyNotFoundException e)
@@ -220,7 +225,7 @@ namespace NetRewind.Utils.Simulation.State
                 }
             }
 
-            if (isAboutToReconcile && fullClientSnapshot.Tick != 0)
+            if (shouldReconcile && fullClientSnapshot.Tick != 0)
                 Simulation.InitReconciliation(fullClientSnapshot, reconciliationIsExpected);
         }
 

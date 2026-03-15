@@ -9,7 +9,7 @@ namespace NetRewind.Utils.Simulation.State
     public struct NetObjectState : IState
     {
         #if Client
-        private static List<uint> _receivedEvents = new List<uint>();
+        private static Dictionary<uint, uint> _receivedEvents = new Dictionary<uint, uint>(); // EventId -> Tick to remove this event from list
         #endif
 
         public ushort InputOwnerClientId;
@@ -34,15 +34,19 @@ namespace NetRewind.Utils.Simulation.State
 
                 foreach (var @event in Events)
                 {
-                    if (_receivedEvents.Contains(@event.EventId))
+                    uint eventId = @event.EventId;
+                    if (_receivedEvents.ContainsKey(eventId))
                     {
-                        // Skip / ignore
+                        if (_receivedEvents[eventId] <= Simulation.CurrentTick)
+                            // Unmark this event as received and don't ignore this event
+                            _receivedEvents.Remove(eventId);
+                        else
+                            // Ignore this event
+                            continue;
                     }
-                    else
-                    {
-                        _receivedEvents.Add(@event.EventId);
-                        eventsForThisState.Add(@event);
-                    }
+                    
+                    _receivedEvents.Add(@event.EventId, Simulation.CurrentTick + (NetRunner.EventPackageLossToAccountFor * 2));
+                    eventsForThisState.Add(@event);
                 }
 
                 Events = eventsForThisState.ToArray();

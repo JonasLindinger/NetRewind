@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NetRewind.Utils.CustomDataStructures;
 using NetRewind.Utils.Features.ShowOnly;
 using NetRewind.Utils.Input;
@@ -58,6 +59,7 @@ namespace NetRewind.Utils.Simulation
 
         #if Server
         private List<Event> _events = new List<Event>();
+        private Dictionary<uint, uint> _eventCounts = new Dictionary<uint, uint>();
         #endif
 
         #if Client
@@ -239,7 +241,7 @@ namespace NetRewind.Utils.Simulation
         #region Apply (Partial) State
         public void TryApplyPartialState(IState serverState, uint result) => _stateHolder.ApplyPartialState(serverState, result);
         
-        public static void TryApplyState(ulong networkId, IState state, NetObjectState netObjectState)
+        public static void TryApplyState(ulong networkId, IState state, NetObjectState netObjectState, bool playEvents)
         {
             try
             {
@@ -247,7 +249,7 @@ namespace NetRewind.Utils.Simulation
                 obj.SetNetObjectState(netObjectState);
                 obj._stateHolder.ApplyState(state);
                 #if Client
-                if (!obj.IsServer) // Don't do this as the server / host.
+                if (!obj.IsServer && playEvents) // Don't do this as the server / host.
                     obj.PlayEvents(netObjectState);
                 #endif
             }
@@ -256,12 +258,12 @@ namespace NetRewind.Utils.Simulation
                 throw new Exception("Failed to apply state: " + e);
             }
         }
-        public void TryApplyState(IState state, NetObjectState netObjectState) => TryApplyState(NetworkObjectId, state, netObjectState);
+        public void TryApplyState(IState state, NetObjectState netObjectState, bool playEvents) => TryApplyState(NetworkObjectId, state, netObjectState, playEvents);
         #endregion
         
         #region Update State
         #if Client
-        private static void TryUpdateState(ulong networkId, IState state, NetObjectState netObjectState)
+        private static void TryUpdateState(ulong networkId, IState state, NetObjectState netObjectState, bool playEvents)
         {
             try
             {
@@ -278,13 +280,13 @@ namespace NetRewind.Utils.Simulation
         }
         #endif
         #if Client
-        public void TryUpdateState(IState state, NetObjectState netObjectState) => TryUpdateState(NetworkObjectId, state, netObjectState);
+        public void TryUpdateState(IState state, NetObjectState netObjectState, bool playEvents) => TryUpdateState(NetworkObjectId, state, netObjectState, playEvents);
         #endif
         #endregion
         
         #region Event
         #if Client
-        private void PlayEvents(NetObjectState netObjectState)
+        public void PlayEvents(NetObjectState netObjectState)
         {
             if (IsServer) return;
             
@@ -310,7 +312,7 @@ namespace NetRewind.Utils.Simulation
             Event[] eventsToSend =  Array.Empty<Event>();
             #if Server
             if (IsServer)
-                eventsToSend = GetEventsToSend();
+                eventsToSend = _events.ToArray();
             #endif
             NetObjectState netObjectState = new NetObjectState(
                 _inputOwnerClientId,
@@ -337,9 +339,6 @@ namespace NetRewind.Utils.Simulation
             // Check if this object should leave the sync group.
             if (IsServer && tick >= _tickToLeaveGroup) 
                 LeaveSyncGroup();
-            
-            // Remove events that happened before this tick.
-            _events.RemoveAll(e => e.TickToDeleteTheEvent <= tick);
             #endif
             
             // If this is an inputListener, try to get input
@@ -406,13 +405,32 @@ namespace NetRewind.Utils.Simulation
         #endregion
         
         #region GetSnapshotState
-        public ObjectState GetSnapshotState(uint tick)
+        public ObjectState GetSnapshotState(uint tick, bool clearEvents)
         {
             if (_stateHolder == null)
                 throw new NotImplementedException("No state holder found!");
             
             IState netObjectState = GetNetObjectState();
             IState state = _stateHolder.GetCurrentState();
+            
+            #if Server
+            if (clearEvents)
+            {
+                int i = 0;
+                foreach (var @event in _events.ToArray())
+                {
+                    _eventCounts[@event.EventId]++;
+
+                    if (_eventCounts[@event.EventId] >= NetRunner.EventPackageLossToAccountFor)
+                    {
+                        _eventCounts.Remove(@event.EventId);
+                        _events.RemoveAt(i);
+                    }
+
+                    i++;
+                }
+            }
+            #endif
             
             #if Client
             if (_firstRecordedState == 0)
@@ -459,7 +477,7 @@ namespace NetRewind.Utils.Simulation
                 ulong networkId = kvp.Key;
                 IState state = kvp.Value;
                 NetObjectState netObjectState = (NetObjectState) snapshotToRollbackTo.NetObjectStates[networkId];
-                TryApplyState(networkId, state, netObjectState);
+                TryApplyState(networkId, state, netObjectState, false);
             }
             
             // Run the method / code
@@ -471,7 +489,7 @@ namespace NetRewind.Utils.Simulation
                 ulong networkId = kvp.Key;
                 IState state = kvp.Value;
                 NetObjectState netObjectState = (NetObjectState) currentSnapshot.NetObjectStates[networkId];
-                TryApplyState(networkId, state, netObjectState);
+                TryApplyState(networkId, state, netObjectState, false);
             }
         }
         
@@ -730,11 +748,10 @@ namespace NetRewind.Utils.Simulation
             Event e = new Event(tick, data);
             
             _events.Add(e);
+            _eventCounts.Add(e.EventId, 0);
         }
-        #endif
         
-        #if Server
-        private Event[] GetEventsToSend() => _events.ToArray();
+        public bool HasEvents() => _events.Count > 0;
         #endif
         #endregion
         

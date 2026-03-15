@@ -117,12 +117,20 @@ namespace NetRewind.Utils.Simulation
                 List<NetObject> objectsToSend = new List<NetObject>();
                 foreach (SendingMode mode in NetObject.StateSendingList.Keys)
                 {
+                    List<NetObject> list = NetObject.StateSendingList[mode];
+                    
                     if (tick % (byte) mode == 0)
                     {
-                        // Send these objects!
-                        List<NetObject> list = NetObject.StateSendingList[mode];
+                        // Send all these objects!
                         foreach (NetObject obj in list)
                             objectsToSend.Add(obj);
+                    }
+                    else
+                    {
+                        // Check if the objects are important(Has Events) to sync right now.
+                        foreach (NetObject obj in list)
+                            if (obj.HasEvents())
+                                objectsToSend.Add(obj);
                     }
                 }
 
@@ -204,7 +212,7 @@ namespace NetRewind.Utils.Simulation
                 ulong networkId = kvp.Key;
                 IState state = kvp.Value;
                 NetObjectState netObjectState = (NetObjectState) snapshot.NetObjectStates[networkId];
-                NetObject.TryApplyState(networkId, state, netObjectState);
+                NetObject.TryApplyState(networkId, state, netObjectState, false);
             }
             
             // --- Save the snapshot. ---
