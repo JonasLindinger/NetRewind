@@ -1,4 +1,4 @@
-using NetRewind.Utils.Simulation.State;
+using NetRewind.Utils.CustomDataStructures;
 using Unity.Netcode;
 using UnityEngine;
 

@@ -1,9 +1,13 @@
 ﻿using UnityEngine;
 
-namespace NetRewind.Utils
+namespace NetRewind.Utils.Features
 {
     public abstract class MonoBehaviourSingleton<T> : MonoBehaviour where T : MonoBehaviourSingleton<T>
     {
+        // -----
+        // Not my script. But i changed it a bit and don't remember the original source.
+        // -----
+        
         private static T _instance;
 
         [SerializeField] private bool dontDestroy = true;

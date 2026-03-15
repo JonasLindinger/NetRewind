@@ -4,13 +4,17 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace NetRewind.Utils.Simulation.State
+namespace NetRewind.Utils.CustomDataStructures
 {
-    public static class StateTypeRegistry
+    public static class DataTypeRegistry
     {
+        // ------------
+        // AI GENERATED
+        // ------------
+        
         private static bool _initialized;
         private static readonly Dictionary<Type, ushort> TypeToId = new();
-        private static readonly List<Func<IState>> FactoriesById = new();
+        private static readonly List<Func<IData>> FactoriesById = new();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Init()
@@ -45,16 +49,16 @@ namespace NetRewind.Utils.Simulation.State
                     if (type == null)
                         continue;
 
-                    var hasAttr = type.GetCustomAttribute<StateTypeAttribute>() != null;
-                    var isIState = typeof(IState).IsAssignableFrom(type);
+                    var hasAttr = type.GetCustomAttribute<DataTypeAttribute>() != null;
+                    var isIData = typeof(IData).IsAssignableFrom(type);
 
                     if (hasAttr)
                     {
-                        // Rule 1: attribute only allowed on struct + IState
-                        if (!type.IsValueType || !isIState)
+                        // Rule 1: attribute only allowed on struct + IData
+                        if (!type.IsValueType || !isIData)
                         {
                             throw new InvalidOperationException(
-                                $"[StateType] can only be applied to structs implementing IState. " +
+                                $"[DataType] can only be applied to structs implementing IData. " +
                                 $"Type '{type.FullName}' violates this rule.");
                         }
 
@@ -65,7 +69,7 @@ namespace NetRewind.Utils.Simulation.State
                 }
             }
 
-            // Rule 2: every IState must have [StateType]
+            // Rule 2: every IData must have [DataType]
             var missingAttributeTypes = assemblies
                 .SelectMany(a =>
                 {
@@ -73,22 +77,22 @@ namespace NetRewind.Utils.Simulation.State
                     catch (ReflectionTypeLoadException e) { return e.Types.Where(t => t != null); }
                 })
                 .Where(t => t != null
-                            && typeof(IState).IsAssignableFrom(t)
+                            && typeof(IData).IsAssignableFrom(t)
                             && !t.IsAbstract
                             && t.IsValueType
-                            && t.GetCustomAttribute<StateTypeAttribute>() == null)
+                            && t.GetCustomAttribute<DataTypeAttribute>() == null)
                 .ToList();
 
             if (missingAttributeTypes.Count > 0)
             {
                 var list = string.Join("\n - ", missingAttributeTypes.Select(t => t.FullName));
                 throw new InvalidOperationException(
-                    "The following IState structs are missing the [StateType] attribute:\n - " + list);
+                    "The following IData structs are missing the [DataType] attribute:\n - " + list);
             }
 
             // Now we know:
-            // - Any [StateType] is on a struct that implements IState
-            // - Every struct IState has [StateType]
+            // - Any [DataType] is on a struct that implements IData
+            // - Every struct IData has [DataType]
 
             // Deterministic ID assignment
             allMarkedTypes.Sort((a, b) => string.CompareOrdinal(a.FullName, b.FullName));
@@ -99,22 +103,22 @@ namespace NetRewind.Utils.Simulation.State
                 ushort id = i;
 
                 TypeToId[type] = id;
-                FactoriesById.Add(() => (IState)Activator.CreateInstance(type));
+                FactoriesById.Add(() => (IData)Activator.CreateInstance(type));
             }
         }
 
-        public static ushort GetId<T>() where T : IState
+        public static ushort GetId<T>() where T : IData
         {
             InitializeIfNeeded();
 
             var type = typeof(T);
             if (!TypeToId.TryGetValue(type, out var id))
                 throw new InvalidOperationException(
-                    $"Type {type.FullName} is not registered as an IState with [StateType].");
+                    $"Type {type.FullName} is not registered as an IData with [DataType].");
             return id;
         }
 
-        public static IState Create(ushort id)
+        public static IData Create(ushort id)
         {
             InitializeIfNeeded();
 
@@ -136,7 +140,7 @@ namespace NetRewind.Utils.Simulation.State
     }
     
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
-    public sealed class StateTypeAttribute : Attribute
+    public sealed class DataTypeAttribute : Attribute
     {
         
     }

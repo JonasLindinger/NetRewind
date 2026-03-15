@@ -1,4 +1,4 @@
-namespace NetRewind.Utils.Simulation
+namespace NetRewind.Utils.Sync
 {
     public enum PhysicsMode
     {

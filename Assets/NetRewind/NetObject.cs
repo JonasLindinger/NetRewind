@@ -1,24 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using NetRewind.Utils.CustomDataStructures;
-using NetRewind.Utils.Features.ShowOnly;
+using NetRewind.Utils.Features;
 using NetRewind.Utils.Input;
-using NetRewind.Utils.Input.Data;
-using NetRewind.Utils.Simulation.State;
-using Unity.Collections;
+using NetRewind.Utils.Sync;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 
-namespace NetRewind.Utils.Simulation
+namespace NetRewind
 {
     public abstract class NetObject : NetworkBehaviour
     {
         #region Variables
         #if Server
-        private static List<RollbackInfo> RollbackInfos = new List<RollbackInfo>();
+        private static List<RollbackInfo> _rollbackInfos = new List<RollbackInfo>();
         #endif
         
         private static IInputDataSource _globalInputDataSource; // static because there can only be one!
@@ -166,7 +162,7 @@ namespace NetRewind.Utils.Simulation
         private void Update()
         {
             #if Client
-            if (Simulation.IsCorrectingGameState)
+            if (NetRewind.Simulation.IsCorrectingGameState)
                 return;
             #endif
             
@@ -176,7 +172,7 @@ namespace NetRewind.Utils.Simulation
                     visual.position,
                     transform.position,
                     ref _visualVelocity,
-                    Simulation.TimeBetweenTicks // seconds
+                    NetRewind.Simulation.TimeBetweenTicks // seconds
                 );
                 
                 visual.rotation = transform.rotation;
@@ -456,11 +452,11 @@ namespace NetRewind.Utils.Simulation
         public static void RunAllRollbacks()
         {
             // Handle every rollback
-            foreach (RollbackInfo rollbackInfo in RollbackInfos)
-                rollbackInfo.NetObject.HandleColliderRollbackCalls(rollbackInfo.Tick, rollbackInfo.method);
+            foreach (RollbackInfo rollbackInfo in _rollbackInfos)
+                rollbackInfo.NetObject.HandleColliderRollbackCalls(rollbackInfo.Tick, rollbackInfo.Method);
             
             // Mark every rollback as done.
-            RollbackInfos.Clear();
+            _rollbackInfos.Clear();
         }
         
         private void HandleColliderRollbackCalls(uint tickToRollbackTo, Action method)
@@ -502,11 +498,11 @@ namespace NetRewind.Utils.Simulation
                 return;
             }
             
-            RollbackInfos.Add(new RollbackInfo()
+            _rollbackInfos.Add(new RollbackInfo()
             {
                 NetObject = this,
                 Tick = tickToRollbackTo,
-                method = method
+                Method = method
             });
         }
         #endif

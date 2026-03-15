@@ -1,6 +1,6 @@
 using Unity.Netcode;
 
-namespace NetRewind.Utils.Simulation.State
+namespace NetRewind.Utils.CustomDataStructures
 {
     public interface IState : INetworkSerializable
     {

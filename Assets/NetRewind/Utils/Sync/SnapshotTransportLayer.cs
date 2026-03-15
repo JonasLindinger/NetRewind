@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using NetRewind.Utils.CustomDataStructures;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace NetRewind.Utils.Simulation.State
+namespace NetRewind.Utils.Sync
 {
     public class SnapshotTransportLayer : NetworkBehaviour
     {
@@ -78,7 +79,7 @@ namespace NetRewind.Utils.Simulation.State
         private void SendSnapshotRPC(Snapshot snapshot)
         {
             #if Client
-            Simulation.InitReconciliation(snapshot, false);
+            NetRewind.Simulation.InitReconciliation(snapshot, false);
             #endif
         }
         
@@ -142,7 +143,7 @@ namespace NetRewind.Utils.Simulation.State
                 return;
             }
             
-            if (snapshot.Tick > Simulation.CurrentTick)
+            if (snapshot.Tick > NetRewind.Simulation.CurrentTick)
             {
                 // We received a snapshot for a tick that didn't happen yet. We are probably too far behind and should speed up. But this shouldn't be done here! 
 
@@ -151,15 +152,15 @@ namespace NetRewind.Utils.Simulation.State
             }
             
             // Check if our buffer is even capable of containing the snapshot at that tick.
-            uint lastSnapshotTickWeHave = Simulation.CurrentTick - SnapshotContainer.SnapshotBufferSize;
-            if (snapshot.Tick <= lastSnapshotTickWeHave && Simulation.CurrentTick > SnapshotContainer.SnapshotBufferSize)
+            uint lastSnapshotTickWeHave = NetRewind.Simulation.CurrentTick - SnapshotContainer.SnapshotBufferSize;
+            if (snapshot.Tick <= lastSnapshotTickWeHave && NetRewind.Simulation.CurrentTick > SnapshotContainer.SnapshotBufferSize)
             {
                 // Debug.LogWarning("Not capable of handling the snapshot! We are too far ahead or the snapshot buffer is too small!");
                 return;
             }
             
             // Only accept if we don't already do correction.
-            if (Simulation.IsCorrectingGameState)
+            if (NetRewind.Simulation.IsCorrectingGameState)
             {
                 // Debug.LogWarning("Already correcting the game!");
                 return;
@@ -226,7 +227,7 @@ namespace NetRewind.Utils.Simulation.State
             }
 
             if (shouldReconcile && fullClientSnapshot.Tick != 0)
-                Simulation.InitReconciliation(fullClientSnapshot, reconciliationIsExpected);
+                NetRewind.Simulation.InitReconciliation(fullClientSnapshot, reconciliationIsExpected);
         }
 
         private Snapshot GetCorrectSnapshot(Snapshot incompleteSnapshot, Snapshot wrongCompleteSnapshot)

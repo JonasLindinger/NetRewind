@@ -1,10 +1,7 @@
-using System.Collections.Generic;
-using NetRewind.Utils.Input.Data;
-using NetRewind.Utils.Simulation.State;
+using NetRewind.Utils.CustomDataStructures;
 using Unity.Netcode;
-using UnityEngine;
 
-namespace NetRewind.Utils.Simulation
+namespace NetRewind
 {
     public struct Event : INetworkSerializable
     {

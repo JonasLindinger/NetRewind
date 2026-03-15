@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NetRewind.Utils.CustomDataStructures;
-using NetRewind.Utils.Simulation;
+using NetRewind.Utils.Sync;
 using Unity.Netcode;
 using UnityEngine;
 

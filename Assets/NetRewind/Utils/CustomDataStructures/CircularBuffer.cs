@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace NetRewind.Utils.CustomDataStructures
 {
+    // ------------
+    // AI GENERATED (with some changes)
+    // ------------
+    
     /// <summary>
     /// A generic circular buffer (ring buffer) for storing items efficiently with a fixed size.
     /// Supports storing items by ID, retrieving a specific item, and getting the latest items in order.

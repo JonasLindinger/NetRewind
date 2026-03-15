@@ -1,4 +1,4 @@
-using NetRewind.Utils.Input.Data;
+using NetRewind.Utils.CustomDataStructures;
 using Unity.Netcode;
 
 namespace _Demo.Scripts.Player

@@ -1,9 +1,8 @@
-using System;
 using NetRewind.Utils.Input;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace NetRewind.Utils.Simulation
+namespace NetRewind.Utils.Sync
 {
     public class SimulationTransportLayer : TickSystem
     {
@@ -47,7 +46,7 @@ namespace NetRewind.Utils.Simulation
             else Debug.LogWarning("No InputTransportLayer found! -> no input will be sent.");
 
             uint maxTicksTheClientIsAllowedToBeAhead =
-                (uint)Mathf.Max((int)(NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(Simulation.TickRate) / 2), 3);
+                (uint)Mathf.Max((int)(NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(NetRewind.Simulation.TickRate) / 2), 3);
             uint headRoom = maxTicksTheClientIsAllowedToBeAhead / 2;
             uint localTargetTick =
                 serverTick +
@@ -57,7 +56,7 @@ namespace NetRewind.Utils.Simulation
             localTargetTick += headRoom;
 
             TickRate = tickRate;
-            Simulation.StartTickSystem(tickRate, localTargetTick);
+            NetRewind.Simulation.StartTickSystem(tickRate, localTargetTick);
             
             if (inputTransportLayer != null)
                 inputTransportLayer.StartInputSending(tickRate);
@@ -75,11 +74,11 @@ namespace NetRewind.Utils.Simulation
                 NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(TickRate) +
                 _inputSendingTickOffset;
 
-            int difference = (int) (localTargetTick - Simulation.CurrentTick); // Positive means we are behind, negative means we are ahead.
+            int difference = (int) (localTargetTick - NetRewind.Simulation.CurrentTick); // Positive means we are behind, negative means we are ahead.
             uint absDifference = (uint) Mathf.Abs(difference);
 
             uint maxTicksTheClientIsAllowedToBeAhead =
-                (uint)Mathf.Max((int)(NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(Simulation.TickRate) / 2), 3);
+                (uint)Mathf.Max((int)(NetRunner.GetInstance().TicksPassedBetweenServerAndClientRPC(NetRewind.Simulation.TickRate) / 2), 3);
 
             uint headRoom = maxTicksTheClientIsAllowedToBeAhead / 2;
             
@@ -89,13 +88,13 @@ namespace NetRewind.Utils.Simulation
                 if (absDifference > 20) // Todo: Make the 20 configurable
                 {
                     Debug.LogWarning("Setting tick, because we are too far behind the server");
-                    Simulation.SetTick(localTargetTick + headRoom);
+                    NetRewind.Simulation.SetTick(localTargetTick + headRoom);
                 }
                 // Calculate extra ticks if the difference to the server tick isn't that big
                 else
                 {
                     Debug.LogWarning("Calculating extra ticks, because we are a bit behind the server");
-                    Simulation.CalculateExtraTicks(absDifference + headRoom);
+                    NetRewind.Simulation.CalculateExtraTicks(absDifference + headRoom);
                 }
             }
             else if (difference < -maxTicksTheClientIsAllowedToBeAhead) // Check if we are too far ahead.
@@ -104,13 +103,13 @@ namespace NetRewind.Utils.Simulation
                 if (absDifference > 20) // Todo: Make the 20 configurable
                 {
                     Debug.LogWarning("Setting tick, because we are too far in front of the server");
-                    Simulation.SetTick(localTargetTick + headRoom);
+                    NetRewind.Simulation.SetTick(localTargetTick + headRoom);
                 }
                 // Calculate extra ticks if the difference to the server tick isn't that big
                 else
                 {
                     Debug.LogWarning("Skipping ticks, because we are a bit in front of the server");
-                    Simulation.SkipTicks(absDifference - headRoom);
+                    NetRewind.Simulation.SkipTicks(absDifference - headRoom);
                 }
             }
             else

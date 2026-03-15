@@ -1,6 +1,5 @@
-using System;
-using NetRewind.Utils.Simulation;
-using NetRewind.Utils.Simulation.State;
+using NetRewind;
+using NetRewind.Utils.CustomDataStructures;
 using UnityEngine;
 
 namespace _Demo.Scripts.PatrollingPlatform

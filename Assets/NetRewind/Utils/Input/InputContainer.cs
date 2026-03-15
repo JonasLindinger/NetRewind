@@ -1,5 +1,4 @@
 using NetRewind.Utils.CustomDataStructures;
-using NetRewind.Utils.Simulation;
 
 namespace NetRewind.Utils.Input
 {

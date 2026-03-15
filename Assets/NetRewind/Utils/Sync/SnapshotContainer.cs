@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
 using NetRewind.Utils.CustomDataStructures;
 
-namespace NetRewind.Utils.Simulation.State
+namespace NetRewind.Utils.Sync
 {
     public static class SnapshotContainer
     {

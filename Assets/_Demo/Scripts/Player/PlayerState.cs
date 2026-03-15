@@ -1,8 +1,6 @@
-using System.Diagnostics;
-using NetRewind.Utils.Simulation.State;
+using NetRewind.Utils.CustomDataStructures;
 using Unity.Netcode;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace _Demo.Scripts.Player
 {

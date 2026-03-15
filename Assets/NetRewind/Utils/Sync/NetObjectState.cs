@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using NetRewind.Utils.Input.Data;
+using NetRewind.Utils.CustomDataStructures;
 using Unity.Netcode;
-using Unity.VisualScripting;
+using IState = NetRewind.Utils.CustomDataStructures.IState;
 
-namespace NetRewind.Utils.Simulation.State
+namespace NetRewind.Utils.Sync
 {
     [StateType]
     public struct NetObjectState : IState
@@ -37,7 +37,7 @@ namespace NetRewind.Utils.Simulation.State
                     uint eventId = @event.EventId;
                     if (_receivedEvents.ContainsKey(eventId))
                     {
-                        if (_receivedEvents[eventId] <= Simulation.CurrentTick)
+                        if (_receivedEvents[eventId] <= NetRewind.Simulation.CurrentTick)
                             // Unmark this event as received and don't ignore this event
                             _receivedEvents.Remove(eventId);
                         else
@@ -45,7 +45,7 @@ namespace NetRewind.Utils.Simulation.State
                             continue;
                     }
                     
-                    _receivedEvents.Add(@event.EventId, Simulation.CurrentTick + (NetRunner.EventPackageLossToAccountFor * 2));
+                    _receivedEvents.Add(@event.EventId, NetRewind.Simulation.CurrentTick + (NetRunner.EventPackageLossToAccountFor * 2));
                     eventsForThisState.Add(@event);
                 }
 

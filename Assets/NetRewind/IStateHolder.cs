@@ -1,6 +1,6 @@
-using NetRewind.Utils.Simulation.State;
+using NetRewind.Utils.CustomDataStructures;
 
-namespace NetRewind.Utils.Simulation
+namespace NetRewind
 {
     public interface IStateHolder
     {

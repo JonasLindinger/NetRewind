@@ -1,4 +1,4 @@
-namespace NetRewind.Utils.Simulation.State
+namespace NetRewind.Utils.Sync
 {
     public enum CompareResult : uint
     {

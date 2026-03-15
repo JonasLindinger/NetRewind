@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NetRewind.Utils.Features.ShowOnly
+namespace NetRewind.Utils.Features
 {
     #if UNITY_EDITOR
     [CustomPropertyDrawer(typeof(ShowOnlyAttribute))]
@@ -21,6 +21,13 @@ namespace NetRewind.Utils.Features.ShowOnly
             EditorGUI.PropertyField(position, property, label, true);
             GUI.enabled = true;
         }
+    }
+    #endif
+    
+    #if UNITY_EDITOR
+    public class ShowOnlyAttribute : PropertyAttribute
+    {
+        // DO NOT DELETE this class. Otherwise the attribute won't work
     }
     #endif
 }

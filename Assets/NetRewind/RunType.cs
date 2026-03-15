@@ -1,4 +1,4 @@
-namespace NetRewind.Utils
+namespace NetRewind
 {
     public enum RunType : byte
     {

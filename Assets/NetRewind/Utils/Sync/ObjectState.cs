@@ -1,7 +1,7 @@
+using NetRewind.Utils.CustomDataStructures;
 using Unity.Netcode;
-using UnityEngine;
 
-namespace NetRewind.Utils.Simulation.State
+namespace NetRewind.Utils.Sync
 {
     public struct ObjectState : INetworkSerializable
     {

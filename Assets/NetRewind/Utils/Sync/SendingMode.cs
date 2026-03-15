@@ -1,4 +1,4 @@
-namespace NetRewind.Utils.Input
+namespace NetRewind.Utils.Sync
 {
     public enum SendingMode : byte
     {

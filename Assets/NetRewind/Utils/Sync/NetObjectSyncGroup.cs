@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using NetRewind.Utils.Input;
 
-namespace NetRewind.Utils.Simulation
+namespace NetRewind.Utils.Sync
 {
     public class NetObjectSyncGroup
     {

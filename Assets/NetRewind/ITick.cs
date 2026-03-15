@@ -1,4 +1,4 @@
-namespace NetRewind.Utils.Simulation
+namespace NetRewind
 {
     public interface ITick
     {

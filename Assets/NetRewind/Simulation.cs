@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using NetRewind.Utils.CustomDataStructures;
 using NetRewind.Utils.Input;
-using NetRewind.Utils.Simulation.State;
+using NetRewind.Utils.Sync;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace NetRewind.Utils.Simulation
+namespace NetRewind
 {
     public static class Simulation
     {

@@ -1,11 +1,11 @@
 using System;
 
-namespace NetRewind.Utils.Simulation.State
+namespace NetRewind.Utils.Sync
 {
     public struct RollbackInfo
     {
         public NetObject NetObject;
         public uint Tick;
-        public Action method;
+        public Action Method;
     }
 }
