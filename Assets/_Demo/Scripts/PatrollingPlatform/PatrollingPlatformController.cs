@@ -5,7 +5,7 @@ using UnityEngine;
 namespace _Demo.Scripts.PatrollingPlatform
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class PatrollingPlatformController : NetObject, ITick, IStateHolder
+    public class PatrollingPlatformController : NetObject
     {
         [Header("Path")]
         [SerializeField] private Transform pointA;
@@ -38,7 +38,7 @@ namespace _Demo.Scripts.PatrollingPlatform
             ChangePredictionState(true);
         }
 
-        public void Tick(uint tick)
+        protected override void Tick(uint tick)
         {
             if (pointA == null || pointB == null)
                 return;
@@ -106,7 +106,8 @@ namespace _Demo.Scripts.PatrollingPlatform
         }
     
         #region State
-        public IState GetCurrentState()
+
+        protected override IState GetCurrentState()
         {
             return new PatrollingPlatformState()
             {
@@ -117,7 +118,7 @@ namespace _Demo.Scripts.PatrollingPlatform
             };
         }
 
-        public void UpdateState(IState state)
+        protected override void UpdateState(IState state)
         {
             PatrollingPlatformState platformState = (PatrollingPlatformState) state;
 
@@ -127,7 +128,7 @@ namespace _Demo.Scripts.PatrollingPlatform
             _movingForward = platformState.Direction;
         }
 
-        public void ApplyState(IState state)
+        protected override void ApplyState(IState state)
         {
             PatrollingPlatformState platformState = (PatrollingPlatformState) state;
 
@@ -137,7 +138,7 @@ namespace _Demo.Scripts.PatrollingPlatform
             _movingForward = platformState.Direction;
         }
 
-        public void ApplyPartialState(IState state, uint part)
+        protected override void ApplyPartialState(IState state, uint part)
         {
             throw new System.NotImplementedException();
         }

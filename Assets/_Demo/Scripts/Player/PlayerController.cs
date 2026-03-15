@@ -9,7 +9,7 @@ using UnityEngine;
 namespace _Demo.Scripts.Player
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class PlayerController : NetObject, ITick, IStateHolder, IInputListener, IInputDataSource
+    public class PlayerController : NetObject
     {
         public bool IsInCar => _currentCar != null;
         
@@ -36,10 +36,6 @@ namespace _Demo.Scripts.Player
         [SerializeField] private Transform orientation;
         [SerializeField] private LayerMask whatIsGround;
         [SerializeField] private float playerHeight;
-
-        public byte[] InputData { get; set; }
-        public IData Data { get; set; }
-        public uint TickOfTheInput { get; set; }
 
         private Rigidbody _rb;
         
@@ -119,7 +115,8 @@ namespace _Demo.Scripts.Player
         #endregion
         
         #region Tick
-        public void Tick(uint tick)
+
+        protected override void Tick(uint tick)
         {
             if (IsInCar)
             {
@@ -134,7 +131,7 @@ namespace _Demo.Scripts.Player
             if (HasInputForThisTick(tick))
             {
                 // GetPlayer data
-                PlayerData data = GetData<PlayerData>();
+                PlayerData data = GetData<PlayerData>(tick);
             
                 // Rotate player
                 Vector3 newRotation = transform.eulerAngles;
@@ -153,9 +150,9 @@ namespace _Demo.Scripts.Player
 
                 // Move player
                 if (_canMove)
-                    Move();
+                    Move(tick);
             
-                CheckInteract();
+                CheckInteract(tick);
 
                 CheckForShooting(tick, data);
             }
@@ -165,7 +162,7 @@ namespace _Demo.Scripts.Player
         #region Shooting
         private void CheckForShooting(uint tick, PlayerData data)
         {
-            bool isShooting = GetButton("Shoot");
+            bool isShooting = GetButton(tick, "Shoot");
             
             if (isShooting && !_isShooting)
             {
@@ -217,7 +214,7 @@ namespace _Demo.Scripts.Player
         #endregion
         
         #region Movement
-        private void Move()
+        private void Move(uint tick)
         {
             if (_jumpCooldownTimer > 0)
                 _jumpCooldownTimer -= Simulation.TimeBetweenTicks;
@@ -232,13 +229,13 @@ namespace _Demo.Scripts.Player
                 _rb.linearDamping = 0;
 
             // Calculating movement
-            Vector2 moveInput = GetVector2("Move").normalized;
+            Vector2 moveInput = GetVector2(tick, "Move").normalized;
 
             // _orientation.rotation = Quaternion.Euler(0, input.PlayerRotation, 0);
             Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
 
             // Applying movement
-            float moveSpeed = GetButton("Sprint") ? sprintSpeed : GetButton("Crouch") ? crouchSpeed : walkSpeed;
+            float moveSpeed = GetButton(tick, "Sprint") ? sprintSpeed : GetButton(tick, "Crouch") ? crouchSpeed : walkSpeed;
 
             // Grounded
             if (_grounded)
@@ -256,7 +253,7 @@ namespace _Demo.Scripts.Player
                 _rb.linearVelocity = new Vector3(limitedVel.x, _rb.linearVelocity.y, limitedVel.z);
             }
 
-            if (GetButton("Jump") && _grounded && _jumpCooldownTimer <= 0)
+            if (GetButton(tick, "Jump") && _grounded && _jumpCooldownTimer <= 0)
             {
                 // Resetting Y velocity
                 _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
@@ -271,9 +268,9 @@ namespace _Demo.Scripts.Player
         #endregion
 
         #region Interactions
-        private void CheckInteract()
+        private void CheckInteract(uint tick)
         {
-            bool interacting = GetButton("Use");
+            bool interacting = GetButton(tick, "Use");
             
             if (interacting && !_isInteracting)
             {
@@ -335,11 +332,12 @@ namespace _Demo.Scripts.Player
         }
         #endregion
         
-        #region NetOwnerUpdate
-        public void NetInputOwnerUpdate()
+        #region NetUpdate
+        protected override void NetUpdate()
         {
             #if Client
-            Look();
+            if (IsInputOwner)
+                Look();
             #endif
         }
         #endregion
@@ -383,7 +381,7 @@ namespace _Demo.Scripts.Player
         #region State
         
         #if Client
-        public IData OnInputData()
+        protected override IData OnGetInputDataToSend()
         {
             return new PlayerData()
             {
@@ -393,7 +391,7 @@ namespace _Demo.Scripts.Player
         }
         #endif
 
-        public IState GetCurrentState()
+        protected override IState GetCurrentState()
         {
             return new PlayerState()
             {
@@ -406,7 +404,7 @@ namespace _Demo.Scripts.Player
             };
         }
 
-        public void UpdateState(IState state)
+        protected override void UpdateState(IState state)
         {
             PlayerState playerState = (PlayerState) state;
             
@@ -445,7 +443,7 @@ namespace _Demo.Scripts.Player
             transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
         }
 
-        public void ApplyState(IState state)
+        protected override void ApplyState(IState state)
         {
             PlayerState playerState = (PlayerState) state;
             
@@ -484,7 +482,7 @@ namespace _Demo.Scripts.Player
             transform.localRotation = Quaternion.Euler(0, playerState.YRotation, 0);
         }
 
-        public void ApplyPartialState(IState state, uint part)
+        protected override void ApplyPartialState(IState state, uint part)
         {
             throw new System.NotImplementedException();
         }

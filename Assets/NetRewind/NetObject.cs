@@ -17,7 +17,7 @@ namespace NetRewind
         private static List<RollbackInfo> _rollbackInfos = new List<RollbackInfo>();
         #endif
         
-        private static IInputDataSource _globalInputDataSource; // static because there can only be one!
+        private static NetObject _globalInputDataSource; // The NetObject, that sends the player input data. static because there can only be one!
 
         public static Dictionary<ulong, NetObject> NetworkObjects = new Dictionary<ulong, NetObject>();
         #if Server
@@ -73,12 +73,11 @@ namespace NetRewind
 
         public bool HasInputOwner => _inputOwnerClientId != ushort.MaxValue;
 
-        private IInputDataSource _inputDataSource;
-        private ITick _tickInterface;
-        private IInputListener _inputListener;
-        private IStateHolder _stateHolder;
-
         private Vector3 _visualVelocity;
+        
+        public byte[] InputData { get; set; }
+        public IData Data { get; set; }
+        public uint TickOfTheInput { get; set; }
         #endregion
 
         #region Inspector
@@ -91,12 +90,6 @@ namespace NetRewind
         #region OnNetworkSpawn
         public override void OnNetworkSpawn()
         {
-            TryGetComponent(out _tickInterface);
-            TryGetComponent(out _inputListener);
-            TryGetComponent(out _stateHolder);
-            
-            TryGetComponent(out _inputDataSource);
-            
             NetworkObjects.Add(NetworkObjectId, this);
 
             if (visual)
@@ -145,7 +138,8 @@ namespace NetRewind
             }            
             #endif
 
-            if (_inputDataSource == _globalInputDataSource && _inputDataSource != null)
+            // If we are the global input data source, don't be it. : )
+            if (_globalInputDataSource == this)
                 _globalInputDataSource = null;
 
             if (visual)
@@ -158,11 +152,31 @@ namespace NetRewind
         }
         #endregion
         
+        #region Global Input Data Source
+
+        private bool CouldDeliverInputDataSource()
+        {
+            try
+            {
+                OnGetInputDataToSend();
+                
+                // The method was overwritten without an error, so we are capable to deliver input data source
+                return true;
+            }
+            catch (NotImplementedException e)
+            {
+                // The method wasn't overwritten
+                return false;
+            }
+        }
+        
+        #endregion
+        
         #region Update
         private void Update()
         {
             #if Client
-            if (NetRewind.Simulation.IsCorrectingGameState)
+            if (Simulation.IsCorrectingGameState)
                 return;
             #endif
             
@@ -178,11 +192,6 @@ namespace NetRewind
                 visual.rotation = transform.rotation;
             }
             
-            #if Client
-            if (IsInputOwner && _inputListener != null)
-                _inputListener.NetInputOwnerUpdate();
-            #endif
-            
             NetUpdate();
         }
         #endregion
@@ -196,6 +205,7 @@ namespace NetRewind
 
             SetInputOwner((ushort) newInputOwnerClientId);
         }
+        
         public void SetInputOwner(ushort newInputOwnerClientId)
         {
             if (InputOwnerClientId == newInputOwnerClientId)
@@ -220,22 +230,22 @@ namespace NetRewind
                 // -> Just became input owner
                 
                 // Set the global input data source, if the net object has one.
-                if (_inputDataSource != null)
-                    _globalInputDataSource = _inputDataSource;
+                if (_globalInputDataSource == null && CouldDeliverInputDataSource())
+                    _globalInputDataSource = this;
             }
             else
             {
                 // -> We aren't the input owner anymore.
                 
                 // Reset the global input data source, if it was the one.
-                if (_globalInputDataSource == _inputDataSource && _inputDataSource != null)
+                if (_globalInputDataSource == this)
                     _globalInputDataSource = null;
             }
         }
         #endregion
 
         #region Apply (Partial) State
-        public void TryApplyPartialState(IState serverState, uint result) => _stateHolder.ApplyPartialState(serverState, result);
+        public void TryApplyPartialState(IState serverState, uint result) => ApplyPartialState(serverState, result);
         
         public static void TryApplyState(ulong networkId, IState state, NetObjectState netObjectState, bool playEvents)
         {
@@ -243,7 +253,7 @@ namespace NetRewind
             {
                 NetObject obj = NetworkObjects[networkId];
                 obj.SetNetObjectState(netObjectState);
-                obj._stateHolder.ApplyState(state);
+                obj.ApplyState(state);
                 #if Client
                 if (!obj.IsServer && playEvents) // Don't do this as the server / host.
                     obj.PlayEvents(netObjectState);
@@ -265,7 +275,7 @@ namespace NetRewind
             {
                 NetObject obj = NetworkObjects[networkId];
                 obj.SetNetObjectState(netObjectState);
-                obj._stateHolder.UpdateState(state);
+                obj.UpdateState(state);
                 if (!obj.IsServer) // Don't do this as the server / host.
                     obj.PlayEvents(netObjectState);
             }
@@ -337,77 +347,72 @@ namespace NetRewind
                 LeaveSyncGroup();
             #endif
             
-            // If this is an inputListener, try to get input
-            if (_inputListener != null)
-            {
-                // Reset input
-                _inputListener.InputData = null;
-                _inputListener.Data = null;
-                _inputListener.TickOfTheInput = 0;
+            // ----- Handle input -----
+            // 1. Reset input
+            InputData = null;
+            Data = null;
+            TickOfTheInput = 0;
                 
-                // Get input
-                InputState inputState = new InputState();
-                bool gotInput = false;
-                #if Client
-                // As the input owner and a client, get the local input
-                if (IsInputOwner && IsClient)
+            // 2. Get input as the input owner
+            InputState inputState = new InputState();
+            bool gotInput = false;
+            #if Client
+            // As the input owner and a client, get the local input
+            if (IsInputOwner && IsClient)
+            {
+                // -> Local client, get local input
+                inputState = InputContainer.GetInput(tick);
+                gotInput = true;
+            }
+            #endif
+                
+            #if Server
+            // 2. Get input as server, who isn't the input owner.
+            bool shouldSearchForReceavedInput = IsServer && !IsInputOwner; // Server has to run the input. But not here, if the server is the input owner -> Is Host and play's this object.
+            bool playerSentInput = InputTransportLayer.SentInput(InputOwnerClientId);
+            if (shouldSearchForReceavedInput && playerSentInput && HasInputOwner)
+            {
+                // Not local client -> get input from InputTransportLayer
+                try
                 {
-                    // -> Local client, get local input
-                    inputState = InputContainer.GetInput(tick);
+                    inputState = InputTransportLayer.GetInput(InputOwnerClientId, tick);
                     gotInput = true;
                 }
-                #endif
-                
-                #if Server
-                bool shouldRunAsServer = IsServer && !IsInputOwner; // Server has to run the input. But not here, if the server is the input owner -> Is Host and play's this object.
-                bool sentInput = InputTransportLayer.SentInput(InputOwnerClientId);
-                if (shouldRunAsServer && sentInput && HasInputOwner)
+                catch (Exception e)
                 {
-                    // Not local client -> get input from InputTransportLayer
-                    try
-                    {
-                        inputState = InputTransportLayer.GetInput(InputOwnerClientId, tick);
-                        gotInput = true;
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.Log("No input found!");
-                    }
-                }
-                #endif
-
-                // Set input if there is any
-                if (gotInput)
-                {
-                    _inputListener.InputData = inputState.Input;
-                    _inputListener.Data = inputState.Data;
-                    _inputListener.TickOfTheInput = inputState.Tick;
+                    Debug.Log("No input found!");
                 }
             }
+            #endif
+
+            // Set input if input was found
+            if (gotInput)
+            {
+                InputData = inputState.Input;
+                Data = inputState.Data;
+                TickOfTheInput = inputState.Tick;
+            }
+            else
+            {
+                // No input found for this tick / NetObject
+            }
             
-            // Trigger the tick
-            _tickInterface?.Tick(tick);
+            Tick(tick);
         }
+        
+        protected virtual void Tick(uint tick) { }
         #endregion
         
         #region HasInputForThisTick
-        public bool HasInputForThisTick(uint tick)
-        {
-            if (_inputListener == null)
-                return false;
-            
-            return _inputListener.TickOfTheInput == tick;
-        }
+        protected bool HasInputForThisTick(uint tick)
+            => TickOfTheInput == tick;
         #endregion
         
         #region GetSnapshotState
         public ObjectState GetSnapshotState(uint tick, bool clearEvents)
         {
-            if (_stateHolder == null)
-                throw new NotImplementedException("No state holder found!");
-            
             IState netObjectState = GetNetObjectState();
-            IState state = _stateHolder.GetCurrentState();
+            IState state = GetCurrentState();
             
             #if Server
             if (clearEvents)
@@ -512,9 +517,17 @@ namespace NetRewind
         #if Client
         public static IData GetPlayerInputData()
         {
-            return _globalInputDataSource != null ?
-                _globalInputDataSource.OnInputData() :
-                new DefaultPlayerData();
+            try
+            {
+                if (_globalInputDataSource == null)
+                    throw new NotImplementedException("No global input data source found!"); // Will be catched and will return DefaultPlayerData
+                
+                return _globalInputDataSource.OnGetInputDataToSend();
+            }
+            catch (Exception e)
+            {
+                return new DefaultPlayerData();
+            }
         }
         #endif
         #endregion
@@ -561,7 +574,14 @@ namespace NetRewind
         protected virtual void NetSpawn() { }
         protected virtual void NetDespawn() { }
         protected virtual void NetUpdate() { }
+        
+        protected virtual IData OnGetInputDataToSend() { throw new NotImplementedException(); }
 
+        protected virtual IState GetCurrentState() { return new DefaultObjectState(); }
+        protected virtual void UpdateState(IState state) { throw new NotImplementedException(); }
+        protected virtual void ApplyState(IState state) { throw new NotImplementedException(); }
+        protected virtual void ApplyPartialState(IState state, uint part) { throw new NotImplementedException(); }
+        
         #if Client
         protected virtual void OnEvent(IData eventData)
         {
@@ -571,23 +591,37 @@ namespace NetRewind
         #endregion
         
         #region Input Decoders
-        protected bool GetButton(string inputName) => InputSender.GetInstance().GetButton(InputSender.ButtonInputReferences[inputName], _inputListener.InputData);
-        protected Vector2 GetVector2(string inputName) => InputSender.GetInstance().GetVector2(InputSender.Vector2InputReferences[inputName], _inputListener.InputData);
+
+        protected bool GetButton(uint tick, string inputName)
+        {
+            if (!HasInputForThisTick(tick))
+                throw new Exception("No input for this tick found! The input saved isn't for this tick.");
+            
+            return InputSender.GetInstance().GetButton(InputSender.ButtonInputReferences[inputName], InputData);
+        }
+
+        protected Vector2 GetVector2(uint tick, string inputName)
+        {
+            if (!HasInputForThisTick(tick))
+                throw new Exception("No input for this tick found! The input saved isn't for this tick.");
+            
+            return InputSender.GetInstance().GetVector2(InputSender.Vector2InputReferences[inputName], InputData);
+        }
         #endregion
         
         #region Input Data
-        protected T GetData<T>() where T : IData
+        protected T GetData<T>(uint tick) where T : IData
         {
-            if (_inputListener == null)
-                throw new Exception("This object doesn't have an input listener!");
+            if (!HasInputForThisTick(tick))
+                throw new Exception("No input for this tick found! The data saved isn't for this tick.");
             
-            if (_inputListener.Data == null)
+            if (Data == null)
                 throw new Exception("No Data available!");
 
-            if (_inputListener.Data.GetType() != typeof(T))
-                throw new Exception("Cannot cast " + _inputListener.Data.GetType() + " into " + typeof(T) + "!");
+            if (Data.GetType() != typeof(T))
+                throw new Exception("Cannot cast " + Data.GetType() + " into " + typeof(T) + "!");
             
-            return (T) _inputListener.Data;
+            return (T) Data;
         }
         #endregion
         

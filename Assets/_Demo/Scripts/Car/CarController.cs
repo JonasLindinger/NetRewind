@@ -8,7 +8,7 @@ using UnityEngine;
 namespace _Demo.Scripts.Car
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class CarController : NetObject, ITick, IInputListener, IStateHolder, IInteractable
+    public class CarController : NetObject, IInteractable
     {
         private static Dictionary<ulong, CarController> _cars = new Dictionary<ulong, CarController>();
         
@@ -25,10 +25,6 @@ namespace _Demo.Scripts.Car
         
         private ushort _playerOnSeat1 = ushort.MaxValue;
         private ushort _playerOnSeat2 = ushort.MaxValue;
-        
-        public byte[] InputData { get; set; }
-        public IData Data { get; set; }
-        public uint TickOfTheInput { get; set; }
 
         private Rigidbody _rb;
 
@@ -46,36 +42,26 @@ namespace _Demo.Scripts.Car
             ChangePredictionState(shouldPredict);
         }
 
-        protected override void OnOwnershipChanged(ulong previous, ulong current)
-        {
-            NetInputOwnerUpdate();
-        }
-
         protected override void NetDespawn()
         {
             _cars.Remove(NetworkObjectId);
         }
-
-        public void NetInputOwnerUpdate()
-        {
-            
-        }
         
-        public void Tick(uint tick)
+        protected override void Tick(uint tick)
         {
             if (!HasInputForThisTick(tick)) return;
             
-            Move();
+            Move(tick);
         }
         
-        private void Move()
+        private void Move(uint tick)
         {
             // Applying movement
             // Setting the drag
             _rb.linearDamping = groundDrag;
 
             // Calculating movement
-            Vector2 moveInput = GetVector2("Move").normalized;
+            Vector2 moveInput = GetVector2(tick, "Move").normalized;
 
             // _orientation.rotation = Quaternion.Euler(0, input.PlayerRotation, 0);
             Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
@@ -162,7 +148,8 @@ namespace _Demo.Scripts.Car
         }
         
         #region State
-        public IState GetCurrentState()
+
+        protected override IState GetCurrentState()
         {
             return new CarState()
             {
@@ -175,7 +162,7 @@ namespace _Demo.Scripts.Car
             };
         }
 
-        public void UpdateState(IState state)
+        protected override void UpdateState(IState state)
         {
             CarState carState = (CarState) state;
             transform.position = carState.Position;
@@ -191,7 +178,7 @@ namespace _Demo.Scripts.Car
                 ChangePredictionState(shouldPredict);
         }
 
-        public void ApplyState(IState state)
+        protected override void ApplyState(IState state)
         {
             CarState carState = (CarState) state;
             transform.position = carState.Position;
@@ -207,7 +194,7 @@ namespace _Demo.Scripts.Car
                 ChangePredictionState(shouldPredict);
         }
 
-        public void ApplyPartialState(IState state, uint part)
+        protected override void ApplyPartialState(IState state, uint part)
         {
             throw new System.NotImplementedException();
         }
