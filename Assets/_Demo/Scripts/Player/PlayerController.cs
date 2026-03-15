@@ -11,6 +11,8 @@ namespace _Demo.Scripts.Player
     [RequireComponent(typeof(Rigidbody))]
     public class PlayerController : NetObject
     {
+        #region Variables
+        
         public bool IsInCar => _currentCar != null;
         
         [Header("Interaction")]
@@ -51,6 +53,8 @@ namespace _Demo.Scripts.Player
         
         private bool _isInteracting;
         private bool _isShooting;
+        
+        #endregion
 
         #region Spawn / Despawn
         protected override void NetSpawn()
@@ -372,7 +376,7 @@ namespace _Demo.Scripts.Player
                     HandleShootEvent(shootEvent);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("Event type is not supported");
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

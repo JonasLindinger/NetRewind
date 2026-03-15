@@ -24,10 +24,8 @@ namespace NetRewind.Utils.Features
     }
     #endif
     
-    #if UNITY_EDITOR
     public class ShowOnlyAttribute : PropertyAttribute
     {
         // DO NOT DELETE this class. Otherwise the attribute won't work
     }
-    #endif
 }

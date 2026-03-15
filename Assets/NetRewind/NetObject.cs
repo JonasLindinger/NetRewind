@@ -75,9 +75,16 @@ namespace NetRewind
 
         private Vector3 _visualVelocity;
         
-        public byte[] InputData { get; set; }
-        public IData Data { get; set; }
-        public uint TickOfTheInput { get; set; }
+        private byte[] InputData { get; set; }
+        private IData Data { get; set; }
+        private uint TickOfTheInput { get; set; }
+        
+        [ShowOnly] 
+        public bool queuedToBeDestroyed;
+        
+        #if Server
+        private uint _tickToDestroyThisObject = uint.MaxValue;
+        #endif
         #endregion
 
         #region Inspector
@@ -91,6 +98,7 @@ namespace NetRewind
         public override void OnNetworkSpawn()
         {
             NetworkObjects.Add(NetworkObjectId, this);
+            queuedToBeDestroyed = false;
 
             if (visual)
             {
@@ -143,10 +151,7 @@ namespace NetRewind
                 _globalInputDataSource = null;
 
             if (visual)
-            {
-                visual.SetParent(gameObject.transform);
                 Destroy(visual.gameObject);
-            }
             
             NetDespawn();
         }
@@ -244,15 +249,15 @@ namespace NetRewind
         }
         #endregion
 
-        #region Apply (Partial) State
-        public void TryApplyPartialState(IState serverState, uint result) => ApplyPartialState(serverState, result);
+        #region Apply/Update State
         
+        #region Apply State
         public static void TryApplyState(ulong networkId, IState state, NetObjectState netObjectState, bool playEvents)
         {
             try
             {
                 NetObject obj = NetworkObjects[networkId];
-                obj.SetNetObjectState(netObjectState);
+                obj.ApplyNetObjectState(netObjectState);
                 obj.ApplyState(state);
                 #if Client
                 if (!obj.IsServer && playEvents) // Don't do this as the server / host.
@@ -274,7 +279,7 @@ namespace NetRewind
             try
             {
                 NetObject obj = NetworkObjects[networkId];
-                obj.SetNetObjectState(netObjectState);
+                obj.ApplyNetObjectState(netObjectState);
                 obj.UpdateState(state);
                 if (!obj.IsServer) // Don't do this as the server / host.
                     obj.PlayEvents(netObjectState);
@@ -290,6 +295,59 @@ namespace NetRewind
         #endif
         #endregion
         
+        #region Apply Partial State
+        public void TryApplyPartialState(IState serverState, uint result) => ApplyPartialState(serverState, result);
+        #endregion
+        
+        #endregion
+        
+        #region NetworkObject State
+        
+        public void ApplyNetObjectState(NetObjectState state)
+        {
+            // Look for changes
+            if (queuedToBeDestroyed != state.QueuedToBeDestroyed)
+            {
+                // Something changed
+                if (queuedToBeDestroyed)
+                {
+                    // Not destroyed anymore
+                    ExitDestroyedState();
+                }
+                else
+                {
+                    // Now being destroyed
+                    EnterDestroyedState();
+                }
+            }
+            
+            // Apply values
+            SetInputOwner(state.InputOwnerClientId);
+            queuedToBeDestroyed = state.QueuedToBeDestroyed;
+            
+            visual.gameObject.SetActive(!queuedToBeDestroyed);
+        }
+        
+        private IState GetNetObjectState()
+        {
+            // Getting events to save/send/compare
+            Event[] events = Array.Empty<Event>();
+            #if Server
+            if (IsServer)
+                events = _events.ToArray();
+            #endif
+            
+            // Creating the NetObjectState
+            NetObjectState netObjectState = new NetObjectState(
+                _inputOwnerClientId,
+                events,
+                queuedToBeDestroyed
+            );
+            
+            return netObjectState;
+        }
+        #endregion
+        
         #region Event
         #if Client
         public void PlayEvents(NetObjectState netObjectState)
@@ -300,33 +358,6 @@ namespace NetRewind
                 OnEvent(e.Data);
         }
         #endif
-        #endregion
-        
-        #region NetworkObject State
-        private void SetNetObjectState(NetObjectState state)
-        {
-            SetInputOwner(state.InputOwnerClientId);
-        }
-        
-        public void ApplyNetObjectState(NetObjectState netObjectState)
-        {
-            SetNetObjectState(netObjectState);
-        }
-        
-        private IState GetNetObjectState()
-        {
-            Event[] eventsToSend =  Array.Empty<Event>();
-            #if Server
-            if (IsServer)
-                eventsToSend = _events.ToArray();
-            #endif
-            NetObjectState netObjectState = new NetObjectState(
-                _inputOwnerClientId,
-                eventsToSend
-            );
-            
-            return netObjectState;
-        }
         #endregion
         
         #region Tick
@@ -342,10 +373,22 @@ namespace NetRewind
         private void InternalTick(uint tick)
         {
             #if Server
+            // Check for destruction
+            if (IsServer && tick >= _tickToDestroyThisObject)
+            {
+                Destroy(gameObject);
+            }
+            #endif
+            
+            #if Server
             // Check if this object should leave the sync group.
             if (IsServer && tick >= _tickToLeaveGroup) 
                 LeaveSyncGroup();
             #endif
+            
+            // ----- Check for destruction -----
+            if (queuedToBeDestroyed)
+                return;
             
             // ----- Handle input -----
             // 1. Reset input
@@ -399,8 +442,6 @@ namespace NetRewind
             
             Tick(tick);
         }
-        
-        protected virtual void Tick(uint tick) { }
         #endregion
         
         #region HasInputForThisTick
@@ -570,23 +611,20 @@ namespace NetRewind
         #endif
         #endregion
         
-        #region Virtuals
+        #region Virtual Methods
         protected virtual void NetSpawn() { }
         protected virtual void NetDespawn() { }
         protected virtual void NetUpdate() { }
-        
+        protected virtual void Tick(uint tick) { }
         protected virtual IData OnGetInputDataToSend() { throw new NotImplementedException(); }
-
         protected virtual IState GetCurrentState() { return new DefaultObjectState(); }
         protected virtual void UpdateState(IState state) { throw new NotImplementedException(); }
         protected virtual void ApplyState(IState state) { throw new NotImplementedException(); }
         protected virtual void ApplyPartialState(IState state, uint part) { throw new NotImplementedException(); }
-        
+        protected virtual void EnterDestroyedState() { throw new NotImplementedException("Please implement this method, just to be aware, that you should handle this. No matter if needed or not. But you will probably need it in the future, so please just implement it and think about if you need to handle any logic in there."); }
+        protected virtual void ExitDestroyedState() { throw new NotImplementedException("Please implement this method, just to be aware, that you should handle this. No matter if needed or not. But you will probably need it in the future, so please just implement it and think about if you need to handle any logic in there."); }
         #if Client
-        protected virtual void OnEvent(IData eventData)
-        {
-            throw new NotImplementedException("Override the OnEvent method to handle events!");
-        }
+        protected virtual void OnEvent(IData eventData) { throw new NotImplementedException("Override the OnEvent method to handle events!"); }
         #endif
         #endregion
         
@@ -830,6 +868,25 @@ namespace NetRewind
                 }
             }
         }
+        #endregion
+        
+        #region Destroying
+        
+        #if Server
+        public void NetDestroy(uint tick)
+        {
+            if (!IsServer) 
+                throw new Exception("You can't call this, since you aren't a server!");
+            
+            _tickToDestroyThisObject = tick + SnapshotContainer.SnapshotBufferSize + 1; // The +1 is just to be save. I don't know if it's necessary, but it won't hurt.
+            queuedToBeDestroyed = true;
+            
+            name += "(queued to be destroyed)";
+            visual.gameObject.SetActive(false);
+            EnterDestroyedState();
+        }
+        #endif
+        
         #endregion
     }
 }

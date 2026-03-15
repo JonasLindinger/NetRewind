@@ -101,11 +101,22 @@ namespace NetRewind.Utils.Sync
             
             // Debug.Log("Sending snapshot to clients");
             foreach (var layer in _layers)
+            {
+                if (layer.IsOwner)
+                    continue; // This is a host and the host doesn't need to send snapshot to himself.
+                
                 layer.SendRegularSnapshotToClientRPC(snapshot);
+            }
         }
         #endif
         
         #if Server
+        /// <summary>
+        /// Get's the snapshot to sent to the clients.
+        /// </summary>
+        /// <param name="tick"></param>
+        /// <param name="netObjects"></param>
+        /// <returns></returns>
         private static Snapshot GetSnapshotByObjects(uint tick, NetObject[] netObjects)
         {
             Snapshot snapshot = new Snapshot(tick);
@@ -114,7 +125,7 @@ namespace NetRewind.Utils.Sync
             {
                 ulong networkId = netObject.NetworkObjectId;
                 NetObject networkedObject = netObject;
-
+                
                 try
                 {
                     ObjectState objectState = networkedObject.GetSnapshotState(tick, true);

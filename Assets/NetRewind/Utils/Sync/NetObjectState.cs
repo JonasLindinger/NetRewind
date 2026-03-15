@@ -12,19 +12,22 @@ namespace NetRewind.Utils.Sync
         private static Dictionary<uint, uint> _receivedEvents = new Dictionary<uint, uint>(); // EventId -> Tick to remove this event from list
         #endif
 
+        public bool QueuedToBeDestroyed;
         public ushort InputOwnerClientId;
         public Event[] Events;
 
-        public NetObjectState(ushort inputOwnerClientId, Event[] events)
+        public NetObjectState(ushort inputOwnerClientId, Event[] events, bool queuedToBeDestroyed)
         {
             InputOwnerClientId = inputOwnerClientId;
             Events = events;
+            QueuedToBeDestroyed = queuedToBeDestroyed;
         }
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref InputOwnerClientId);
             serializer.SerializeValue(ref Events);
+            serializer.SerializeValue(ref QueuedToBeDestroyed);
             
             #if Client
             // Filter out events that have already been received
@@ -63,8 +66,12 @@ namespace NetRewind.Utils.Sync
             {
                 return 1;
             }
+            else if (local.QueuedToBeDestroyed != server.QueuedToBeDestroyed)
+            {
+                return 1;
+            }
 
-            /* Don't compare this. since it doesn't really make sense
+            /* Don't compare this. since it doesn't really make sense **i think**
             if (local.Events != server.Events)
             {
                 return 1;

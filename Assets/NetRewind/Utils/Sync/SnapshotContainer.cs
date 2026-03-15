@@ -37,6 +37,9 @@ namespace NetRewind.Utils.Sync
                 ulong networkId = kvp.Key;
                 NetObject networkedObject = kvp.Value;
 
+                if (networkedObject.queuedToBeDestroyed)
+                    continue;
+                
                 try
                 {
                     ObjectState objectState = networkedObject.GetSnapshotState(tick, false);
